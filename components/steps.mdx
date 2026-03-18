@@ -1,0 +1,39 @@
+---
+title: Steps
+description: "Break multi-step processes into numbered instructions with Steps and Step components. Each step gets a title and supports rich content."
+---
+
+Use Steps for ordered instructions:
+
+<Steps>
+  <Step title="Install the CLI">
+    ```bash
+    npm install -g jamdesk
+    ```
+  </Step>
+  <Step title="Initialize your project">
+    ```bash
+    jamdesk init
+    ```
+  </Step>
+  <Step title="Start writing">
+    Open your project and create `.mdx` files. Each file becomes a page in your docs.
+  </Step>
+</Steps>
+
+## Usage
+
+```mdx
+<Steps>
+  <Step title="First step">
+    Description of what to do.
+  </Step>
+  <Step title="Second step">
+    Next instruction.
+  </Step>
+</Steps>
+```
+
+<Tip>
+Steps work well for setup guides, tutorials, and getting-started flows.
+</Tip>

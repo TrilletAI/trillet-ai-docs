@@ -1,0 +1,79 @@
+---
+title: Code Blocks
+description: "Fenced code blocks with automatic syntax highlighting, optional file titles, and CodeGroup for multi-language examples side by side."
+---
+
+Fenced code blocks are automatically syntax-highlighted.
+
+## Basic code block
+
+```javascript
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+```
+
+Add a language identifier after the opening fence for syntax highlighting:
+
+````mdx
+```javascript
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+```
+````
+
+## With title
+
+Add a title after the language:
+
+```javascript server.js
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Hello World');
+});
+
+app.listen(3000);
+```
+
+````mdx
+```javascript server.js
+const express = require('express');
+// ...
+```
+````
+
+## Code groups
+
+Show the same example in multiple languages:
+
+<CodeGroup>
+```javascript Node.js
+const response = await fetch('https://api.example.com/data');
+const data = await response.json();
+```
+
+```python Python
+import requests
+response = requests.get('https://api.example.com/data')
+data = response.json()
+```
+
+```bash cURL
+curl -X GET https://api.example.com/data
+```
+</CodeGroup>
+
+````mdx
+<CodeGroup>
+```javascript Node.js
+const response = await fetch('https://api.example.com/data');
+```
+
+```python Python
+response = requests.get('https://api.example.com/data')
+```
+</CodeGroup>
+````

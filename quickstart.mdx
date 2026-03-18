@@ -1,0 +1,75 @@
+---
+title: Quickstart
+description: "Edit MDX files, add new pages to your navigation, customize colors and branding in docs.json, and preview locally with the Jamdesk CLI."
+---
+
+Your docs are built from MDX files in this repository. Every push to GitHub triggers an automatic build and deploy.
+
+## Edit a page
+
+Open any `.mdx` file and start writing. MDX supports standard Markdown plus Jamdesk components.
+
+```mdx
+---
+title: My Page
+description: A brief description for SEO
+---
+
+# Heading
+
+Regular markdown works — **bold**, *italic*, `code`, [links](https://example.com).
+```
+
+## Add a new page
+
+<Steps>
+  <Step title="Create an MDX file">
+    Add a new `.mdx` file anywhere in your project, for example `guides/deployment.mdx`.
+  </Step>
+  <Step title="Add it to navigation">
+    Open `docs.json` and add the page path to the `navigation` section:
+
+    ```json
+    {
+      "group": "Guides",
+      "pages": ["guides/deployment"]
+    }
+    ```
+  </Step>
+  <Step title="Push to GitHub">
+    Commit and push. Your site will rebuild automatically.
+  </Step>
+</Steps>
+
+## Customize your site
+
+Everything is configured in `docs.json`:
+
+| Setting | What it does |
+|---------|-------------|
+| `name` | Site name shown in the header |
+| `colors` | Primary, light, and dark accent colors |
+| `logo` | Light and dark mode logo images |
+| `theme` | Visual theme (`jam`, `nebula`, or `pulsar`) |
+| `navigation` | Sidebar tabs, groups, and page order |
+| `navbar` | Top navigation links and buttons |
+
+<Tip>
+See the full configuration reference at [jamdesk.com/docs](https://jamdesk.com/docs).
+</Tip>
+
+## Use the CLI
+
+Install the Jamdesk CLI for local development:
+
+```bash
+npm install -g jamdesk
+```
+
+Preview your docs locally:
+
+```bash
+jamdesk dev
+```
+
+This starts a local server with hot reload so you can see changes instantly.

@@ -1,0 +1,65 @@
+---
+title: Tabs & Accordions
+description: "Organize content with Tabs for language or platform variants and AccordionGroup for collapsible FAQ-style sections that save vertical space."
+---
+
+## Tabs
+
+Show content in switchable panels:
+
+<Tabs>
+  <Tab title="React">
+    ```jsx
+    function App() {
+      return <h1>Hello React</h1>;
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```html
+    <template>
+      <h1>Hello Vue</h1>
+    </template>
+    ```
+  </Tab>
+  <Tab title="Svelte">
+    ```html
+    <h1>Hello Svelte</h1>
+    ```
+  </Tab>
+</Tabs>
+
+```mdx
+<Tabs>
+  <Tab title="React">
+    Content for the React tab.
+  </Tab>
+  <Tab title="Vue">
+    Content for the Vue tab.
+  </Tab>
+</Tabs>
+```
+
+## Accordions
+
+Collapsible sections for optional details:
+
+<AccordionGroup>
+  <Accordion title="What is Jamdesk?">
+    Jamdesk is a documentation platform that builds and hosts your docs from MDX files in a GitHub repository.
+  </Accordion>
+  <Accordion title="How do I deploy?">
+    Push to GitHub. Jamdesk builds and deploys automatically on every push.
+  </Accordion>
+  <Accordion title="Can I use a custom domain?">
+    Yes. Configure your custom domain in the Jamdesk dashboard under project settings.
+  </Accordion>
+</AccordionGroup>
+
+```mdx
+<AccordionGroup>
+  <Accordion title="Question here">
+    Answer here.
+  </Accordion>
+</AccordionGroup>
+```

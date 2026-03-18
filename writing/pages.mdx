@@ -1,0 +1,50 @@
+---
+title: Pages
+description: "How MDX files become pages, how frontmatter sets titles and descriptions, and how file paths map to URLs in your documentation site."
+---
+
+Every `.mdx` file in your project becomes a page. The file path determines the URL.
+
+## Frontmatter
+
+Each page starts with frontmatter — metadata between `---` fences:
+
+```mdx
+---
+title: My Page Title
+description: A short description for search engines
+---
+
+Your content starts here.
+```
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `title` | Yes | Page title shown in the browser tab and sidebar |
+| `description` | No | Meta description for SEO |
+
+## File organization
+
+Your file structure maps directly to URLs:
+
+```
+introduction.mdx        → /introduction
+quickstart.mdx          → /quickstart
+guides/deployment.mdx   → /guides/deployment
+api/users/list.mdx      → /api/users/list
+```
+
+## Markdown features
+
+MDX supports all standard Markdown:
+
+- **Bold** and *italic* text
+- `Inline code` and fenced code blocks
+- [Links](https://example.com) and images
+- Ordered and unordered lists
+- Tables and blockquotes
+- Headings (`##`, `###`, `####`)
+
+<Note>
+Headings on the page automatically appear in the right sidebar as a table of contents.
+</Note>

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://jamdesk.com/docs.json",
+  "name": "Documentation",
+  "description": "Your documentation site powered by Jamdesk",
+  "theme": "jam",
+  "colors": {
+    "primary": "#6366F1",
+    "light": "#818CF8",
+    "dark": "#4F46E5"
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "/introduction"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Writing Content",
+            "pages": [
+              "writing/pages",
+              "writing/components",
+              "writing/code-blocks"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Components",
+        "icon": "puzzle-piece",
+        "groups": [
+          {
+            "group": "Components",
+            "pages": [
+              "components/cards",
+              "components/callouts",
+              "components/tabs-and-accordions",
+              "components/steps"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+---
+title: Cards
+description: "Create linked feature grids and navigation panels with Card and Columns components. Supports icons, descriptions, and click-through links."
+---
+
+## Basic card
+
+<Card title="Getting Started">
+  A simple card with a title and content.
+</Card>
+
+```mdx
+<Card title="Getting Started">
+  A simple card with a title and content.
+</Card>
+```
+
+## Card with icon
+
+<Card title="Documentation" icon="book">
+  Add an icon for visual emphasis.
+</Card>
+
+```mdx
+<Card title="Documentation" icon="book">
+  Add an icon for visual emphasis.
+</Card>
+```
+
+## Card with link
+
+<Card title="Quickstart Guide" icon="play" href="/quickstart">
+  Cards can link to other pages.
+</Card>
+
+```mdx
+<Card title="Quickstart Guide" icon="play" href="/quickstart">
+  Cards can link to other pages.
+</Card>
+```
+
+## Card group
+
+Use `Columns` to arrange cards in a grid:
+
+<Columns cols={2}>
+  <Card title="Docs" icon="book">
+    Documentation
+  </Card>
+  <Card title="API" icon="code">
+    API Reference
+  </Card>
+  <Card title="Guides" icon="graduation-cap">
+    Tutorials
+  </Card>
+  <Card title="Support" icon="life-ring">
+    Get help
+  </Card>
+</Columns>
+
+```mdx
+<Columns cols={2}>
+  <Card title="Docs" icon="book">Documentation</Card>
+  <Card title="API" icon="code">API Reference</Card>
+</Columns>
+```
+
+## Properties
+
+<ParamField name="title" type="string" required>
+  The title displayed at the top of the card.
+</ParamField>
+
+<ParamField name="icon" type="string">
+  Font Awesome icon name (e.g., "book", "code", "rocket").
+</ParamField>
+
+<ParamField name="href" type="string">
+  URL the card links to.
+</ParamField>
