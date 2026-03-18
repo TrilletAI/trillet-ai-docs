@@ -1,0 +1,29 @@
+---
+title: "Disconnect Meta WhatsApp"
+api: "DELETE /v1/api/meta-whatsapp/disconnect"
+description: "Disconnect the Meta WhatsApp Business integration from your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the disconnection was successful.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>

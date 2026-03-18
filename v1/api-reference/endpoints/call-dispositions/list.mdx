@@ -1,0 +1,110 @@
+---
+title: "List Call Dispositions"
+api: "GET /v1/api/call-dispositions"
+description: "Retrieve a paginated list of call dispositions with filtering options."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="page" type="number" default="1">
+Page number for pagination.
+</ParamField>
+
+<ParamField query="limit" type="number" default="50">
+Number of records per page.
+</ParamField>
+
+<ParamField query="phoneNumber" type="string">
+Filter by phone number.
+</ParamField>
+
+<ParamField query="batchId" type="string">
+Filter by batch call ID.
+</ParamField>
+
+<ParamField query="agentId" type="string">
+Filter by agent ID.
+</ParamField>
+
+<ParamField query="status" type="string">
+Filter by disposition status.
+</ParamField>
+
+<ParamField query="disposition" type="string">
+Filter by disposition type.
+</ParamField>
+
+<ParamField query="attempt" type="number">
+Filter by attempt number.
+</ParamField>
+
+<ParamField query="search" type="string">
+Search across dispositions.
+</ParamField>
+
+<ParamField query="timezone" type="string">
+Timezone for date formatting (e.g., "America/New_York").
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="data" type="object">
+Paginated disposition data.
+
+<ResponseField name="dispositions" type="array">
+Array of call disposition objects.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+Total number of matching dispositions.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+Current page number.
+</ResponseField>
+
+<ResponseField name="limit" type="number">
+Records per page.
+</ResponseField>
+
+<ResponseField name="totalPages" type="number">
+Total number of pages.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "data": {
+    "dispositions": [
+      {
+        "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+        "phoneNumber": "+14155551234",
+        "disposition": "callback_scheduled",
+        "status": "pending",
+        "scheduledAt": "2024-06-02T14:00:00.000Z",
+        "attempt": 1,
+        "agentId": "665a1b2c3d4e5f6a7b8c9d0f",
+        "batchId": "665a1b2c3d4e5f6a7b8c9d10",
+        "createdAt": "2024-06-01T10:00:00.000Z"
+      }
+    ],
+    "total": 25,
+    "page": 1,
+    "limit": 50,
+    "totalPages": 1
+  }
+}
+```
+</ResponseExample>

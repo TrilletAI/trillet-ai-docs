@@ -1,0 +1,45 @@
+---
+title: "Export Call Dispositions CSV"
+api: "GET /v1/api/call-dispositions/export-csv"
+description: "Export call dispositions as a CSV file."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="phoneNumber" type="string">
+Filter by phone number.
+</ParamField>
+
+<ParamField query="batchId" type="string">
+Filter by batch call ID.
+</ParamField>
+
+<ParamField query="agentId" type="string">
+Filter by agent ID.
+</ParamField>
+
+<ParamField query="status" type="string">
+Filter by disposition status.
+</ParamField>
+
+<ParamField query="disposition" type="string">
+Filter by disposition type.
+</ParamField>
+
+<ParamField query="timezone" type="string">
+Timezone for date formatting in the CSV.
+</ParamField>
+
+## Response
+
+The response is a CSV file with `Content-Type: text/csv` headers containing all matching dispositions with columns for phone number, disposition type, status, scheduled time, attempt number, agent, and notes.

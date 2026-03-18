@@ -1,0 +1,183 @@
+---
+title: "Start Batch Calls"
+api: "POST /v1/api/batch-calls"
+description: "Initiate a batch call operation using a CSV file and specified agent"
+---
+### Headers
+<ParamField header="x-api-key" type="string" required>
+  API key used for authenticating requests to the API.
+</ParamField>
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+### Request Body
+This endpoint accepts multipart/form-data with the following fields:
+<ParamField body="file" type="file" required>
+  CSV file containing the batch call data. Maximum file size: 20MB.
+</ParamField>
+<ParamField body="agentId" type="string" required>
+  The ID of the agent that will be used to make the batch calls.
+</ParamField>
+<ParamField body="scheduledAt" type="string" optional>
+  UTC datetime string in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ) to schedule the batch for future execution. If not provided, batch starts immediately.
+</ParamField>
+<ParamField body="smartCallbackConfig" type="string" optional>
+  JSON string containing smart callback configuration. Format: `{"enabled": boolean, "maxAttempts": number, "gaps": [{"days": number, "hours": number}]}`
+</ParamField>
+<Note>
+  **Testing Note**: The "Try Now" button in this documentation doesn't support file uploads. Use the cURL example below or a tool like Postman to test this endpoint.
+</Note>
+### CSV File Format
+The CSV file should contain the following columns:
+- `phone_number` - The phone number to call (required)
+- `first_name` - First name for personalization
+- `last_name` - Last name for personalization  
+- `email` - Email address
+- Additional custom fields for dynamic variables
+### Response
+<ResponseField name="batchId" type="string">
+  Unique identifier for the batch call operation
+</ResponseField>
+<ResponseField name="totalCalls" type="number">
+  Total number of calls that will be made in this batch
+</ResponseField>
+<ResponseField name="status" type="string">
+  Current status of the batch operation (e.g., "queued", "processing")
+</ResponseField>
+<ResponseField name="message" type="string">
+  Success message confirming the batch initiation
+</ResponseField>
+### Example Usage
+```bash
+# Basic batch call
+curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -F "file=@batch-calls.csv" \
+  -F "agentId=agent_123456"
+
+# Scheduled batch call with smart callback
+curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -F "file=@batch-calls.csv" \
+  -F "agentId=agent_123456" \
+  -F "scheduledAt=2024-01-15T14:30:00Z" \
+  -F "smartCallbackConfig={\"enabled\": true, \"maxAttempts\": 3, \"gaps\": [{\"days\": 1, \"hours\": 0}]}"
+```
+
+### Example Response
+```json
+{
+  "batchId": "batch_7891011121314",
+  "totalCalls": 150,
+  "status": "queued",
+  "message": "Batch calls initiated successfully"
+}
+```
+
+### Testing with Different Tools
+<Tabs>
+  <Tab title="cURL">
+    ```bash
+    # Basic usage
+    curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+      -F "file=@batch-calls.csv" \
+      -F "agentId=agent_123456"
+    
+    # With verbose output for debugging
+    curl -v -X POST "https://api.trillet.ai/v1/api/batch-calls" \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+      -F "file=@batch-calls.csv" \
+      -F "agentId=agent_123456"
+
+    # With scheduled time and smart callback
+    curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
+      -H "x-api-key: YOUR_API_KEY" \
+      -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+      -F "file=@batch-calls.csv" \
+      -F "agentId=agent_123456" \
+      -F "scheduledAt=2024-01-15T14:30:00Z" \
+      -F "smartCallbackConfig={\"enabled\": true, \"maxAttempts\": 5, \"gaps\": [{\"days\": 1, \"hours\": 0}, {\"days\": 2, \"hours\": 0}]}"
+    ```
+  </Tab>
+
+  <Tab title="JavaScript/Node.js">
+    ```javascript
+    const FormData = require('form-data');
+    const fs = require('fs');
+    const axios = require('axios');
+
+    const form = new FormData();
+    form.append('file', fs.createReadStream('batch-calls.csv'));
+    form.append('agentId', 'agent_123456');
+    
+    // Optional: Schedule for future
+    form.append('scheduledAt', '2024-01-15T14:30:00Z');
+    
+    // Optional: Smart callback configuration
+    form.append('smartCallbackConfig', JSON.stringify({
+      enabled: true,
+      maxAttempts: 3,
+      gaps: [
+        { days: 1, hours: 0 },
+        { days: 2, hours: 0 }
+      ]
+    }));
+
+    const response = await axios.post('https://api.trillet.ai/v1/api/batch-calls', form, {
+      headers: {
+        ...form.getHeaders(),
+        'x-api-key': 'YOUR_API_KEY',
+        'x-workspace-id': 'YOUR_WORKSPACE_ID'
+      }
+    });
+    ```
+  </Tab>
+
+  <Tab title="Python">
+    ```python
+    import requests
+    import json
+
+    url = "https://api.trillet.ai/v1/api/batch-calls"
+    headers = {
+        'x-api-key': 'YOUR_API_KEY',
+        'x-workspace-id': 'YOUR_WORKSPACE_ID'
+    }
+
+    files = {
+        'file': open('batch-calls.csv', 'rb'),
+        'agentId': (None, 'agent_123456'),
+        'scheduledAt': (None, '2024-01-15T14:30:00Z'),  # Optional
+        'smartCallbackConfig': (None, json.dumps({      # Optional
+            "enabled": True,
+            "maxAttempts": 3,
+            "gaps": [{"days": 1, "hours": 0}]
+        }))
+    }
+
+    response = requests.post(url, headers=headers, files=files)
+    print(response.json())
+    ```
+  </Tab>
+</Tabs>
+### Processing Flow
+1. **File Upload**: The CSV file is uploaded and validated
+2. **Record Validation**: Each record in the CSV is validated for required fields
+3. **Batch Preparation**: A batch configuration is created with the specified agent
+4. **Queue Initialization**: Individual call jobs are queued for processing
+5. **Execution**: Calls are made according to your account's rate limits (or at scheduled time)
+### Error Responses
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+**Common Error Codes:**
+- `400` - No file uploaded, no agent ID provided, or CSV validation failed
+- `413` - File size exceeds 20MB limit
+- `500` - Failed to prepare batch or start batch execution
+### Rate Limits
+Batch calls are subject to your account's rate limits. The system will automatically manage the call queue to respect these limits while maximizing throughput.

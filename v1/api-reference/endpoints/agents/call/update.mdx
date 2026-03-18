@@ -1,0 +1,239 @@
+---
+title: "Update Call Agent"
+api: "PUT /v1/api/agents/{agentId}"
+description: "Update an existing agent"
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="agentId" type="string" required>
+The unique identifier of the agent to update.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string">
+New name for the agent.
+</ParamField>
+
+<ParamField body="llmModel" type="string" default='gpt-4o-mini' required>
+New language model to be used by the agent to generate responses. Must be one of: gpt-4o-mini, gpt-4o-enterprise, gpt-4.1, gpt-4.1-mini, gemini-2.5-flash-preview-native-audio-dialog, gemini-2.5-flash, gemini-live-2.5-flash-preview, geminiaudiopipeline:gemini-2.5-flash-preview-native-audio-dialog, gemini-2.0-flash-live-001, gpt-5.
+</ParamField>
+
+<ParamField body="ttsModel" type="object">
+Text-to-Speech configuration updates.
+
+<Expandable title="Voice Settings">
+
+<ParamField body="provider" type="string" required>
+The text-to-speech provider. Must be one of: openai, rime, elevenlabs, 11labs_byo, google.
+</ParamField>
+
+<ParamField body="voiceId" type="string">
+The voice ID used for generating speech. e.g for Trillet Voices,
+"mistv2_Wildflower" - Alt Female, Smart
+"mistv2_Brook" - Male, Friendly
+"mistv2_Violet" - Female, Professional
+</ParamField>
+
+<ParamField body="language" type="string">
+Language code (e.g., en, fr).
+</ParamField>
+
+<ParamField body="elevenLabsApiKey" type="string">
+ElevenLabs API key (required only when provider is "11labs_byo"). Will be encrypted and stored securely. Set to null to remove existing key.
+</ParamField>
+
+</Expandable>
+</ParamField>
+
+<ParamField body="smartCallback" type="boolean" default="false">
+Enable smart callback functionality for the agent.
+</ParamField>
+
+<ParamField body="maxAttemptsForSmartCallback" type="number" default="5">
+Maximum number of callback attempts when smart callback is enabled.
+</ParamField>
+
+<ParamField body="gapBetweenEachAttemptForSmartCallback" type="array">
+Array of time intervals between each callback attempt. Each item contains days and hours.
+
+<Expandable title="Array Item Properties">
+
+<ParamField body="days" type="number" default="1" min="0" max="30">
+Number of days to wait before the next attempt.
+</ParamField>
+
+<ParamField body="hours" type="number" default="0" min="0" max="23">
+Number of hours to wait before the next attempt.
+</ParamField>
+
+</Expandable>
+</ParamField>
+
+<ParamField body="phoneNumberIds" type="array">
+Array of phone number IDs to associate with the agent.
+</ParamField>
+
+<ParamField body="settings" type="object">
+Additional settings for the agent.
+
+<Expandable title="properties">
+
+<ParamField body="speed" type="number">
+Value between 0 and 1 that determines how fast the TTS narrates text.
+</ParamField>
+
+<ParamField body="volume" type="number">
+Value between 0 and 1 that adjusts the TTS volume.
+</ParamField>
+
+<ParamField body="temperature" type="number">
+Value between 0 and 1 for controlling the creativity of the LLM.
+</ParamField>
+
+</Expandable>
+</ParamField>
+
+<ParamField body="variables" type="object">
+Custom variables to store for the agent.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="_id" type="string">
+The unique identifier of the agent.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+The workspace identifier to which the agent belongs.
+</ResponseField>
+
+<ResponseField name="userId" type="string" optional="true">
+The user identifier associated with the agent, if applicable.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+The name assigned to the agent.
+</ResponseField>
+
+<ResponseField name="ttsModel" type="object">
+The configuration of the text-to-speech model used by the agent.
+
+<ResponseField name="provider" type="string">
+The provider of the TTS service.
+</ResponseField>
+
+<ResponseField name="voiceId" type="string">
+The specific voice ID used in the TTS model.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+The name of the TTS model configuration.
+</ResponseField>
+
+<ResponseField name="language" type="string">
+The language set for the TTS model.
+</ResponseField>
+
+<ResponseField name="elevenLabsApiKey" type="string">
+Encrypted ElevenLabs API key (only present if provider is "11labs_byo").
+</ResponseField>
+</ResponseField>
+
+<ResponseField name="llmModel" type="string">
+The large language model used by the agent.
+</ResponseField>
+
+<ResponseField name="smartCallback" type="boolean">
+Whether smart callback functionality is enabled.
+</ResponseField>
+
+<ResponseField name="phoneNumberIds" type="array">
+Array of phone number IDs associated with the agent.
+</ResponseField>
+
+<ResponseField name="activeSessions" type="array">
+A list of active sessions associated with the agent.
+
+<ResponseField name="roomName" type="string">
+The name of the room for the session.
+</ResponseField>
+
+<ResponseField name="participantId" type="string">
+The participant identifier in the session.
+</ResponseField>
+
+<ResponseField name="startTime" type="date">
+The start time of the session.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+The status of the session.
+</ResponseField>
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+Any custom settings configured for the agent.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+The current status of the agent, such as "pending", "ready", or "error".
+</ResponseField>
+
+<ResponseField name="currentNode" type="string">
+The current node or state within the agent's flow or logic.
+</ResponseField>
+
+<ResponseField name="variables" type="object">
+Custom variables stored for the agent.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+Timestamp when the agent was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+Timestamp when the agent was last updated.
+</ResponseField>
+
+<ResponseExample>
+
+```json
+{
+  "name": "Updated Customer Support Agent",
+  "llmModel": "claude-3-5-sonnet-latest",
+  "ttsModel": {
+    "provider": "11labs_byo",
+    "voiceId": "21m00Tcm4TlvDq8ikWAM",
+    "name": "Premium Voice",
+    "language": "en",
+    "elevenLabsApiKey": "your-new-elevenlabs-api-key"
+  },
+  "smartCallback": true,
+  "maxAttemptsForSmartCallback": 5,
+  "gapBetweenEachAttemptForSmartCallback": [
+    { "days": 1, "hours": 0 },
+    { "days": 1, "hours": 12 },
+    { "days": 2, "hours": 0 },
+    { "days": 3, "hours": 0 },
+    { "days": 7, "hours": 0 }
+  ],
+  "settings": {
+    "speed": 0.9,
+    "volume": 0.8,
+    "temperature": 0.6
+  }
+}
+```
+</ResponseExample>

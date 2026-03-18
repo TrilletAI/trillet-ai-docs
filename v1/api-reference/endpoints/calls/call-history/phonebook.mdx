@@ -1,0 +1,36 @@
+---
+title: "Get Call Phonebook"
+api: "GET /v2/api/call-history/phonebook"
+description: "Retrieve the most frequently called phone numbers in your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="data" type="array">
+Array of phone number objects ordered by frequency.
+
+<ResponseField name="toPhoneNumber" type="string">
+The phone number in E.164 format.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+[
+  { "toPhoneNumber": "+14155551234" },
+  { "toPhoneNumber": "+14155555678" },
+  { "toPhoneNumber": "+14155559012" }
+]
+```
+</ResponseExample>

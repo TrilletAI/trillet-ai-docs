@@ -1,0 +1,67 @@
+---
+title: "Export Call History CSV"
+api: "POST /v2/api/call-history/export-csv"
+description: "Export call history records as a CSV file with optional transcript and post-analysis data."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Request Body
+
+<ParamField body="includeTranscripts" type="boolean" default="false">
+Whether to include full call transcripts in the export.
+</ParamField>
+
+<ParamField body="includePostAnalysis" type="boolean" default="false">
+Whether to include post-call analysis data in the export.
+</ParamField>
+
+<ParamField body="limit" type="number">
+Maximum number of records to export.
+</ParamField>
+
+<ParamField body="batchId" type="string">
+Filter by batch call ID.
+</ParamField>
+
+<ParamField body="agentId" type="string">
+Filter by agent ID.
+</ParamField>
+
+<ParamField body="status" type="string">
+Filter by call status.
+</ParamField>
+
+<ParamField body="direction" type="string">
+Filter by call direction.
+</ParamField>
+
+<ParamField body="dateRange" type="object">
+Date range filter.
+
+<Expandable title="properties">
+
+<ParamField body="startDate" type="string">
+Start date in ISO format.
+</ParamField>
+
+<ParamField body="endDate" type="string">
+End date in ISO format.
+</ParamField>
+
+</Expandable>
+</ParamField>
+
+## Response
+
+The response is streamed as a CSV file with `Content-Type: text/csv` and `Content-Disposition: attachment` headers.
+
+The CSV includes columns for call ID, phone numbers, direction, status, duration, agent, flow name, cost, summary, variables, and optionally transcript and post-analysis data.

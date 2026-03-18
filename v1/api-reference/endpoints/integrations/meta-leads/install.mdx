@@ -1,0 +1,29 @@
+---
+title: "Install Meta Lead Ads"
+api: "GET /v1/api/meta-lead/auth/install"
+description: "Get the Meta OAuth authorization URL to connect Meta Lead Ads for automatic lead calling."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="url" type="string">
+The Meta OAuth authorization URL. Redirect the user to this URL to authorize the Meta Lead Ads connection.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "url": "https://www.facebook.com/v18.0/dialog/oauth?client_id=...&redirect_uri=...&scope=...&state=..."
+}
+```
+</ResponseExample>

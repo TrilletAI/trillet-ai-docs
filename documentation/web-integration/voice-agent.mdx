@@ -1,0 +1,713 @@
+---
+title: 'Voice Agent Widget'
+description: 'Embed an AI-powered voice agent on your website'
+icon: 'microphone'
+---
+
+## Prerequisites
+
+<Steps>
+  <Step title="Get your Workspace ID">
+    In the Trillet Portal sidebar, click the **workspace name dropdown** at the top. Your Workspace ID is displayed next to each workspace - click to copy.
+  </Step>
+  <Step title="Get your Agent ID">
+    Navigate to **Call Flows** in the sidebar. Each call flow card displays its **Agent ID** - copy it from the card.
+  </Step>
+  <Step title="Whitelist your domain">
+    Go to **Settings → Domain** and add the domain where you'll embed the widget (e.g. `https://yoursite.com`). This is required to avoid CORS errors. Allow up to 24 hours for propagation. Skip this if you're using a whitelabelled custom domain.
+  </Step>
+  <Step title="Enable public access">
+    Open your call flow, go to the **Settings** tab, and toggle **Public Access** on. Without this, `startPublicCall()` will be rejected.
+  </Step>
+</Steps>
+
+<Warning>
+  The voice widget requires **microphone permissions** and must be served over **HTTPS** (or localhost). Browsers block microphone access on insecure origins.
+</Warning>
+
+## Integration
+
+Choose between a minimal quick-start snippet or a complete styled widget, then pick your framework.
+
+<Accordion title="Quick Start - Minimal snippet">
+  Paste this before the closing `</body>` tag. A mic button appears in the bottom-right corner.
+
+  <Tabs>
+    <Tab title="HTML / CDN">
+```html
+<script type="module">
+  import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm';
+
+  const WORKSPACE_ID = 'your-workspace-id';
+  const AGENT_ID = 'your-agent-id';
+
+  const btn = document.createElement('button');
+  btn.id = 'trillet-voice-btn';
+  btn.innerHTML = `<svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+  btn.style.cssText = 'position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:12px;background:#0066ff;border:1px solid rgba(0,102,255,0.2);cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.08);z-index:9999;transition:all 0.1s ease-in-out;';
+  document.body.appendChild(btn);
+
+  let agent = null;
+  let isActive = false;
+
+  btn.addEventListener('click', async () => {
+    if (isActive) { agent?.endCall(); return; }
+
+    btn.style.background = '#d1d5db';
+    btn.disabled = true;
+
+    try {
+      agent = new TrilletAgent({ workspaceId: WORKSPACE_ID, agentId: AGENT_ID, mode: 'voice' });
+
+      agent.on('connected', () => {
+        isActive = true;
+        btn.disabled = false;
+        btn.style.background = '#ef4444';
+        btn.style.borderColor = 'rgba(239,68,68,0.2)';
+        btn.innerHTML = `<svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.55 8.67 7.56 7 12 7s8.45 1.67 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85a.993.993 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>`;
+      });
+
+      agent.on('disconnected', () => {
+        isActive = false;
+        btn.style.background = '#0066ff';
+        btn.style.borderColor = 'rgba(0,102,255,0.2)';
+        btn.innerHTML = `<svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+        btn.disabled = false;
+      });
+
+      agent.on('error', () => {
+        btn.style.background = '#0066ff';
+        btn.style.borderColor = 'rgba(0,102,255,0.2)';
+        btn.innerHTML = `<svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+        btn.disabled = false;
+        isActive = false;
+      });
+
+      await agent.startPublicCall();
+    } catch (err) {
+      btn.style.background = '#0066ff';
+      btn.style.borderColor = 'rgba(0,102,255,0.2)';
+      btn.innerHTML = `<svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+      btn.disabled = false;
+    }
+  });
+</script>
+```
+    </Tab>
+    <Tab title="React / Next.js">
+```bash
+npm install @trillet-ai/web-sdk
+```
+
+```tsx
+import { useRef, useState, useEffect } from 'react';
+import { TrilletAgent } from '@trillet-ai/web-sdk';
+
+export default function TrilletVoice({ workspaceId, agentId }) {
+  const agentRef = useRef(null);
+  const [isActive, setIsActive] = useState(false);
+  const [status, setStatus] = useState('idle');
+
+  const startCall = async () => {
+    const agent = new TrilletAgent({ workspaceId, agentId, mode: 'voice' });
+    agentRef.current = agent;
+    setStatus('connecting');
+
+    agent.on('connected', () => { setIsActive(true); setStatus('connected'); });
+    agent.on('disconnected', () => { setIsActive(false); setStatus('idle'); });
+    agent.on('error', () => setStatus('error'));
+
+    try {
+      await agent.startPublicCall();
+    } catch {
+      setStatus('error');
+    }
+  };
+
+  const endCall = () => agentRef.current?.endCall();
+  useEffect(() => () => agentRef.current?.endCall?.(), []);
+
+  return (
+    <button onClick={isActive ? endCall : startCall} disabled={status === 'connecting'}
+      style={{ position: 'fixed', bottom: 24, right: 24, width: 52, height: 52,
+        borderRadius: 12, background: isActive ? '#ef4444' : '#0066ff',
+        border: `1px solid ${isActive ? 'rgba(239,68,68,0.2)' : 'rgba(0,102,255,0.2)'}`,
+        cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', zIndex: 9999, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+      {status === 'connecting' ? '...' : isActive ? '📞' : '🎙️'}
+    </button>
+  );
+}
+```
+
+Usage:
+```tsx
+<TrilletVoice workspaceId="your-workspace-id" agentId="your-agent-id" />
+```
+    </Tab>
+  </Tabs>
+</Accordion>
+
+<Accordion title="Full Widget - Voice panel with controls and transcript">
+  A polished voice widget with mute/unmute, end call, audio visualizer, and live transcript display.
+
+  <Tabs>
+    <Tab title="HTML / CDN">
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trillet Voice Widget</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    #trillet-v-bubble {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      background: #0066ff;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 102, 255, 0.2);
+      z-index: 9999;
+      transition: all 0.1s ease-in-out;
+    }
+    #trillet-v-bubble:hover { background: #0052cc; }
+    #trillet-v-bubble svg { width: 22px; height: 22px; fill: white; }
+
+    #trillet-v-panel {
+      position: fixed;
+      bottom: 88px;
+      right: 24px;
+      width: 340px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 12px -1px rgba(0, 0, 0, 0.05);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+    #trillet-v-panel.open { display: flex; animation: trillet-v-in 0.15s cubic-bezier(0.16,1,0.3,1); }
+
+    @keyframes trillet-v-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .trillet-v-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .trillet-v-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: #111827; }
+    .trillet-v-header .status {
+      font-size: 12px; color: #6b7280;
+      display: flex; align-items: center; gap: 5px; margin-top: 1px;
+    }
+    .trillet-v-header .status-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #d1d5db;
+    }
+    .trillet-v-header .status-dot.online { background: #10b981; }
+    .trillet-v-close {
+      background: none; border: none; color: #9ca3af;
+      cursor: pointer; font-size: 16px; padding: 4px; line-height: 1;
+      transition: color 0.1s;
+    }
+    .trillet-v-close:hover { color: #6b7280; }
+
+    .trillet-v-transcript {
+      max-height: 180px;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: #f9fafb;
+    }
+    .trillet-v-msg {
+      max-width: 85%;
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .trillet-v-msg.user {
+      background: #0066ff; color: #fff; align-self: flex-end;
+    }
+    .trillet-v-msg.assistant {
+      background: #fff; color: #111827; align-self: flex-start;
+      border: 1px solid #e5e7eb;
+    }
+    .trillet-v-msg.system {
+      background: #f3f4f6; color: #6b7280;
+      align-self: center; font-size: 11px; padding: 3px 8px; border-radius: 4px;
+    }
+
+    .trillet-v-controls {
+      padding: 20px;
+      background: #fff;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .trillet-v-vis {
+      display: flex; align-items: center; justify-content: center;
+      gap: 3px; height: 32px;
+    }
+    .trillet-v-vis .bar {
+      width: 3px; height: 6px;
+      background: #0066ff; border-radius: 2px;
+      transition: height 0.1s;
+    }
+    .trillet-v-vis.active .bar {
+      animation: trillet-pulse 0.8s infinite ease-in-out;
+    }
+    .trillet-v-vis.active .bar:nth-child(1) { animation-delay: 0s; }
+    .trillet-v-vis.active .bar:nth-child(2) { animation-delay: 0.1s; }
+    .trillet-v-vis.active .bar:nth-child(3) { animation-delay: 0.2s; }
+    .trillet-v-vis.active .bar:nth-child(4) { animation-delay: 0.3s; }
+    .trillet-v-vis.active .bar:nth-child(5) { animation-delay: 0.4s; }
+    .trillet-v-vis.active .bar:nth-child(6) { animation-delay: 0.3s; }
+    .trillet-v-vis.active .bar:nth-child(7) { animation-delay: 0.2s; }
+    @keyframes trillet-pulse {
+      0%, 100% { height: 6px; }
+      50% { height: 22px; }
+    }
+
+    .trillet-v-label {
+      font-size: 12px; color: #6b7280; font-weight: 500;
+    }
+
+    .trillet-v-btns {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .trillet-v-mic {
+      width: 48px; height: 48px; border-radius: 12px; border: none;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.1s;
+    }
+    .trillet-v-mic.idle {
+      background: #0066ff; color: white;
+      border: 1px solid rgba(0, 102, 255, 0.2);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .trillet-v-mic.idle:hover { background: #0052cc; }
+    .trillet-v-mic.active {
+      background: #0066ff; color: white;
+      border: 1px solid rgba(0, 102, 255, 0.2);
+    }
+    .trillet-v-mic.muted {
+      background: #fef2f2; color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.15);
+    }
+    .trillet-v-mic svg { width: 20px; height: 20px; }
+
+    .trillet-v-end {
+      width: 40px; height: 40px; border-radius: 12px; border: none;
+      background: #ef4444; color: white; cursor: pointer;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.1s;
+    }
+    .trillet-v-end:hover { background: #dc2626; }
+    .trillet-v-end svg { width: 18px; height: 18px; }
+
+    @media (max-width: 480px) {
+      #trillet-v-panel {
+        width: calc(100vw - 24px);
+        right: 12px;
+        bottom: 88px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Paste everything below into your website -->
+  <button id="trillet-v-bubble">
+    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+  </button>
+
+  <div id="trillet-v-panel">
+    <div class="trillet-v-header">
+      <div>
+        <h3>Voice Assistant</h3>
+        <div class="status">
+          <div class="status-dot" id="trillet-v-dot"></div>
+          <span id="trillet-v-status-text">Ready</span>
+        </div>
+      </div>
+      <button class="trillet-v-close" id="trillet-v-close">&#x2715;</button>
+    </div>
+    <div class="trillet-v-transcript" id="trillet-v-transcript"></div>
+    <div class="trillet-v-controls">
+      <div class="trillet-v-vis" id="trillet-v-vis">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <div class="trillet-v-label" id="trillet-v-label">Tap the mic to start</div>
+      <div class="trillet-v-btns" id="trillet-v-btns">
+        <button class="trillet-v-mic idle" id="trillet-v-mic">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm';
+
+    // ── REPLACE THESE WITH YOUR VALUES ──
+    const WORKSPACE_ID = 'your-workspace-id';
+    const AGENT_ID = 'your-agent-id';
+    // ─────────────────────────────────────
+
+    const $ = (id) => document.getElementById(id);
+    const bubble = $('trillet-v-bubble');
+    const panel = $('trillet-v-panel');
+    const micSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>`;
+    const micMutedSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-1.7c0 .74-.16 1.43-.43 2.05l1.23 1.23c.56-.98.9-2.09.9-3.28zm-4.02.17c0-.06.02-.11.02-.17V5c0-1.66-1.34-3-3-3S9 3.34 9 5v.18l5.98 5.99zM4.27 3L3 4.27l6.01 6.01V11c0 1.66 1.33 3 2.99 3 .22 0 .44-.03.65-.08l1.66 1.66c-.71.33-1.5.52-2.31.52-2.76 0-5.3-2.1-5.3-5.1H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c.91-.13 1.77-.45 2.54-.9L19.73 21 21 19.73 4.27 3z"/></svg>`;
+    const hangupSvg = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.55 8.67 7.56 7 12 7s8.45 1.67 11.71 4.72c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.1-.7-.28-.79-.73-1.68-1.36-2.66-1.85a.993.993 0 01-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>`;
+
+    let agent = null;
+    let isActive = false;
+    let isMuted = false;
+    let pollInterval = null;
+    const displayed = new Set();
+
+    bubble.addEventListener('click', () => panel.classList.toggle('open'));
+    $('trillet-v-close').addEventListener('click', () => panel.classList.remove('open'));
+
+    $('trillet-v-mic').addEventListener('click', () => {
+      if (!isActive) connectAgent();
+      else toggleMute();
+    });
+
+    async function connectAgent() {
+      setStatus('Connecting...', false);
+      $('trillet-v-label').textContent = 'Connecting...';
+      $('trillet-v-mic').disabled = true;
+
+      try {
+        agent = new TrilletAgent({
+          workspaceId: WORKSPACE_ID,
+          agentId: AGENT_ID,
+          mode: 'voice',
+        });
+
+        agent.on('connected', () => {
+          isActive = true;
+          isMuted = false;
+          setStatus('Connected', true);
+          $('trillet-v-label').textContent = 'Listening...';
+          $('trillet-v-vis').classList.add('active');
+          $('trillet-v-mic').disabled = false;
+          showActiveControls();
+          addMsg('Voice call connected', 'system');
+          startPolling();
+        });
+
+        agent.on('disconnected', () => {
+          isActive = false;
+          setStatus('Disconnected', false);
+          $('trillet-v-label').textContent = 'Call ended';
+          $('trillet-v-vis').classList.remove('active');
+          showIdleControls();
+          stopPolling();
+          addMsg('Call ended', 'system');
+        });
+
+        agent.on('error', () => {
+          addMsg('An error occurred', 'system');
+          setStatus('Error', false);
+        });
+
+        agent.on('assistantStartedSpeaking', () => {
+          $('trillet-v-label').textContent = 'Agent speaking...';
+        });
+
+        agent.on('assistantStoppedSpeaking', () => {
+          $('trillet-v-label').textContent = isMuted ? 'Muted' : 'Listening...';
+        });
+
+        ['message', 'transcript', 'transcriptUpdate'].forEach(evt => {
+          agent.on(evt, (data) => {
+            if (data?.isFinal === false) return;
+            const text = typeof data === 'string' ? data : data?.text || data?.content;
+            const role = data?.role || 'assistant';
+            if (text) addMsg(text, role);
+          });
+        });
+
+        await agent.startPublicCall();
+      } catch (err) {
+        setStatus('Failed', false);
+        $('trillet-v-label').textContent = 'Failed to connect';
+        $('trillet-v-mic').disabled = false;
+        showIdleControls();
+      }
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      try { agent?.toggleMicrophone?.(!isMuted); } catch (e) {}
+      const mic = $('trillet-v-mic');
+      if (isMuted) {
+        mic.className = 'trillet-v-mic muted';
+        mic.innerHTML = micMutedSvg;
+        $('trillet-v-label').textContent = 'Muted';
+      } else {
+        mic.className = 'trillet-v-mic active';
+        mic.innerHTML = micSvg;
+        $('trillet-v-label').textContent = 'Listening...';
+      }
+    }
+
+    function endCall() { try { agent?.endCall(); } catch (e) {} }
+
+    function showActiveControls() {
+      $('trillet-v-btns').innerHTML = `
+        <button class="trillet-v-end" id="trillet-v-end">${hangupSvg}</button>
+        <button class="trillet-v-mic active" id="trillet-v-mic">${micSvg}</button>
+      `;
+      $('trillet-v-end').addEventListener('click', endCall);
+      $('trillet-v-mic').addEventListener('click', toggleMute);
+    }
+
+    function showIdleControls() {
+      $('trillet-v-btns').innerHTML = `
+        <button class="trillet-v-mic idle" id="trillet-v-mic">${micSvg}</button>
+      `;
+      $('trillet-v-mic').addEventListener('click', () => {
+        if (!isActive) connectAgent();
+        else toggleMute();
+      });
+    }
+
+    function startPolling() {
+      let lastCount = 0;
+      pollInterval = setInterval(() => {
+        if (!agent || !isActive) return;
+        try {
+          const transcripts = agent.getTranscripts?.() || [];
+          for (let i = lastCount; i < transcripts.length; i++) {
+            const t = transcripts[i];
+            if (t.text) addMsg(t.text, t.role || 'assistant');
+          }
+          lastCount = transcripts.length;
+        } catch (e) {}
+      }, 500);
+    }
+
+    function stopPolling() {
+      if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+    }
+
+    function setStatus(text, online) {
+      $('trillet-v-status-text').textContent = text;
+      $('trillet-v-dot').classList.toggle('online', online);
+    }
+
+    function addMsg(text, type) {
+      if (!text?.trim()) return;
+      const key = type + ':' + text;
+      if (displayed.has(key)) return;
+      displayed.add(key);
+      const el = document.createElement('div');
+      el.className = 'trillet-v-msg ' + type;
+      el.textContent = text;
+      const container = $('trillet-v-transcript');
+      container.appendChild(el);
+      container.scrollTop = container.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>
+```
+    </Tab>
+    <Tab title="React / Next.js">
+```bash
+npm install @trillet-ai/web-sdk
+```
+
+```tsx
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { TrilletAgent } from '@trillet-ai/web-sdk';
+
+export default function TrilletVoice({ workspaceId, agentId }) {
+  const agentRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [status, setStatus] = useState('idle');
+  const [label, setLabel] = useState('Tap the mic to start');
+  const [transcripts, setTranscripts] = useState([]);
+
+  const startCall = useCallback(async () => {
+    const agent = new TrilletAgent({ workspaceId, agentId, mode: 'voice' });
+    agentRef.current = agent;
+    setStatus('connecting');
+    setLabel('Connecting...');
+
+    agent.on('connected', () => {
+      setIsActive(true); setStatus('connected'); setLabel('Listening...');
+      let lastCount = 0;
+      const poll = setInterval(() => {
+        const t = agent.getTranscripts?.() || [];
+        for (let i = lastCount; i < t.length; i++) {
+          if (t[i].text) setTranscripts(prev => [...prev, { type: t[i].role || 'assistant', text: t[i].text }]);
+        }
+        lastCount = t.length;
+      }, 500);
+      agent.__poll = poll;
+    });
+    agent.on('disconnected', () => {
+      setIsActive(false); setStatus('idle'); setLabel('Call ended'); setIsMuted(false);
+      clearInterval(agent.__poll);
+    });
+    agent.on('assistantStartedSpeaking', () => setLabel('Agent speaking...'));
+    agent.on('assistantStoppedSpeaking', () => setLabel(prev => prev === 'Muted' ? 'Muted' : 'Listening...'));
+    agent.on('error', () => setStatus('error'));
+
+    ['message', 'transcript'].forEach(evt => {
+      agent.on(evt, (data) => {
+        const text = typeof data === 'string' ? data : data?.text || data?.content;
+        const role = data?.role || 'assistant';
+        if (text) setTranscripts(prev => [...prev, { type: role, text }]);
+      });
+    });
+
+    try { await agent.startPublicCall(); }
+    catch { setStatus('error'); setLabel('Failed to connect'); }
+  }, [workspaceId, agentId]);
+
+  const endCall = () => agentRef.current?.endCall();
+
+  const toggleMute = () => {
+    const next = !isMuted;
+    setIsMuted(next);
+    setLabel(next ? 'Muted' : 'Listening...');
+    agentRef.current?.toggleMicrophone?.(!next);
+  };
+
+  useEffect(() => () => agentRef.current?.endCall?.(), []);
+
+  const s = {
+    bubble: { position: 'fixed', bottom: 24, right: 24, width: 52, height: 52,
+      borderRadius: 12, background: '#0066ff', border: '1px solid rgba(0,102,255,0.2)',
+      cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 9999, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' },
+    panel: { position: 'fixed', bottom: 88, right: 24, width: 340,
+      background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
+      boxShadow: '0 4px 12px -1px rgba(0,0,0,0.05)',
+      display: 'flex', flexDirection: 'column', zIndex: 9999,
+      fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' },
+  };
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(!isOpen)} style={s.bubble}>
+        <svg width="22" height="22" fill="#fff" viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+      </button>
+      {isOpen && (
+        <div style={s.panel}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#111827' }}>Voice Assistant</div>
+              <div style={{ fontSize: 12, color: status === 'connected' ? '#10b981' : '#6b7280' }}>
+                {status === 'connected' ? 'Connected' : status === 'connecting' ? 'Connecting...' : 'Ready'}
+              </div>
+            </div>
+            <button onClick={() => setIsOpen(false)}
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: 16 }}>
+              &#x2715;
+            </button>
+          </div>
+          {transcripts.length > 0 && (
+            <div style={{ maxHeight: 180, overflowY: 'auto', padding: '12px 16px',
+              display: 'flex', flexDirection: 'column', gap: 6, background: '#f9fafb' }}>
+              {transcripts.map((t, i) => (
+                <div key={i} style={{ alignSelf: t.type === 'user' ? 'flex-end' : 'flex-start',
+                  background: t.type === 'user' ? '#0066ff' : '#fff',
+                  color: t.type === 'user' ? '#fff' : '#111827',
+                  border: t.type === 'user' ? 'none' : '1px solid #e5e7eb',
+                  padding: '7px 11px', borderRadius: 8, maxWidth: '85%', fontSize: 12 }}>
+                  {t.text}
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ padding: 20, borderTop: '1px solid #e5e7eb', display: 'flex',
+            flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>{label}</div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              {isActive && (
+                <button onClick={endCall}
+                  style={{ width: 40, height: 40, borderRadius: 12, background: '#ef4444',
+                    border: '1px solid rgba(239,68,68,0.2)', color: '#fff', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  &#x260E;
+                </button>
+              )}
+              <button onClick={isActive ? toggleMute : startCall}
+                disabled={status === 'connecting'}
+                style={{ width: 48, height: 48, borderRadius: 12, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isMuted ? '#fef2f2' : '#0066ff',
+                  color: isMuted ? '#ef4444' : '#fff',
+                  border: `1px solid ${isMuted ? 'rgba(239,68,68,0.15)' : 'rgba(0,102,255,0.2)'}`,
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                {isMuted ? '🔇' : '🎙️'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+Usage:
+```tsx
+<TrilletVoice workspaceId="your-workspace-id" agentId="your-agent-id" />
+```
+    </Tab>
+  </Tabs>
+</Accordion>
+
+## Events Reference
+
+| Event | Description |
+|---|---|
+| `connected` | Voice call connected, agent is live |
+| `disconnected` | Call ended |
+| `error` | An error occurred |
+| `assistantStartedSpeaking` | Agent is speaking |
+| `assistantStoppedSpeaking` | Agent stopped speaking |
+| `transcript` | Transcript of speech (user or assistant) |
+
+```js
+agent.on('assistantStartedSpeaking', () => {
+  console.log('Agent is talking...');
+});
+```

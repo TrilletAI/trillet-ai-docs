@@ -1,0 +1,56 @@
+---
+title: "Remove AI Agent (Human Takeover)"
+api: "POST /v2/api/active-calls/{roomName}/remove-agent"
+description: "Remove the AI agent from an active call to allow human takeover. The agent is muted rather than disconnected."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="roomName" type="string" required>
+The LiveKit room name of the active call.
+</ParamField>
+
+## Request Body
+
+<ParamField body="participantIdentity" type="string" required>
+Identity of the AI agent participant to remove/mute.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the agent was removed successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+Confirmation message.
+</ResponseField>
+
+<ResponseField name="roomName" type="string">
+The room name of the call.
+</ResponseField>
+
+<ResponseField name="mutedTracks" type="array">
+Array of track SIDs that were muted.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Agent removed from call",
+  "roomName": "call-abc123",
+  "mutedTracks": ["TR_abc123"]
+}
+```
+</ResponseExample>

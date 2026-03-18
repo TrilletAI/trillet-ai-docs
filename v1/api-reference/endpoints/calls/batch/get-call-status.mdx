@@ -1,0 +1,139 @@
+---
+title: "Get Individual Call Status"
+api: "GET /v1/api/batch-calls/{batchId}/calls/{jobId}"
+description: "Get the status of an individual call within a batch operation"
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The unique identifier of the batch call operation
+</ParamField>
+
+<ParamField path="jobId" type="string" required>
+  The unique identifier of the individual call job
+</ParamField>
+
+### Response
+
+<ResponseField name="jobId" type="string">
+  The unique identifier of the call job
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the individual call
+  - `waiting` - Call is queued and waiting to be processed
+  - `active` - Call is currently in progress
+  - `completed` - Call completed successfully
+  - `failed` - Call failed due to an error
+</ResponseField>
+
+<ResponseField name="phone_number" type="string">
+  The phone number that was called
+</ResponseField>
+
+<ResponseField name="startTime" type="number">
+  Timestamp when the call started (if applicable)
+</ResponseField>
+
+<ResponseField name="endTime" type="number">
+  Timestamp when the call ended (if completed or failed)
+</ResponseField>
+
+<ResponseField name="duration" type="number">
+  Duration of the call in seconds (if completed)
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message if the call failed
+</ResponseField>
+
+<ResponseField name="result" type="object">
+  Call result data including conversation details (if completed)
+</ResponseField>
+
+### Example Usage
+
+```bash
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls/call_123" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+### Example Response (Completed Call)
+
+```json
+{
+  "jobId": "call_123",
+  "status": "completed",
+  "phone_number": "+1234567890",
+  "startTime": 1703097600000,
+  "endTime": 1703097642000,
+  "duration": 42,
+  "result": {
+    "callId": "call_abc123",
+    "transcript": "Hello John, this is an automated call...",
+    "outcome": "successful",
+    "metadata": {
+      "first_name": "John",
+      "last_name": "Doe",
+      "email": "john.doe@example.com"
+    }
+  }
+}
+```
+
+### Example Response (Failed Call)
+
+```json
+{
+  "jobId": "call_124",
+  "status": "failed",
+  "phone_number": "+1987654321",
+  "startTime": 1703097600000,
+  "endTime": 1703097615000,
+  "error": "Number busy - unable to connect after 3 attempts"
+}
+```
+
+### Example Response (Active Call)
+
+```json
+{
+  "jobId": "call_125",
+  "status": "active",
+  "phone_number": "+1555666777",
+  "startTime": 1703097700000
+}
+```
+
+### Error Responses
+
+<ResponseField name="status" type="string">
+  Will be "not_found" if the call doesn't exist
+</ResponseField>
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+
+**Common Error Codes:**
+- `404` - Call not found with the specified job ID
+- `500` - Server error retrieving call status
+
+### Use Cases
+
+- Monitor individual call progress within a batch
+- Retrieve detailed results for completed calls
+- Debug failed calls to understand failure reasons
+- Track call timing and duration metrics

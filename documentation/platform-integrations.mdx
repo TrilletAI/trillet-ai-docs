@@ -1,0 +1,287 @@
+## Trillet AI Integrations
+Trillet AI offers seamless integration with popular automation tools like **Make.com**, **n8n**, and our **Web SDK**, allowing you to automate **outbound AI voice calls** and embed **AI agents directly into your applications**. Use these platforms and tools to trigger TrilletAI's call capabilities directly from your workflows or integrate voice agents into your websites.
+
+---
+
+## Make.com Integration
+<img
+  className="hidden h-32 dark:block"
+  src="../logo/make-color.png"
+  alt="Hero Dark"
+/>
+<img
+  className="block h-32 dark:hidden"
+  src="../logo/make-color.png"
+  alt="Hero Light"
+/>
+
+Integrate Trillet AI with Make.com **custom node** to automate **outbound voice call workflows**. This is ideal for building call-based campaigns, customer notifications, or voice follow-ups powered by Trillet AI.
+
+### Installation
+
+To add TrilletAI's app to your Make.com organization:
+
+You can find TrilletAI directly on Make.com by searching **"TrilletAI"** in the App list under the `us1` or `us2` regions.
+
+If TrilletAI does not appear in your region or account, use the invitation link below to add it manually:
+
+🔗 **[Click here to install](https://www.make.com/en/hq/app-invitation/380f3212527664bd958eb3bf383c97fe)** if it doesn't appear.
+
+## n8n Integration
+<img
+  className="hidden h-32 dark:block"
+  src="../logo/n8n-color.png"
+  alt="Hero Dark"
+/>
+<img
+  className="block h-32 dark:hidden"
+  src="../logo/n8n-color.png"
+  alt="Hero Light"
+/>
+
+TrilletAI provides a **custom node** for [n8n](https://n8n.io) to let you trigger **outbound voice calls** directly within your workflows. This allows you to automate call-based sequences based on custom events, user actions, or external system triggers.
+
+### Installation Steps
+
+1. Ensure `n8n` is installed on your machine. If not, follow [n8n installation guide](https://docs.n8n.io/).
+2. Open your terminal and install the TrilletAI node package:
+
+```bash
+npm install n8n-trillet-nodes
+```
+
+---
+
+## SDK Integration
+<img
+  className="hidden h-32 dark:block"
+  src="../logo/sdk-logo.png"
+  alt="Hero Dark"
+/>
+<img
+  className="block h-32 dark:hidden"
+  src="../logo/sdk-logo.png"
+  alt="Hero Light"
+/>
+
+The Trillet AI Web SDK allows you to integrate **AI-powered voice agents** directly into your website or web application. This enables users to interact with your Trillet AI agents via voice or text calls, ideal for embedding real-time AI conversations in client-facing apps, demos, or custom workflows. The SDK uses LiveKit for real-time audio handling and supports features like transcription, audio analysis, and event emitting.
+
+### Installation
+
+You can install the SDK via npm for modern web frameworks (e.g., React, Next.js) or load it directly from a CDN for simple HTML integrations.
+
+#### Via npm
+1. Install the package:
+
+```bash
+npm install @trillet-ai/web-sdk
+```
+
+2. Import and use in your code:
+
+```typescript
+import { TrilletAgent } from '@trillet-ai/web-sdk';
+```
+
+#### Via CDN (No Build Tools Required)
+Include the SDK script in your HTML:
+
+```html
+<script type="module">
+  const module = await import("https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm");
+  const TrilletAgent = module.TrilletAgent;
+  // Use TrilletAgent here
+</script>
+```
+
+**Note:** The SDK requires a browser environment with secure context (HTTPS or localhost). It does not support server-side rendering.
+
+### Configuration
+Initialize a `TrilletAgent` instance:
+
+```typescript
+const agent = new TrilletAgent({
+  workspaceId: 'your-workspace-id',
+  agentId: 'your-agent-id',
+  variables: { key: 'value' },
+  mode: 'voice',
+});
+```
+
+### Usage
+1. **Start a Call:**
+   - Use `startPublicCall()` for public (workspace-based) integrations.
+   - Use `startCall()` for API key authenticated calls.
+
+```typescript
+try {
+  await agent.startPublicCall();
+  console.log('Call started');
+} catch (error) {
+  console.error('Failed to start call:', error);
+}
+```
+
+2. **End a Call:**
+
+```typescript
+agent.endCall();
+```
+
+3. **Toggle Microphone:**
+
+```typescript
+agent.toggleMicrophone(true); // Enable microphone
+```
+
+4. **Event Handling:**
+   The SDK extends `EventEmitter`. Listen for events like `connected`, `disconnected`, `error`, `assistantStartedSpeaking`, etc.
+
+```typescript
+agent.on('connected', (details) => {
+  console.log('Connected:', details.callId, details.agent.name);
+});
+
+agent.on('disconnected', () => {
+  console.log('Call ended');
+});
+
+agent.on('error', (error) => {
+  console.error('Error:', error);
+});
+```
+
+5. **Transcripts:**
+   Access real-time and final transcripts:
+
+```typescript
+const transcripts = agent.getTranscripts(); // Array of Transcript objects
+const current = agent.getCurrentTranscript(); // Partial transcripts
+```
+
+### SDK Integration Preview
+
+<img
+  className="block w-full max-w-md mx-auto rounded-lg"
+  src="../logo/sdk.png"
+  alt="Trillet AI SDK Integration"
+/>
+
+<Note>
+  **Important:** Make sure to enable public access in your call flow settings before testing the SDK integration. You can find this option in the call flow settings panel.
+</Note>
+
+### Examples
+
+#### React Component Integration
+For React/Next.js apps, create a basic component to handle calls:
+
+```tsx
+import { useState, useRef } from 'react';
+import { TrilletAgent } from '@trillet-ai/web-sdk';
+
+const VoiceAgent = ({ agentId, workspaceId }) => {
+  const agentRef = useRef(null);
+  const [isCallActive, setIsCallActive] = useState(false);
+
+  if (!agentRef.current) {
+    agentRef.current = new TrilletAgent({
+      workspaceId,
+      agentId,
+    });
+  }
+
+  const startCall = async () => {
+    try {
+      await agentRef.current.startPublicCall();
+      setIsCallActive(true);
+    } catch (error) {
+      console.error('Failed to start call:', error);
+    }
+  };
+
+  const endCall = () => {
+    agentRef.current.endCall();
+    setIsCallActive(false);
+  };
+
+  return (
+    <button onClick={isCallActive ? endCall : startCall}>
+      {isCallActive ? 'Hang Up' : 'Start Call'}
+    </button>
+  );
+};
+
+export default VoiceAgent;
+```
+
+#### Simple HTML Button Integration
+Embed a button that starts/stops a voice call with your agent:
+
+```html
+<!-- Trillet Voice Button -->
+<style>
+  #trillet-voice-button {
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: bold;
+    background: linear-gradient(to right, #25aae1, #40e495, #30dd8a, #2bb673);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    z-index: 999;
+    box-shadow: 0 8px 20px rgba(0, 102, 255, 0.4);
+    transition: all 0.3s ease;
+  }
+
+  #trillet-voice-button:hover {
+    transform: scale(1.05);
+  }
+</style>
+
+<button id="trillet-voice-button">
+  🎙️ Speak with AI Agent
+</button> 
+
+<script type="module">
+  const { TrilletAgent } = await import("https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm");
+
+  const workspaceId = "your-workspace-id"; // Replace with your workspace ID
+  const agentId = "your-agent-id"; // Replace with your agent ID
+  const button = document.getElementById("trillet-voice-button");
+
+  const agent = new TrilletAgent({ workspaceId, agentId });
+  let isCalling = false;
+
+  button.addEventListener("click", async () => {
+    if (!isCalling) {
+      try {
+        button.innerText = "⏳ Connecting...";
+        button.disabled = true;
+        await agent.startPublicCall();
+        isCalling = true;
+        button.innerText = "Hang Up 🔴";
+      } catch (err) {
+        console.error("Failed to start call:", err);
+        alert("Could not start the AI call. Please try again.");
+        button.innerText = "🎙️ Speak with AI Agent";
+      } finally {
+        button.disabled = false;
+      }
+    } else {
+      agent.endCall();
+      isCalling = false;
+      button.innerText = "🎙️ Speak with AI Agent";
+    }
+  });
+
+  agent.on("disconnected", () => {
+    isCalling = false;
+    button.innerText = "🎙️ Speak with AI Agent";
+    button.disabled = false;
+  });
+</script>
+```
+
+**Note:** Replace placeholders like `your-workspace-id` and `your-agent-id` with your actual Trillet AI credentials. For production, secure sensitive data (e.g., avoid exposing API keys client-side). The SDK handles browser compatibility checks internally. If you encounter issues, ensure microphone permissions are granted and test in a secure context.

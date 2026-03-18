@@ -1,0 +1,168 @@
+---
+title: "API Reference"
+description: "Complete reference for the Trillet AI Platform API"
+---
+
+## Overview
+
+The Trillet AI API provides programmatic access to create and manage AI agents, conversation flows, voice calls, and SMS messaging. Our REST API uses standard HTTP methods and returns JSON responses.
+
+<Card title="Base URL" icon="globe">
+  ```bash https://api.trillet.ai ```
+</Card>
+
+## Authentication
+
+All API requests require authentication using an API key in the `x-api-key` header:
+
+```bash
+curl https://api.trillet.ai/v1/api/
+  -H "x-api-key: YOUR_API_KEY"
+  -H "Content-Type: application/json"
+```
+
+<ParamField header="x-api-key" type="string" required>
+  Your API key for authentication. Include this in the request headers.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be set to `application/json`.
+</ParamField>
+
+<Note>
+  Get your API key from [Trillet Settings
+  Dashboard](https://app.trillet.ai/settings)
+</Note>
+
+## API Resources
+
+<Columns cols={2}>
+  <Card
+    title="Call Agents API"
+    icon="robot"
+    href="/v1/api-reference/endpoints/agents/call/create"
+  >
+    Create and manage conversational call agents with unique voices and
+    personalities through our REST API
+  </Card>
+  <Card
+    title="Omni Flow Agents API"
+    icon="message-bot"
+    href="/v1/api-reference/endpoints/agents/omniflow/create"
+  >
+    Create and manage messaging AI agents with unique through our REST API
+  </Card>
+  <Card
+    title="Call Flows API"
+    icon="diagram-project"
+    href="/v1/api-reference/endpoints/flows/call-flows/create"
+  >
+    Design and control call & conversation flows programmatically
+  </Card>
+  <Card
+    title="Message Flows API"
+    icon="message-code"
+    href="/v1/api-reference/endpoints/flows/message-flows/create"
+  >
+    Design and control call & conversation flows programmatically
+  </Card>
+  <Card
+    title="Voice Calls API"
+    icon="phone"
+    href="/v1/api-reference/endpoints/calls/initiate-call"
+  >
+    Initiate and manage voice calls via REST endpoints
+  </Card>
+  <Card
+    title="Conversations API"
+    icon="comments"
+    href="/v1/api-reference/endpoints/conversations/generateMessage"
+  >
+    Design and control customer interactions through conversations
+    programmatically
+  </Card>
+</Columns>
+
+## Rate Limits
+
+<Info>
+  The API has rate limits based on your plan. Contact the Trillet team to
+  increase your limits.
+</Info>
+
+| Plan      | Requests per minute | Concurrent calls |
+| --------- | ------------------- | ---------------- |
+| Developer | 60                  | 1                |
+
+## Webhooks [Coming Soon!]
+
+Configure webhooks to receive real-time updates about events in your account. Each webhook request includes an event type and relevant data:
+
+```json
+{
+  "event": "call.completed",
+  "data": {
+    "callId": "call_xyz789",
+    "agentId": "agent_123abc",
+    "duration": 125,
+    "status": "completed"
+  }
+}
+```
+
+### Webhook Events
+
+- `call.started` - When a call begins
+- `call.completed` - When a call ends
+- `call.failed` - When a call fails to connect
+- `sms.sent` - When an SMS is sent
+- `sms.delivered` - When an SMS is delivered
+- `agent.created` - When a new agent is created
+- `agent.updated` - When an agent is updated
+- `flow.created` - When a new flow is created
+- `flow.updated` - When a flow is updated
+
+### Webhook Security
+
+Verify webhook signatures using the signature in the `X-Trillet-Signature` header:
+
+```bash
+# Your webhook secret from the dashboard
+WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
+
+# Verify the signature before processing webhooks
+```
+
+## Error Handling
+
+The API uses conventional HTTP response codes:
+
+- `200` - Success
+- `400` - Bad request
+- `401` - Unauthorized
+- `403` - Forbidden
+- `404` - Not found
+- `429` - Too many requests
+- `500` - Server error
+
+Error responses include a message and error code:
+
+```json
+{
+  "error": {
+    "code": "invalid_number",
+    "message": "The provided phone number is invalid"
+  }
+}
+```
+
+## Need Help?
+
+<Columns cols={2}>
+  <Card title="API Status [Coming Soon!]" icon="signal">
+    Check our API status and uptime
+  </Card>
+  <Card title="Support" icon="headset" href="mailto:support@trillet.ai">
+    Get technical support
+  </Card>
+</Columns>

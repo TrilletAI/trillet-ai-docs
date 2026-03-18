@@ -1,0 +1,89 @@
+---
+title: "Assign Phone Number to Agent"
+api: "POST /v1/api/agents/{agentId}/bind/{phoneNumberId}"
+description: "Assign a specific phone number to an agent's call flow, configure recording options, office hours, metadata, and automatically update SIP trunks."
+---
+
+### Path Parameters
+
+<ParamField path="agentId" type="string" required>
+  The ID of the agent whose call flow will be bound to the phone number.
+</ParamField>
+
+<ParamField path="phoneNumberId" type="string" required>
+  The ID of the phone number to bind.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API. Required to scope the binding operation.
+</ParamField>
+
+### Request Body
+
+<ParamField body="recordCalls" type="boolean" optional>
+  Whether calls should be recorded. When enabled, updates Twilio trunk recording settings (`record-from-ringing`).  
+  Default: `false`.
+</ParamField>
+
+<ParamField body="recordingPublic" type="boolean" optional>
+  Whether recordings are publicly accessible.  
+  Default: `false`.
+</ParamField>
+
+<ParamField body="officeHours" type="object" optional>
+  Custom office hours configuration for the phone number (stored with the binding).  
+  Example: `{ "monday": ["09:00-17:00"], "tuesday": [] }`.
+</ParamField>
+
+<ParamField body="metadataTags" type="object" optional>
+  Arbitrary metadata key/value tags to store with the phone number.  
+  Example: `{ "department": "sales", "priority": "high" }`.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="agent" type="object">
+  The updated agent object, including its bound phone number IDs.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="object">
+  The updated phone number object after binding and SIP trunk configuration.
+</ResponseField>
+
+<ResponseField name="pathwayId" type="string">
+  The ID of the call flow associated with this assignment.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  The direction of the call flow (`inbound`, `outbound`, or `bidirectional`).
+</ResponseField>
+
+<ResponseExample>
+```
+{
+  "agent": {
+    "_id": "64f9b12a",
+    "status": "ready",
+    "phoneNumberIds": ["750cd920"]
+  },
+  "phoneNumber": {
+    "_id": "750cd920",
+    "agentId": "64f9b12a",
+    "recordingEnabled": true,
+    "recordingPublic": false,
+    "officeHours": {
+      "monday": ["09:00-17:00"],
+      "tuesday": []
+    },
+    "metadataTags": {
+      "department": "support",
+      "priority": "high"
+    }
+  },
+  "pathwayId": "pwy_abc123",
+  "direction": "bidirectional"
+}
+```
+</ResponseExample>

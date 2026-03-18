@@ -1,0 +1,114 @@
+---
+title: "List Active Calls"
+api: "GET /v2/api/active-calls"
+description: "Retrieve all currently active calls in your workspace with real-time status information."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="data" type="array">
+Array of active call objects.
+
+<ResponseField name="id" type="string">
+Unique identifier for the active call.
+</ResponseField>
+
+<ResponseField name="roomName" type="string">
+The LiveKit room name for the call.
+</ResponseField>
+
+<ResponseField name="customerPhone" type="string">
+Customer's phone number.
+</ResponseField>
+
+<ResponseField name="customerName" type="string">
+Customer's name if available.
+</ResponseField>
+
+<ResponseField name="aiAgentName" type="string">
+Name of the AI agent handling the call.
+</ResponseField>
+
+<ResponseField name="duration" type="number">
+Current call duration in seconds.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+Call status (always "active" for this endpoint).
+</ResponseField>
+
+<ResponseField name="sentiment" type="string">
+Current detected sentiment of the conversation.
+</ResponseField>
+
+<ResponseField name="lastMessage" type="string">
+The most recent message in the conversation.
+</ResponseField>
+
+<ResponseField name="transferRequested" type="boolean">
+Whether a transfer to a human agent has been requested.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+Call type: "phone" or "web".
+</ResponseField>
+
+<ResponseField name="participants" type="array">
+Array of call participants.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseField name="count" type="number">
+Total number of active calls.
+</ResponseField>
+
+<ResponseField name="timestamp" type="string">
+Server timestamp of the response.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "data": [
+    {
+      "id": "665a1b2c3d4e5f6a7b8c9d0e",
+      "roomName": "call-abc123",
+      "customerPhone": "+14155551234",
+      "customerName": "John Doe",
+      "aiAgentName": "Customer Support Agent",
+      "duration": 145,
+      "status": "active",
+      "sentiment": "positive",
+      "lastMessage": "Sure, I can help you with that!",
+      "transferRequested": false,
+      "type": "phone",
+      "participants": [
+        {
+          "identity": "agent-001",
+          "isAgent": true,
+          "joinedAt": "2024-06-01T10:00:00.000Z"
+        },
+        {
+          "identity": "customer-001",
+          "isAgent": false,
+          "joinedAt": "2024-06-01T10:00:01.000Z"
+        }
+      ]
+    }
+  ],
+  "count": 1,
+  "timestamp": "2024-06-01T10:02:25.000Z"
+}
+```
+</ResponseExample>

@@ -1,0 +1,46 @@
+---
+title: "Delete Conversation"
+api: "DELETE /v1/api/conversations/{conversationId}"
+description: "Delete a conversation from the database."
+---
+
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+<ParamField path="conversationId" type="string" required>
+  The Conversation ID of the conversation you want to delete.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="status" type="string">
+  The status of the call.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A message to describe the result.
+</ResponseField>
+
+<ResponseField name="conversationId" type="string">
+  The deleted conversationId.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+"status": "success",
+"message": `Conversation with ID abc1234aa deleted successfully.`,
+"conversationId": abc1234aa,
+}
+```
+</ResponseExample>

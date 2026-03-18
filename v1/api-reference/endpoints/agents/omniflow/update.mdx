@@ -1,0 +1,106 @@
+---
+title: "Update Omni Flow Agent"
+api: "PUT /v1/api/omni-flow-agents/{agentId}"
+description: "Update an existing agent"
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="agentId" type="string" required>
+  The unique identifier of the agent to update
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string">
+  New name for the agent
+</ParamField>
+
+<ParamField body="llmModel" type="string">
+  New language model to use
+</ParamField>
+
+<ParamField body="ttsModel" type="object">
+  <Expandable title="Voice Settings">
+    <ParamField body="provider" type="string">
+      The text-to-speech provider
+    </ParamField>
+    <ParamField body="voiceId" type="string">
+      The voice identifier
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the OmniFlowAgent.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the OmniFlowAgent is configured.
+</ResponseField>
+
+<ResponseField name="userId" type="string" optional="true">
+  The identifier of the user associated with the OmniFlowAgent, if any.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the OmniFlowAgent.
+</ResponseField>
+
+<ResponseField name="llmModel" type="string">
+  The language model used by the OmniFlowAgent, such as 'gpt-4o-mini'.
+</ResponseField>
+
+<ResponseField name="phoneNumberId" type="string" optional="true">
+  The identifier of the phone number associated with the OmniFlowAgent.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  A flexible schema for storing custom settings related to the OmniFlowAgent.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The operational status of the OmniFlowAgent, such as 'pending', 'ready', or
+  'error'.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the conversation was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the conversation was last updated.
+</ResponseField>
+<ResponseExample>
+
+```json
+{
+  "_id": "agentIdExample",
+  "workspaceId": "workspaceIdExample",
+  "userId": "userIdExample",
+  "name": "Updated Agent Name",
+  "llmModel": "gpt-4o-mini",
+  "phoneNumberId": "phoneNumberIdExample",
+  "settings": {
+    "customSetting": "value"
+  },
+  "status": "ready",
+  "createdAt": "2025-01-01T12:00:00Z",
+  "updatedAt": "2025-01-02T12:00:00Z"
+}
+```
+
+</ResponseExample>

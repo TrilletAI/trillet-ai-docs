@@ -1,0 +1,51 @@
+---
+title: "Get Meta Lead Ads Status"
+api: "GET /v1/api/meta-lead/status/{flowId}"
+description: "Check the connection and configuration status of Meta Lead Ads for a specific call flow."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="flowId" type="string" required>
+The call flow ID to check the Meta Lead Ads status for.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="connected" type="boolean">
+Whether Meta Lead Ads is connected and configured for this flow.
+</ResponseField>
+
+<ResponseField name="pages" type="array">
+Configured Facebook pages and their forms.
+</ResponseField>
+
+<ResponseField name="callDelaySeconds" type="number">
+Current call delay setting in seconds.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "connected": true,
+  "pages": [
+    {
+      "pageId": "123456789",
+      "pageName": "My Business Page",
+      "forms": ["form_001", "form_002"]
+    }
+  ],
+  "callDelaySeconds": 30
+}
+```
+</ResponseExample>

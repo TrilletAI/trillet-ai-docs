@@ -1,0 +1,33 @@
+---
+title: "Delete Workspace"
+api: "DELETE /v1/api/workspaces/{workspaceId}"
+description: "Delete an existing workspace. Only the owner of the workspace can delete it. Master workspaces and the user's only remaining workspace cannot be deleted."
+---
+
+### Path Parameters
+
+<ParamField path="workspaceId" type="string" required>
+  The unique identifier of the workspace to delete.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The workspace ID being accessed (should match the path parameter).
+</ParamField>
+
+### Description
+
+This endpoint allows the authenticated owner of a workspace to delete it, subject to the following restrictions:
+
+- The workspace **cannot be the master workspace**.
+- The workspace **cannot be the user's only remaining workspace**.
+- The requester **must be the owner** of the workspace (team members are not authorized).
+
+If the workspace contains external members, their access is revoked before deletion. The associated workspace wallet is also deleted as part of this operation.
+
+### Response Fields
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the workspace was successfully deleted.
+</ResponseField>

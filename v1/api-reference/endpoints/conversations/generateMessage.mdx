@@ -1,0 +1,84 @@
+---
+title: 'Generate Message'
+api: 'POST /v1/api/conversations/message/generate'
+description: 'Send an AI-generated message through either SMS or email to a specified recipient with optional metadata and dynamic configurations.'
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Request Body
+
+<ParamField body="flowId" type="string" required>  
+Unique identifier for the message flow sending the message. Ensure the Message Flow ID belongs to an active flow.  
+</ParamField>  
+
+<ParamField body="to" type="string" required>
+Recipient's contact information. Use <b>E.164</b> format for SMS (e.g., `+1234567890`) and a valid email address format for Email (e.g., `user@example.com`).
+<Note>
+Ensure the contact format matches the <b>messageChannel</b> type: SMS for phone numbers and Email for email addresses. Using an incorrect format or type will result in an error.
+</Note>
+</ParamField>
+  
+
+
+<ParamField body="metadata" type="object" optional>  
+  <Expandable title="properties">  
+    <ParamField body="customerDetails" type="object" optional>  
+      Details about the customer in key-value format. This field can contain the following:  
+      <Expandable title="properties">  
+        <ParamField body="name" type="string" optional>  
+          The name of the customer. Example: `"Sam"`.
+        </ParamField>
+      </Expandable>  
+    </ParamField>  
+  </Expandable>  
+</ParamField>  
+
+
+
+<ParamField body="autopilot" type="boolean" required>  
+Enable automatically sending the generated message to the intended recipient. If your flow has a `delay` enabled, the message will be sent after that delay. Defaults to `false`.  
+</ParamField>  
+
+<ParamField body="dynamic" type="object" optional>  
+Dynamic inputs for AI-generated messages.  
+</ParamField>  
+
+
+### Response Fields
+
+<ResponseField name="status" type="string">  
+Indicates (`success`) if the request was successful.  
+</ResponseField>  
+
+<ResponseField name="conversation_id" type="string">  
+Unique identifier for the newly created or fetched existing conversation.  
+</ResponseField>  
+
+<ResponseField name="message_id" type="string">  
+Unique identifier for the newly created message within the conversation.  
+</ResponseField>  
+
+<ResponseField name="message" type="string">  
+Content of the message sent. This will always be the corresponding message flow's `initiationMessage`.  
+</ResponseField>  
+
+
+<ResponseExample>  
+```json  
+{  
+  "status": "success",  
+  "conversation_id": "63e63b2a-8b6d-4ea4-ae84-abc123",  
+  "message_id": "56f3459b-c23d-46a4-8a2d-bcd456",  
+  "message": "Your appointment is confirmed for tomorrow at 3 PM."  
+}  
+```  
+</ResponseExample>  

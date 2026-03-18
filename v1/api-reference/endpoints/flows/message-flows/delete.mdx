@@ -1,0 +1,28 @@
+---
+title: "Delete Message Flow"
+api: "DELETE /v1/api/message-flows/{id}"
+description: "Delete an existing message flow."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique ID of the message flow to delete.
+</ParamField>
+
+<ResponseExample>
+```json 
+HTTP/1.1 204 No Content 
+```
+</ResponseExample>

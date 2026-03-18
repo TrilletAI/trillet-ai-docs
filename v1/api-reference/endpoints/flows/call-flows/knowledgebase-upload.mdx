@@ -1,0 +1,77 @@
+---
+title: "Upload Knowledge Base File"
+api: "POST /v1/api/call-flows/{id}/knowledge-base"
+description: "Upload a knowledge base file to a specific call flow."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the call flow to which the knowledge base file will
+  be uploaded.
+</ParamField>
+
+### Request Body
+
+<ParamField body="file" type="file" required>
+  The knowledge base file to upload. Accepted file formats are PDF (.pdf), plain
+  text (.txt), Word document (.docx), and Markdown (.md).
+  <Note> 
+    Only one file can be uploaded per request.
+  </Note>
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the call flow to which the knowledge base file has been uploaded.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace associated with the call flow.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  Contains the updated settings for the call flow following the file upload.
+  <ResponseField name="knowledgeBaseFiles" type="array">
+    An array of objects representing the knowledge base files associated with the call flow. Each object in this array provides details about the uploaded files, including:
+    <ResponseField name="filename" type="string">
+      The name of the file as stored in the system.
+    </ResponseField>
+    <ResponseField name="key" type="string">
+      A unique key or identifier used internally to reference the file.
+    </ResponseField>
+    <ResponseField name="url" type="string">
+      A URL where the uploaded file can be accessed or downloaded.
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseExample>
+```json
+  {
+    "_id": "flowId",
+    "workspaceId": "workspaceIdExample",
+    "settings": {
+      "knowledgeBaseFiles": [
+        {
+          "filename": "exampleFile.pdf",
+          "key": "s3FileKey",
+          "url": "https://example.com/file.pdf"
+        }
+      ]
+    }
+  }
+```
+</ResponseExample>

@@ -1,0 +1,160 @@
+---
+title: "List Call Agents"
+api: "GET /v1/api/agents"
+description: "Retrieve a list of all call agents with all their details."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+<ResponseExample>
+```json
+[
+  {
+    "ttsModel": {
+      "language": "en",
+      "provider": "openai",
+      "voiceId": "example-voice-id-1",
+      "name": "ExampleVoice"
+    },
+    "_id": "example-agent-id-1",
+    "workspaceId": "example-workspace-id-1",
+    "userId": "example-user-id-1",
+    "name": "Test-Agent-1",
+    "llmModel": "gpt-4o-mini",
+    "type": "voice",
+    "settings": {
+      "speed": 0.7,
+      "volume": 1,
+      "temperature": 0.7
+    },
+    "status": "ready",
+    "activeSessions": [],
+    "createdAt": "2025-01-19T02:57:27.923Z",
+    "updatedAt": "2025-01-19T02:57:27.923Z"
+  },
+  {
+    "ttsModel": {
+      "language": "en",
+      "provider": "cartesia",
+      "voiceId": "example-voice-id-2",
+      "name": "Sarah"
+    },
+    "_id": "example-agent-id-2",
+    "workspaceId": "example-workspace-id-2",
+    "userId": "example-user-id-2",
+    "name": "New-Agent",
+    "llmModel": "gpt-4o-mini",
+    "type": "voice",
+    "settings": {
+      "speed": 0,
+      "volume": 1,
+      "temperature": 0.7
+    },
+    "status": "ready",
+    "activeSessions": [
+      {
+        "roomName": "example-room-1",
+        "startTime": "2025-01-16T14:46:36.883Z",
+        "status": "active",
+        "_id": "example-session-id-1"
+      },
+      {
+        "roomName": "example-room-2",
+        "startTime": "2025-01-16T21:10:47.518Z",
+        "status": "active",
+        "_id": "example-session-id-2"
+      }
+    ],
+    "createdAt": "2024-12-27T10:49:04.175Z",
+    "updatedAt": "2025-01-17T09:09:47.887Z"
+  }
+]
+```
+</ResponseExample>
+
+### Response Fields
+
+<ResponseField name="ttsModel" type="object">
+  Contains the text-to-speech model details.
+</ResponseField>
+
+<ResponseField name="ttsModel.language" type="string">
+  The language of the voice model (e.g., `en`).
+</ResponseField>
+
+<ResponseField name="ttsModel.provider" type="string">
+  The TTS provider name (e.g., `openai`, `cartesia`).
+</ResponseField>
+
+<ResponseField name="ttsModel.voiceId" type="string">
+  The unique identifier for the voice model.
+</ResponseField>
+
+<ResponseField name="ttsModel.name" type="string">
+  The name of the voice model.
+</ResponseField>
+
+<ResponseField name="_id" type="string">
+  Unique identifier for the agent.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  Unique identifier for the workspace associated with the agent.
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  Unique identifier for the user associated with the agent.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Name of the agent.
+</ResponseField>
+
+<ResponseField name="llmModel" type="string">
+  The LLM (language model) used by the agent (e.g., `gpt-4o-mini`).
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Type of agent (e.g., `voice`).
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  The settings for the agent, including `speed`, `volume`, and `temperature`.
+</ResponseField>
+
+<ResponseField name="settings.speed" type="number">
+  Speed value for TTS narration (0 to 1).
+</ResponseField>
+
+<ResponseField name="settings.volume" type="number">
+  Volume level for TTS (0 to 1).
+</ResponseField>
+
+<ResponseField name="settings.temperature" type="number">
+  Temperature for LLM creativity (0 to 1).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current status of the agent (e.g., `ready`).
+</ResponseField>
+
+<ResponseField name="activeSessions" type="array">
+  A list of active sessions associated with the agent.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  The timestamp when the agent was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  The timestamp when the agent was last updated.
+</ResponseField>

@@ -1,0 +1,125 @@
+---
+title: "List Call Histories"
+api: "GET /v2/api/call-history"
+description: "Retrieve a list of call history records in your workspace."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the call history record.
+</ResponseField>
+
+<ResponseField name="timestamp" type="number">
+  The Unix timestamp indicating when the call was made.
+</ResponseField>
+
+<ResponseField name="callId" type="string">
+  A unique identifier associated with the specific call.
+</ResponseField>
+
+<ResponseField name="fromPhoneNumber" type="string">
+  The phone number from which the call originated.
+</ResponseField>
+
+<ResponseField name="toPhoneNumber" type="string">
+  The phone number to which the call was directed.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  The direction of the call, typically "inbound", "outbound", or "bidirectional".
+</ResponseField>
+
+<ResponseField name="agent" type="string">
+  The name or identifier of the agent involved in the call.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The status of the call, such as "active", "completed", or other relevant statuses.
+</ResponseField>
+
+<ResponseField name="callFlowName" type="string">
+  The name of the call flow  used during the call.
+</ResponseField>
+
+<ResponseField name="cost" type="number">
+  The cost incurred for the call, if applicable.
+</ResponseField>
+
+<ResponseField name="recordingUrl" type="string" optional="true">
+  A URL pointing to the recorded audio of the call, if available.
+</ResponseField>
+
+<ResponseField name="summary" type="string">
+  A brief summary or overview of the call.
+</ResponseField>
+
+<ResponseField name="analyzedData" type="object">
+  An object containing additional analyzed data from the call, such as flags for voicemail detection or other specific features.
+  <ResponseField name="answered_by_voicemail" type="boolean" optional="true">
+    Indicates whether the call was answered by a voicemail system.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="variables" type="object">
+  Any variables that were used or modified during the call.
+</ResponseField>
+
+<ResponseField name="transcript" type="array">
+  An array containing elements of the call transcript, if available.
+</ResponseField>
+
+<ResponseExample>
+```json
+[
+  {
+    "_id": "00000000bf7ca4a7c69e0000",
+    "timestamp": 1737062894.9754236,
+    "callId": "00000000013bd867b55ca000-00t00imaqj",
+    "fromPhoneNumber": "+00000000000",
+    "toPhoneNumber": "+00000000000",
+    "direction": "bidirectional",
+    "agent": "SampleAgent",
+    "status": "active",
+    "callFlowName": "Example Call Flow",
+    "cost": 0,
+    "recordingUrl": null,
+    "summary": "Call summary here",
+    "analyzedData": {},
+    "variables": {},
+    "transcript": []
+  },
+  {
+    "_id": "00000000cbddbe9988450000",
+    "timestamp": 1737061847.891025,
+    "callId": "00000000013bd867b55ca000-00pk0su000",
+    "fromPhoneNumber": "+00000000000",
+    "toPhoneNumber": "+00000000000",
+    "direction": "bidirectional",
+    "duration": 0,
+    "agent": "SampleAgent",
+    "status": "completed",
+    "callFlowName": "Example Call Flow",
+    "cost": 0,
+    "recordingUrl": null,
+    "summary": "Call summary here",
+    "analyzedData": {
+      "answered_by_voicemail": false
+    },
+    "variables": {},
+    "transcript": []
+  }
+]
+```
+</ResponseExample>

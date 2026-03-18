@@ -1,0 +1,54 @@
+---
+title: "Bring Your Own Number"
+api: "POST /v1/api/twilio/register-external-number"
+description: "Register your own external phone number with Twilio to use within your workspace."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Request Body
+
+<ParamField body="phoneNumber" type="string" required>
+  The external phone number to register, in E.164 format (e.g., `+11234567890`).
+</ParamField>
+
+<ParamField body="provider" type="string" required>
+  The provider for the phone number. Currently, only `"twilio"` is supported.
+</ParamField>
+
+<ParamField body="credentials" type="object" required>
+  The credentials required for the provider.
+  <Expandable title="Credentials Details">
+    <ParamField body="accountSid" type="string" required>
+      The Account SID from Twilio.
+    </ParamField>
+    <ParamField body="authToken" type="string" required>
+      The Auth Token from Twilio.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="status" type="string">
+  The status of the request, indicating success or failure.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A message providing feedback about the registration process.
+</ResponseField>
+
+### Example Response
+
+<ResponseExample>
+```json
+{
+  "status": "success",
+  "message": "Phone number registered successfully"
+}
+```
+</ResponseExample>

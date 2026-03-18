@@ -1,0 +1,252 @@
+---
+title: "API Endpoints"
+description: "Complete reference for all Trillet AI API endpoints"
+---
+
+## Agents
+
+Virtual AI assistants that handle voice interactions.
+
+### Create Agent
+
+<ParamField path="POST /api/v1/agents">
+  Create a new AI agent by selecting voice model characteristics and the
+  underlying language model for script execution.
+</ParamField>
+
+### List Agents
+
+<ParamField path="GET /api/v1/agents">
+  Retrieve a paginated list of all available agents in your account.
+</ParamField>
+
+### Get Agent
+
+<ParamField path="GET /api/v1/agents/{agentId}">
+  Fetch detailed configuration and status information for a specific agent.
+</ParamField>
+
+### Update Agent
+
+<ParamField path="PATCH /api/v1/agents/{agentId}">
+  Modify an existing agent's properties like name, voice settings, or
+  personality.
+</ParamField>
+
+### Delete Agent
+
+<ParamField path="DELETE /api/v1/agents/{agentId}">
+  Permanently remove an agent from your account.
+</ParamField>
+
+## Flows
+
+Complex flows that define how agents handle calls and route conversations.
+
+### Create Flow
+
+<ParamField path="POST /api/v1/flows">
+  Create a new call flow by defining flows for call handling and routing
+  logic.
+</ParamField>
+
+### List Flows
+
+<ParamField path="GET /api/v1/flows">
+  Get a paginated list of all call flows in your account.
+</ParamField>
+
+### Get Flow
+
+<ParamField path="GET /api/v1/flows/{flowId}">
+  Retrieve detailed configuration for a specific call flow including routing
+  logic.
+</ParamField>
+
+### Update Flow
+
+<ParamField path="PATCH /api/v1/flows/{flowId}">
+  Modify an existing call flow and routing rules.
+</ParamField>
+
+### Delete Flow
+
+<ParamField path="DELETE /api/v1/flows/{flowId}">
+  Permanently remove a call flow from your account.
+</ParamField>
+
+## Calls
+
+Manage outbound voice calls using agents and flows.
+
+### Send Call
+
+<ParamField path="POST /api/v1/calls/call">
+  Initiate a new outbound call using an AI agent.
+</ParamField>
+
+#### Request Body
+
+<ResponseField name="agentId" type="string" required>
+  The unique identifier of the AI agent that will handle the call
+</ResponseField>
+
+<ResponseField name="toNumber" type="string" required>
+  The phone number to call in E.164 format (e.g., +1234567890)
+</ResponseField>
+
+#### Response
+
+<ResponseField name="status" type="string">
+  Will be "success" if the call was initiated successfully
+</ResponseField>
+
+<ResponseField name="callId" type="string">
+  A unique identifier for the call
+</ResponseField>
+
+<ResponseField name="roomName" type="string">
+  Internal room identifier for the call session
+</ResponseField>
+
+<ResponseField name="fromNumber" type="string">
+  The phone number the call will be placed from
+</ResponseField>
+
+<ResponseField name="toNumber" type="string">
+  The destination phone number
+</ResponseField>
+
+<ResponseField name="agent" type="object">
+  <Expandable title="Agent Details">
+    <ResponseField name="id" type="string">
+      The agent's unique identifier
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The name of the agent
+    </ResponseField>
+    <ResponseField name="model" type="string">
+      The AI model being used (e.g., "gpt-4o-mini")
+    </ResponseField>
+    <ResponseField name="voice" type="object">
+      Voice configuration details
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+#### Example Response
+
+```json
+{
+  "status": "success",
+  "callId": "ab12cd34ef",
+  "roomName": "64f8e3b1c12d8e9a4f3c2d1e-ab12cd34ef",
+  "fromNumber": "+1987654321",
+  "toNumber": "+1234567890",
+  "agent": {
+    "id": "64f8e3b1c12d8e9a4f3c2d1e",
+    "name": "Sales Assistant",
+    "model": "gpt-4o-mini",
+    "voice": {
+      "provider": "openai",
+      "voiceId": "alloy"
+    }
+  }
+}
+```
+
+#### Error Responses
+
+<ResponseField name="404 - Not Found">
+```json
+{
+  "error": "Agent not found",
+  "details": "The specified agent does not exist or you don't have access to it"
+}
+```
+</ResponseField>
+
+<ResponseField name="400 - Bad Request">
+```json
+{
+  "error": "Invalid configuration",
+  "details": "Agent has no phone number configured"
+}
+```
+</ResponseField>
+
+<ResponseField name="500 - Internal Server Error">
+```json
+{
+  "error": "Failed to initiate call",
+  "details": "Error message",
+  "code": "UNKNOWN_ERROR"
+}
+```
+</ResponseField>
+
+#### Notes
+
+- The agent must have an active phone number configured
+- The agent must have an active flow configured
+- All phone numbers should be in E.164 format (+[country code][number])
+- Calls are recorded by default unless specified otherwise
+- Maximum call duration is typically 1 hour
+
+## Batch Calls
+
+Efficiently make multiple AI-powered calls using CSV data uploads.
+
+### Download CSV Template
+
+<ParamField path="GET /v1/api/batch-calls/template">
+  Download a properly formatted CSV template for batch call operations.
+</ParamField>
+
+### Validate CSV
+
+<ParamField path="POST /v1/api/batch-calls/validate">
+  Validate a CSV file and preview the data before starting batch calls.
+</ParamField>
+
+### Preview CSV Data
+
+<ParamField path="POST /v1/api/batch-calls/preview">
+  Preview the data from a CSV file to verify formatting and content.
+</ParamField>
+
+### Start Batch Operation
+
+<ParamField path="POST /v1/api/batch-calls">
+  Initiate a batch call operation using a CSV file and specified agent.
+</ParamField>
+
+### Get Batch Status
+
+<ParamField path="GET /v1/api/batch-calls/{batchId}">
+  Get detailed status information for a batch call operation.
+</ParamField>
+
+### Get Batch Progress
+
+<ParamField path="GET /v1/api/batch-calls/{batchId}/status">
+  Get real-time progress information for a batch call operation.
+</ParamField>
+
+### List Batch Calls
+
+<ParamField path="GET /v1/api/batch-calls/{batchId}/calls">
+  Get a paginated list of all calls within a batch operation with filtering.
+</ParamField>
+
+### Get Individual Call Status
+
+<ParamField path="GET /v1/api/batch-calls/{batchId}/calls/{jobId}">
+  Get the status of an individual call within a batch operation.
+</ParamField>
+
+### Cancel Batch Operation
+
+<ParamField path="DELETE /v1/api/batch-calls/{batchId}">
+  Cancel a batch call operation and stop remaining calls from processing.
+</ParamField>

@@ -1,0 +1,43 @@
+---
+title: "Get Phone Numbers"
+api: "GET /v1/api/twilio/user-phone-numbers"
+description: "Retrieve a list of phone numbers associated with the user."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="phoneNumbers" type="array">
+  An array of phone numbers associated with the user, in E.164 format.
+</ResponseField>
+
+### Example Response
+
+<ResponseExample>
+```json
+{
+  "_id": "123abc456def789gh012i345jkl6789",
+  "workspaceId": "987xyz654abc321mno987pqr654stu",
+  "phoneNumber": "+12345678901",
+  "country": "US",
+  "type": "local",
+  "status": "released",
+  "recordingEnabled": true,
+  "pathwayId": "xyz123abc456",
+  "monthlyPrice": 19.99,
+  "expiresAt": "2025-12-31T11:59:59.999Z",
+  "transferEnabled": true,
+  "createdAt": "2025-01-01T00:00:00.000Z",
+  "updatedAt": "2025-01-10T15:30:00.000Z",
+  "agentId": "789xyz123abc456def",
+  "flowType": "outbound",
+  "messagePathwayId": "123abc456xyz789",
+  "omniFlowAgentId": "omni123flow456agent789"
+}
+```
+</ResponseExample>

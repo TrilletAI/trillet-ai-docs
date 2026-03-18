@@ -1,0 +1,37 @@
+---
+title: 'Authentication'
+description: 'Learn how to authenticate your API requests'
+---
+
+All API endpoints require authentication using Bearer tokens in the Authorization header:
+
+```bash
+curl https://api.trillet.ai/v1/api/
+  -H "x-api-key: YOUR_API_KEY"
+  -H "Content-Type: application/json"
+```
+<ParamField header="x-api-key" type="string" required>
+  API key used for authenticating requests to the API. This key must be included in the header of each request.
+</ParamField>
+<ParamField header="x-workspace-id" type="string">
+  Workspace identifier for the API.
+</ParamField>
+
+<ParamField header="Content-Type" type="string" required>
+  Must be set to `application/json`.
+</ParamField>
+
+## Obtaining API Keys
+
+Generate an API key under the 'Settings' tab for your API credentials. Each API key has specific permissions and limits associated with it.
+
+<Note>
+  Get your API key from [Trillet Settings Dashboard](https://app.trillet.ai/settings)
+</Note>
+
+## Security Best Practices
+
+1. Keep your API keys secure and never expose them in client-side code
+2. Rotate your API keys periodically
+3. Use different API keys for development and production environments
+4. Monitor your API key usage for any suspicious activity

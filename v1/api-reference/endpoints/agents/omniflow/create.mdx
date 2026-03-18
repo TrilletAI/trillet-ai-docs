@@ -1,0 +1,79 @@
+---
+title: 'Create Omni Flow Agent'
+api: 'POST /v1/api/omni-flow-agents'
+description: 'Create a new agent for a workspace.'
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+  
+
+<ParamField header="x-workspace-id" type="string" required>  
+Workspace identifier for the API.  
+</ParamField>  
+
+### Request Body  
+
+<ParamField body="name" type="string" required>  
+Name of the agent being created.  
+</ParamField>  
+
+<ParamField body="llmModel" type="string" default='gpt-4o-mini' required>  
+Language Model to be used by the agent to generate responses. (e.g. gpt-4o-mini, gpt-4o, gpt-4o-enterprise)  
+</ParamField>  
+
+<ParamField body="settings" type="object" optional>  
+Settings related to the agent. 
+</ParamField>  
+
+### Response Fields  
+
+<ResponseField name="workspaceId" type="string">  
+Workspace ID associated with the agent.  
+</ResponseField>  
+
+<ResponseField name="userId" type="string">  
+User ID of the agent creator.  
+</ResponseField>  
+
+<ResponseField name="name" type="string">  
+Name of the agent.  
+</ResponseField>  
+
+<ResponseField name="llmModel" type="string">  
+Language model used by the agent (e.g., `gpt-4o-mini`).  
+</ResponseField>  
+
+<ResponseField name="phoneNumberId" type="string" nullable>  
+Phone number ID, if assigned to the agent.  
+</ResponseField>  
+
+<ResponseField name="status" type="string">  
+Current status of the agent (e.g., `ready`).  
+</ResponseField>  
+
+<ResponseField name="createdAt" type="string">  
+Timestamp when the agent was created.  
+</ResponseField>  
+
+<ResponseField name="updatedAt" type="string">  
+Timestamp when the agent was last updated.  
+</ResponseField>  
+
+<ResponseExample>  
+```json  
+{  
+  "workspaceId": "01a0sda156scx5f8",  
+  "userId": "01a0sda156scx5f8",  
+  "name": "ExampleOmniFlowAgent",  
+  "llmModel": "gpt-4o-mini",  
+  "phoneNumberId": null,  
+  "status": "ready",  
+  "createdAt": "2025-01-19T03:18:22.604Z",  
+  "updatedAt": "2025-01-19T03:18:22.604Z"  
+}  
+```  
+</ResponseExample>

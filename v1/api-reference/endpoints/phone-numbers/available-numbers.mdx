@@ -1,0 +1,89 @@
+---
+title: "Search Available Numbers"
+api: "GET /v1/api/twilio/available-numbers"
+description: "Search for available phone numbers in a specific country."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="country" type="string" required>
+Country code to search for numbers (e.g., "US", "CA", "AU", "GB").
+</ParamField>
+
+<ParamField query="type" type="string" required>
+Type of phone number. Options: "local", "tollFree", "mobile". Not required for AU.
+</ParamField>
+
+<ParamField query="contains" type="string">
+Search for numbers containing specific digits or patterns.
+</ParamField>
+
+<ParamField query="limit" type="number">
+Maximum number of results to return.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="numbers" type="array">
+Array of available phone numbers.
+
+<ResponseField name="phoneNumber" type="string">
+The phone number in E.164 format.
+</ResponseField>
+
+<ResponseField name="friendlyName" type="string">
+A human-readable formatted version of the number.
+</ResponseField>
+
+<ResponseField name="locality" type="string">
+City or locality associated with the number.
+</ResponseField>
+
+<ResponseField name="region" type="string">
+State or region associated with the number.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseField name="filters" type="object">
+Available filter options for the country.
+
+<ResponseField name="supported" type="array">
+List of supported filter types for the selected country.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "numbers": [
+    {
+      "phoneNumber": "+14155551234",
+      "friendlyName": "(415) 555-1234",
+      "locality": "San Francisco",
+      "region": "CA"
+    },
+    {
+      "phoneNumber": "+14155555678",
+      "friendlyName": "(415) 555-5678",
+      "locality": "San Francisco",
+      "region": "CA"
+    }
+  ],
+  "filters": {
+    "supported": ["contains", "areaCode"]
+  }
+}
+```
+</ResponseExample>

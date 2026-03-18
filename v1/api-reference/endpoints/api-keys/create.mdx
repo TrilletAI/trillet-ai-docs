@@ -1,0 +1,51 @@
+---
+title: "Create API Key"
+api: "POST /v1/api/keys"
+description: "Generate a new API key for authenticating requests to the Trillet API."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+## Request Body
+
+<ParamField body="metadata" type="object">
+Optional metadata to associate with the API key.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="key" type="string">
+The generated 32-character API key. Store this securely as it cannot be retrieved again.
+</ResponseField>
+
+<ResponseField name="_id" type="string">
+Unique identifier for the API key record.
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+User ID associated with the API key.
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+Metadata associated with the API key.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+Timestamp when the API key was created.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "key": "tk_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "userId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "metadata": {},
+  "createdAt": "2024-06-01T09:00:00.000Z"
+}
+```
+</ResponseExample>

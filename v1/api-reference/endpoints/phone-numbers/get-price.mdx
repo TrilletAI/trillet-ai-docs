@@ -1,0 +1,49 @@
+---
+title: "Get Phone Number Price"
+api: "GET /v1/api/twilio/phone-number-price"
+description: "Get the pricing for purchasing a phone number by country and type."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="country" type="string" required>
+Country code (e.g., "US", "CA", "AU", "GB").
+</ParamField>
+
+<ParamField query="type" type="string" required>
+Type of phone number. Options: "local", "tollFree", "mobile".
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="country" type="string">
+Country code.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+Phone number type.
+</ResponseField>
+
+<ResponseField name="price" type="number">
+Monthly price for the phone number in USD.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "country": "US",
+  "type": "local",
+  "price": 1.15
+}
+```
+</ResponseExample>

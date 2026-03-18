@@ -1,0 +1,86 @@
+---
+title: 'Handle Message Action'
+api: 'POST /v1/api/conversations/{conversationId}/message/{messageId}/action'
+description: 'Edit or reject a specific message within a conversation.'
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+<ParamField path="conversationId" type="string" required>
+  The unique identifier for the conversation containing the message.
+</ParamField>
+
+<ParamField path="messageId" type="string" required>
+  The unique identifier for the message to be acted upon.
+</ParamField>
+
+
+### Request Body
+<ParamField body="metadata" type="object" required>
+  <Expandable title="properties">
+    <ParamField body="action" type="string" required>
+      The action to take: "Approve", "Edit", or "Reject".
+      - **Approve**: Approves and sends the message.
+      - **Edit**: Modifies the content of the message.
+      - **Reject**: Rejects the message.
+    </ParamField>
+    <ParamField body="editedMessage" type="string" optional>
+      The new content of the message, used only when the action is **Edit**.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="status" type="string">
+  The status of the action, indicating success or failure.
+</ResponseField>
+
+<ResponseField name="message" type="object">
+  The updated or rejected message details.
+  <Expandable title="properties">
+    <ParamField body="_id" type="string">
+      The unique identifier for the message.
+    </ParamField>
+    <ParamField body="message" type="string">
+      The content of the message.
+    </ParamField>
+    <ParamField body="to" type="string">
+      The recipient's phone number or email address.
+    </ParamField>
+    <ParamField body="sent" type="boolean">
+      Whether the message has been sent.
+    </ParamField>
+    <ParamField body="status" type="string">
+      The current status of the message, e.g., "approved", "rejected", etc.
+    </ParamField>
+    <ParamField body="timestamp" type="string">
+      The timestamp of when the message was sent or updated.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "status": "success",
+  "message": {
+    "_id": "64fbbc2e98312c4b82123456",
+    "message": "Hello, how can I assist you?",
+    "to": "+1234567890",
+    "sent": true,
+    "status": "approved",
+    "timestamp": "2024-12-03T12:00:00Z"
+  }
+}
+```
+</ResponseExample> 

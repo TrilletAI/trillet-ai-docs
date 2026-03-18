@@ -1,0 +1,35 @@
+---
+title: "Delete Voice"
+api: "DELETE /v1/api/voices/{id}"
+description: "Delete a custom voice from your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique identifier of the voice to delete.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the deletion was successful.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>

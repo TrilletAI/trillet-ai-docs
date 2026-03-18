@@ -1,0 +1,237 @@
+---
+title: "Create Message Flow"
+api: "POST /v1/api/message-flows"
+description: "Create a new message flow with full settings."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  The name of this message flow (e.g., "New Years Sale").
+</ParamField>
+
+<ParamField body="direction" type="string" required>
+  Direction of the flow. Possible values: "inbound" "outbound" "bidirectional".
+</ParamField>
+
+<ParamField body="description" type="string">
+  Short description (e.g., "Handles customer support inquiries via SMS").
+</ParamField>
+
+<ParamField body="agent" type="string" required>
+  ID of the OmniFlowAgent to associate with this flow.
+</ParamField>
+
+<ParamField body="settings" type="object">
+  Full configuration object. This can include:
+  <Expandable title="settings">
+    <ParamField body="responseSettings" type="object">
+      <Expandable title="responseSettings">
+        <ParamField body="delay" type="number">
+          Delay (in seconds) before responding.
+        </ParamField>
+        <ParamField body="enabled" type="boolean">
+          Whether working hours logic is enabled.
+        </ParamField>
+        <ParamField body="start" type="string">
+          Start time for working hours (e.g., "09:00").
+        </ParamField>
+        <ParamField body="end" type="string">
+          End time for working hours (e.g., "17:00").
+        </ParamField>
+        <ParamField body="timezone" type="string">
+          Timezone (e.g., "UTC").
+        </ParamField>
+        <ParamField body="outOfHoursMessage" type="string">
+          Automated reply for out-of-hours messages.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField body="security" type="object">
+      <Expandable title="security">
+        <ParamField body="hipaaCompliance" type="boolean">
+          Whether HIPAA compliance is required.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField body="emailSettings" type="object">
+      <Expandable title="emailSettings">
+        <ParamField body="subjectLine" type="string">
+          Default subject line for emails sent in this flow.
+        </ParamField>
+        <ParamField body="signature" type="string">
+          Signature appended to email messages.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="initiationMessage" type="string" required>
+  The first message that triggers the message flow. This field is essential for
+  the generateMessage functionality.
+</ParamField>
+
+<ParamField body="prompt" type="string" required>
+  A system prompt or instructions for the AI agent.
+</ParamField>
+
+<ParamField body="isActive" type="boolean">
+  Enable or disable autopilot for this flow (default false).
+</ParamField>
+
+<ParamField body="autopilot" type="boolean">
+  Enable or disable autopilot for this flow (default false).
+</ParamField>
+
+<ParamField body="messageChannel" type="string" required>
+  Channel type: "SMS" or "Email".
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the newly created message flow.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the message flow is configured.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name given to the message flow.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  The direction of the message flow; possible values include "inbound", "outbound", or "bidirectional".
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A brief description of what the message flow is designed to handle.
+</ResponseField>
+
+<ResponseField name="agent" type="string">
+  The identifier of the agent associated with this message flow.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  Configuration settings of the message flow, including response, security, and email settings.
+  <ResponseField name="responseSettings" type="object">
+    Settings related to response timing and handling within the message flow.
+    <ResponseField name="delay" type="number">
+      The delay in seconds before a response is issued.
+    </ResponseField>
+    <ResponseField name="workingHours" type="object">
+      Settings defining the working hours during which the message flow is active.
+      <ResponseField name="enabled" type="boolean">
+        Whether working hours are enabled.
+      </ResponseField>
+      <ResponseField name="start" type="string">
+        The start time of working hours.
+      </ResponseField>
+      <ResponseField name="end" type="string">
+        The end time of working hours.
+      </ResponseField>
+      <ResponseField name="timezone" type="string">
+        The timezone for the working hours.
+      </ResponseField>
+      <ResponseField name="outOfHoursMessage" type="string">
+        The message delivered outside of working hours.
+      </ResponseField>
+    </ResponseField>
+    <ResponseField name="security" type="object">
+      Security settings for the message flow.
+      <ResponseField name="hipaaCompliance" type="boolean">
+        Indicates if HIPAA compliance is enforced.
+      </ResponseField>
+    </ResponseField>
+    <ResponseField name="emailSettings" type="object">
+      Settings related to email communication.
+      <ResponseField name="subjectLine" type="string">
+        The default subject line for emails sent within this flow.
+      </ResponseField>
+      <ResponseField name="signature" type="string">
+        The signature appended to email messages.
+      </ResponseField>
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  The system prompt or instructions for the AI agent.
+</ResponseField>
+
+<ResponseField name="initiationMessage" type="string">
+  The initial message that activates the message flow.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Indicates whether the message flow is currently active.
+</ResponseField>
+
+<ResponseField name="autopilot" type="boolean">
+  Indicates whether the autopilot feature of the message flow is enabled.
+</ResponseField>
+
+<ResponseField name="messageChannel" type="string">
+  The communication channel used by the message flow, such as "SMS" or "Email".
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  The timestamp when the message flow was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  The timestamp when the message flow was last updated.
+</ResponseField>
+
+
+<ResponseExample>
+```json
+{
+  "_id": "messageFlowId",
+  "workspaceId": "workspaceIdExample",
+  "name": "Customer Engagement Campaign",
+  "direction": "bidirectional",
+  "description": "Manages interactions for promotional events via SMS",
+  "agent": "agentUniqueId",
+  "settings": {
+    "responseSettings": {
+      "delay": 0,
+      "workingHours": {
+        "enabled": false,
+        "start": "09:00",
+        "end": "17:00",
+        "timezone": "UTC",
+        "outOfHoursMessage": ""
+      }
+    },
+    "security": {
+      "hipaaCompliance": false
+    },
+    "emailSettings": {
+      "subjectLine": "Thank You for Joining Our Event",
+      "signature": "Best Regards"
+    }
+  },
+  "prompt": "You are a supportive assistant managing event inquiries.",
+  "initiationMessage": "Welcome to our service! How can we assist you today?",
+  "isActive": true,
+  "autopilot": true,
+  "messageChannel": "SMS",
+  "createdAt": "2025-01-02T10:15:00Z",
+  "updatedAt": "2025-01-02T10:15:00Z"
+}
+```
+</ResponseExample>

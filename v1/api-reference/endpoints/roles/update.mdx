@@ -1,0 +1,90 @@
+---
+title: "Update Role"
+api: "PUT /v1/api/roles-and-permissions/roles/{roleId}"
+description: "Update an existing role's name, description, or permissions."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="roleId" type="string" required>
+The unique identifier of the role to update.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string">
+Updated name for the role.
+</ParamField>
+
+<ParamField body="description" type="string">
+Updated description for the role.
+</ParamField>
+
+<ParamField body="permissions" type="array of strings">
+Updated array of permission ID strings. Each item must be a string (e.g., `"agent_view"`). Use the [List Permissions](/v1/api-reference/endpoints/roles/list-permissions) endpoint to retrieve available permission IDs.
+</ParamField>
+
+<ParamField body="userIds" type="array">
+Updated array of user IDs to assign.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="_id" type="string">
+Unique identifier for the role.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Updated name of the role.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+Updated description of the role.
+</ResponseField>
+
+<ResponseField name="permissions" type="array">
+Updated permissions array.
+</ResponseField>
+
+<RequestExample>
+```json
+{
+  "name": "Senior Manager",
+  "description": "Full access to everything including billing and settings",
+  "permissions": [
+    "agent_view",
+    "agent_create",
+    "agent_edit",
+    "agent_delete",
+    "call_history_view"
+  ]
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "name": "Senior Manager",
+  "description": "Full access to everything including billing and settings",
+  "permissions": [
+    { "key": "agent_view", "category": "agents" },
+    { "key": "agent_create", "category": "agents" },
+    { "key": "agent_edit", "category": "agents" },
+    { "key": "agent_delete", "category": "agents" },
+    { "key": "call_history_view", "category": "calls" }
+  ]
+}
+```
+</ResponseExample>

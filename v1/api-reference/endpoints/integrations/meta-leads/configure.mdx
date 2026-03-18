@@ -1,0 +1,74 @@
+---
+title: "Configure Meta Lead Ads"
+api: "POST /v1/api/meta-lead/configure/{flowId}"
+description: "Configure Meta Lead Ads integration for a specific call flow. When a new lead is received, it automatically triggers a call."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="flowId" type="string" required>
+The call flow ID to configure Meta Lead Ads for.
+</ParamField>
+
+## Request Body
+
+<ParamField body="clientId" type="string" required>
+Meta App client ID.
+</ParamField>
+
+<ParamField body="clientSecret" type="string" required>
+Meta App client secret.
+</ParamField>
+
+<ParamField body="userAccessToken" type="string" required>
+Meta user access token from the OAuth flow.
+</ParamField>
+
+<ParamField body="callDelaySeconds" type="number" default="0">
+Delay in seconds before calling a new lead.
+</ParamField>
+
+<ParamField body="selectedPages" type="array" required>
+Array of Facebook pages and lead forms to monitor.
+
+<Expandable title="properties">
+
+<ParamField body="pageId" type="string" required>
+Facebook page ID.
+</ParamField>
+
+<ParamField body="forms" type="array" required>
+Array of lead form IDs to monitor on this page.
+</ParamField>
+
+</Expandable>
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the configuration was successful.
+</ResponseField>
+
+<ResponseField name="webhookRegistered" type="boolean">
+Whether the webhook was successfully registered with Meta.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "webhookRegistered": true
+}
+```
+</ResponseExample>

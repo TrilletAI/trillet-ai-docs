@@ -1,0 +1,81 @@
+---
+title: "Update Phone Number Configuration"
+api: "PUT /v1/api/twilio/phone-numbers/{phoneNumberId}/config"
+description: "Update the call flow configuration for a phone number, including agent assignment, recording, and office hours."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="phoneNumberId" type="string" required>
+The unique identifier of the phone number.
+</ParamField>
+
+## Request Body
+
+<ParamField body="agentId" type="string">
+The call agent ID to assign to this phone number.
+</ParamField>
+
+<ParamField body="maxCallDuration" type="number">
+Maximum call duration in seconds.
+</ParamField>
+
+<ParamField body="recordingEnabled" type="boolean">
+Whether to enable call recording.
+</ParamField>
+
+<ParamField body="officeHours" type="object">
+Office hours configuration.
+
+<Expandable title="properties">
+
+<ParamField body="enabled" type="boolean">
+Whether office hours are enabled.
+</ParamField>
+
+<ParamField body="timezone" type="string">
+Timezone for office hours (e.g., "America/New_York").
+</ParamField>
+
+<ParamField body="schedule" type="object">
+Weekly schedule with day-specific hours.
+</ParamField>
+
+</Expandable>
+</ParamField>
+
+<ParamField body="transferCallerIdMode" type="string">
+Caller ID mode for transfers. Options: "agent", "customer".
+</ParamField>
+
+<ParamField body="metadataTags" type="array">
+Array of metadata tag strings to assign.
+</ParamField>
+
+<ParamField body="label" type="string">
+A label for the phone number.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the update was successful.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>

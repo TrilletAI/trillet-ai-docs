@@ -1,0 +1,35 @@
+---
+title: "Disconnect GoHighLevel"
+api: "DELETE /v1/api/crm/disconnect"
+description: "Disconnect GoHighLevel CRM integration from a call flow."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="pathwayId" type="string" required>
+The call flow pathway ID to disconnect GoHighLevel from.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the disconnection was successful.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>

@@ -1,0 +1,59 @@
+---
+title: "List Google Calendars"
+api: "GET /v1/api/gcal/calendars"
+description: "List all available Google Calendars for the connected account."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="pathwayId" type="string" required>
+The call flow pathway ID with the Google Calendar connection.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="calendars" type="array">
+Array of available calendars.
+
+<ResponseField name="id" type="string">
+Calendar ID.
+</ResponseField>
+
+<ResponseField name="summary" type="string">
+Calendar name/title.
+</ResponseField>
+
+<ResponseField name="primary" type="boolean">
+Whether this is the primary calendar.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "calendars": [
+    {
+      "id": "primary",
+      "summary": "John Doe",
+      "primary": true
+    },
+    {
+      "id": "appointments@company.com",
+      "summary": "Appointments",
+      "primary": false
+    }
+  ]
+}
+```
+</ResponseExample>

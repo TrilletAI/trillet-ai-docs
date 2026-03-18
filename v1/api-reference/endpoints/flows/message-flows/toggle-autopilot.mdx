@@ -1,0 +1,97 @@
+---
+title: "Toggle Autopilot"
+api: "PUT /v1/api/message-flows/{id}/toggle-autopilot"
+description: "Toggle the autopilot mode of an existing message flow."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique ID of the message flow where autopilot will be toggled.
+</ParamField>
+
+<ParamField type="string" body="" default="s" optional hidden>
+  An optional, empty object as the default body.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the message flow where autopilot was toggled.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace containing the message flow.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the message flow.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A description of what the message flow is designed to handle.
+</ResponseField>
+
+<ResponseField name="agent" type="string">
+  The identifier of the agent associated with this message flow.
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  The system or initial prompt set for the AI agent in the message flow.
+</ResponseField>
+
+<ResponseField name="initiationMessage" type="string">
+  The initial message that triggers the message flow. This is crucial for the generateMessage functionality.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Indicates whether the message flow is currently active.
+</ResponseField>
+
+<ResponseField name="autopilot" type="boolean">
+  Shows the current state of autopilot for this message flow after toggling. If true, autopilot is now enabled; if false, it is now disabled.
+</ResponseField>
+
+<ResponseField name="messageChannel" type="string">
+  The type of communication channel used by the message flow, such as "SMS".
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  The timestamp when the message flow was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  The timestamp the last time the message flow was updated.
+</ResponseField>
+
+
+<ResponseExample>
+```json
+{
+  "_id": "1234567890abcdef12345678",
+  "workspaceId": "abcdef1234567890abcdef12",
+  "name": "SampleFlow",
+  "description": "Sample description for the flow.",
+  "agent": "0987654321fedcba09876543",
+  "prompt": "You are a helpful assistant.",
+  "initiationMessage": "Hello!",
+  "isActive": true,
+  "autopilot": true,
+  "messageChannel": "SMS",
+  "createdAt": "2025-01-01T12:00:00.000Z",
+  "updatedAt": "2025-01-15T08:30:00.000Z"
+}
+
+```
+</ResponseExample>

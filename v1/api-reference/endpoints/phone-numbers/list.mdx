@@ -1,0 +1,73 @@
+---
+title: "List Phone Numbers"
+api: "GET /v1/api/twilio/user-phone-numbers"
+description: "Retrieve all phone numbers associated with your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="phoneNumbers" type="array">
+Array of phone number objects.
+
+<ResponseField name="_id" type="string">
+Unique identifier for the phone number record.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+The phone number in E.164 format (e.g., +14155551234).
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+The telephony provider (e.g., "twilio", "sip").
+</ResponseField>
+
+<ResponseField name="country" type="string">
+Country code of the phone number (e.g., "US", "AU").
+</ResponseField>
+
+<ResponseField name="type" type="string">
+Type of phone number (e.g., "local", "tollFree", "mobile").
+</ResponseField>
+
+<ResponseField name="status" type="string">
+Current status of the phone number.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+Workspace ID associated with the phone number.
+</ResponseField>
+
+<ResponseField name="label" type="string">
+Optional label for the phone number.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "phoneNumbers": [
+    {
+      "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+      "phoneNumber": "+14155551234",
+      "provider": "twilio",
+      "country": "US",
+      "type": "local",
+      "status": "active",
+      "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+      "label": "Sales Line"
+    }
+  ]
+}
+```
+</ResponseExample>

@@ -1,0 +1,448 @@
+---
+title: "Update Call Flow"
+api: "PUT /v1/api/call-flows/{id}"
+description: "Update an existing call flow."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique ID of the call flow to update.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string">
+New name for the flow.
+</ParamField>
+
+<ParamField body="description" type="string">
+Updated description for the call flow (e.g., "Updated description for inbound calls").
+</ParamField>
+
+<ParamField body="direction" type="string" enum={['outbound', 'bidirectional']}>
+The direction of the call flow. 'outbound' or 'bidirectional'
+</ParamField>
+
+<ParamField body="isActive" type="boolean">
+Whether the call flow is currently active.
+</ParamField>
+
+<ParamField body="isGlobal" type="boolean">
+Whether this is a global call flow (requires special permissions).
+</ParamField>
+
+<ParamField body="promptType" type="string" required>
+The type of prompt used in the call flow "simple".
+</ParamField>
+
+<ParamField body="prompt" type="string">
+The primary prompt for user interaction (used when promptType is 'simple').
+</ParamField>
+
+<ParamField body="welcomeMessage" type="string" enum={['user_initiated', 'ai_dynamic', 'ai_custom']} default="user_initiated">
+Type of welcome message for the call flow. Possible values: “user_initiated”, “ai_dynamic”, “ai_custom”. Defaults to “user_initiated”.
+</ParamField>
+
+<ParamField body="customWelcomeMessage" type="string">
+Custom welcome message text (used when welcomeMessage is 'ai_custom').
+</ParamField>
+
+<ParamField body="dynamicVariableCollections" type="array">
+Collections of dynamic variables for the call flow.
+<Expandable title="dynamicVariableCollections">
+  <ParamField body="id" type="string" required>
+    Unique identifier for the variable collection.
+  </ParamField>
+  <ParamField body="name" type="string" required>
+    Name of the variable collection.
+  </ParamField>
+  <ParamField body="isDefault" type="boolean" default="false">
+    Whether this is the default variable collection.
+  </ParamField>
+  <ParamField body="variables" type="array">
+    Array of key-value pairs.
+    <Expandable title="variables">
+      <ParamField body="key" type="string">
+        Variable key name.
+      </ParamField>
+      <ParamField body="value" type="string">
+        Variable value.
+      </ParamField>
+    </Expandable>
+  </ParamField>
+</Expandable>
+</ParamField>
+
+<ParamField body="settings" type="object">
+Configuration settings for the call flow.
+<Expandable title="settings">
+  <ParamField body="enableHumanLikeVoiceAndTone" type="boolean">
+    Whether to enable human-like voice and tone.
+  </ParamField>
+  <ParamField body="welcomeMessageDelay" type="number">
+    Delay in seconds before playing the welcome message.
+  </ParamField>
+  <ParamField body="customerLocation" type="string">
+    Default customer location (e.g., "new york").
+  </ParamField>
+  <ParamField body="utilizePriorCallsContext" type="boolean">
+    Whether to use context from previous calls.
+  </ParamField>
+
+  <ParamField body="responseSettings" type="object">
+    <Expandable title="responseSettings">
+      <ParamField body="delay" type="number">
+        Delay (in seconds) before responding.
+      </ParamField>
+      <ParamField body="workingHours" type="object">
+        <Expandable title="workingHours">
+          <ParamField body="enabled" type="boolean">
+            Whether working hours logic is enabled.
+          </ParamField>
+          <ParamField body="start" type="string">
+            Start time for working hours, e.g., "08:00".
+          </ParamField>
+          <ParamField body="end" type="string">
+            End time for working hours, e.g., "20:00".
+          </ParamField>
+          <ParamField body="timezone" type="string">
+            Timezone for working hours, e.g., "America/New_York".
+          </ParamField>
+          <ParamField body="outOfHoursMessage" type="string">
+            Automated reply for out-of-hours calls.
+          </ParamField>
+        </Expandable>
+      </ParamField>
+    </Expandable>
+  </ParamField>
+
+  <ParamField body="security" type="object">
+    <Expandable title="security">
+      <ParamField body="hipaaCompliance" type="boolean">
+        Whether HIPAA compliance is required. When enabled, automatically disables call recording.
+      </ParamField>
+      <ParamField body="publicAccess" type="boolean">
+        Whether public access is allowed.
+      </ParamField>
+    </Expandable>
+  </ParamField>
+
+  <ParamField body="callSetting" type="object">
+    <Expandable title="callSetting">
+      <ParamField body="maxCallDuration" type="number">
+        Maximum call duration (in seconds).
+      </ParamField>
+      <ParamField body="endCallOnSilence" type="number">
+        Timeout (in seconds) for ending a call if no audio is detected.
+      </ParamField>
+      <ParamField body="trilletVoiceGuard" type="boolean">
+        Whether to enable Trillet voice guard protection.
+      </ParamField>
+      <ParamField body="reminderMessages" type="array">
+        Array of reminder messages to be played during calls.
+      </ParamField>
+    </Expandable>
+  </ParamField>
+
+  <ParamField body="knowledgeBaseFiles" type="array">
+    Array of knowledge base files associated with the call flow.
+    <Expandable title="knowledgeBaseFiles">
+      <ParamField body="filename" type="string">
+        Name of the knowledge base file.
+      </ParamField>
+      <ParamField body="key" type="string">
+        Storage key for the file.
+      </ParamField>
+      <ParamField body="url" type="string">
+        URL to access the file.
+      </ParamField>
+    </Expandable>
+  </ParamField>
+
+  <ParamField body="knowledgeBases" type="array">
+    Array of knowledge base IDs referenced by the call flow.
+  </ParamField>
+
+  <ParamField body="transfers" type="array">
+    Array of transfer configurations for the call flow.
+  </ParamField>
+
+</Expandable>
+</ParamField>
+
+<ParamField body="webhooks" type="array">
+List of webhooks to be added to the call flow. A new webhook will be created for each entry in the array, regardless of the name or if it already exists.
+<Expandable title="webhooks">
+  <ParamField body="name" type="string" required>
+    The name of the webhook (e.g., "Booking").
+  </ParamField>
+  <ParamField body="description" type="string">
+    A brief description of what this webhook does (e.g., "Booking request webhook").
+  </ParamField>
+  <ParamField body="url" type="string" required>
+    The URL to which the webhook will send data (e.g., "https://example.com/webhook/agent").
+  </ParamField>
+  <ParamField body="method" type="string" enum={['GET', 'POST', 'PUT', 'DELETE']} default="POST">
+    HTTP method for the webhook request.
+  </ParamField>
+  <ParamField body="headers" type="object">
+    Headers to be included in the webhook request.
+  </ParamField>
+  <ParamField body="body" type="string">
+    The webhook request body. Can include variable placeholders.
+  </ParamField>
+  <ParamField body="variables" type="array">
+    A list of variables used in the webhook body for dynamic content generation.
+    <Expandable title="variables">
+      <ParamField body="name" type="string" required>
+        The name of the variable.
+      </ParamField>
+      <ParamField body="description" type="string" required>
+        A description of the variable.
+      </ParamField>
+    </Expandable>
+  </ParamField>
+  <ParamField body="responseVariables" type="array">
+    Variables to extract from the webhook response.
+    <Expandable title="responseVariables">
+      <ParamField body="name" type="string">
+        Name of the response variable.
+      </ParamField>
+      <ParamField body="path" type="string">
+        JSON path to extract the value from the response.
+      </ParamField>
+      <ParamField body="description" type="string">
+        Description of the response variable.
+      </ParamField>
+    </Expandable>
+  </ParamField>
+  <ParamField body="isTesting" type="boolean">
+    Whether this webhook is in testing mode.
+  </ParamField>
+  <ParamField body="testResponse" type="string">
+    Mock response for testing purposes.
+  </ParamField>
+  <ParamField body="textToSpeak" type="string">
+    Text to be spoken when this webhook is triggered.
+  </ParamField>
+</Expandable>
+</ParamField>
+
+<Note>
+These `endCallOnSilence` and `maxCallDuration` settings are recommended to be sent for optimal API performance, though they are not strictly required.
+</Note>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the newly created call flow.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the call flow has been created.
+</ResponseField>
+
+<ResponseField name="folderId" type="string">
+  The identifier of the folder where the call flow is organized.
+</ResponseField>
+
+<ResponseField name="isGlobal" type="boolean">
+  Whether this is a global call flow.
+</ResponseField>
+
+<ResponseField name="isPreConfigured" type="boolean">
+  Whether this call flow is pre-configured.
+</ResponseField>
+
+<ResponseField name="preConfiguredWorkspaceId" type="string">
+  Workspace ID for pre-configured flows.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name given to the call flow.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  The direction configuration of the call flow; can be "inbound", "outbound", or "bidirectional".
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A description of what the call flow is designed to handle.
+</ResponseField>
+
+<ResponseField name="agent" type="string">
+  The identifier of the agent associated with this call flow.
+</ResponseField>
+
+<ResponseField name="promptType" type="string">
+  Indicates whether the call flow uses "simple" or "flow" based configuration.
+</ResponseField>
+
+<ResponseField name="welcomeMessage" type="string">
+  Welcome message type configuration.
+</ResponseField>
+
+<ResponseField name="customWelcomeMessage" type="string">
+  Custom welcome message text if configured.
+</ResponseField>
+
+<ResponseField name="flowData" type="object">
+  The configuration of nodes and edges that define the call routing logic within the flow.
+  <ResponseField name="nodes" type="array">
+    Detailed configuration of the nodes within the call flow.
+  </ResponseField>
+  <ResponseField name="edges" type="array">
+    Configurations of the edges connecting nodes within the call flow.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  The initial or system prompt used in the call flow.
+</ResponseField>
+
+<ResponseField name="currentPromptId" type="string">
+  ID of the current active prompt version.
+</ResponseField>
+
+<ResponseField name="gemini_prompt" type="string">
+  Sanitized version of the prompt for Gemini processing.
+</ResponseField>
+
+<ResponseField name="startNodeId" type="string">
+  ID of the starting node for flow-based configurations.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Indicates whether the call flow is currently active or inactive.
+</ResponseField>
+
+<ResponseField name="agentWebhookUrl" type="string">
+  Webhook URL for agent-related events.
+</ResponseField>
+
+<ResponseField name="inboundWebhookUrl" type="string">
+  Webhook URL for inbound call events.
+</ResponseField>
+
+<ResponseField name="dynamicVariableCollections" type="array">
+  Array of dynamic variable collections configured for the call flow.
+</ResponseField>
+
+<ResponseField name="locations" type="array">
+  Array of location objects for visual flow positioning.
+</ResponseField>
+
+<ResponseField name="webhooks" type="array">
+  Array of configured webhooks with their complete configuration.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  Configuration settings for various aspects of the call flow, including welcome messages, webhooks, knowledge bases, call settings, and security.
+  <ResponseField name="security" type="object">
+    Security settings with processed values.
+    <ResponseField name="hipaaCompliance" type="boolean">
+      HIPAA compliance status (processed from securityOptOut).
+    </ResponseField>
+    <ResponseField name="publicAccess" type="boolean">
+      Public access configuration.
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the call flow was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the call flow was last updated.
+</ResponseField>
+
+
+<ResponseExample>
+```json
+{
+  "_id": "676b8e123456789012345678",
+  "workspaceId": "6764d172953253138a3a70f4",
+  "folderId": null,
+  "isGlobal": false,
+  "isPreConfigured": false,
+  "preConfiguredWorkspaceId": null,
+  "name": "Customer Support Flow",
+  "direction": "inbound",
+  "description": "Handles inbound support calls",
+  "agent": "676b8e123456789012345679",
+  "promptType": "simple",
+  "welcomeMessage": "user_initiated",
+  "customWelcomeMessage": "",
+  "flowData": {
+    "nodes": [
+      {
+        "id": "node1",
+        "type": "start",
+        "data": {
+          "prompt": "Welcome to our support line. How can I help you?"
+        }
+      }
+    ],
+    "edges": []
+  },
+  "prompt": "Keep the conversation short and friendly.",
+  "currentPromptId": "676b8e123456789012345680",
+  "promptVersions": [
+    {
+      "_id": "676b8e123456789012345680",
+      "name": "Prompt Version - 1/15/2025, 3:00:00 PM",
+      "prompt": "Keep the conversation short and friendly.",
+      "metadata": {
+        "notes": ""
+      },
+      "createdAt": "2025-01-15T15:00:00.000Z",
+      "updatedAt": "2025-01-15T15:00:00.000Z"
+    }
+  ],
+  "gemini_prompt": "Keep the conversation short and friendly.",
+  "startNodeId": null,
+  "isActive": true,
+  "agentWebhookUrl": "",
+  "inboundWebhookUrl": "",
+  "dynamicVariableCollections": [],
+  "locations": [],
+  "webhooks": [],
+  "settings": {
+    "welcomeMessage": "user_initiated",
+    "customWelcomeMessage": "",
+    "enableHumanLikeVoiceAndTone": false,
+    "welcomeMessageDelay": 0,
+    "webhooks": {
+      "agent": "",
+      "inbound": ""
+    },
+    "customerLocation": "new york",
+    "transfers": [],
+    "knowledgeBases": [],
+    "utilizePriorCallsContext": false,
+    "callSettings": {
+      "trilletVoiceGuard": true,
+      "reminderMessages": []
+    },
+    "security": {
+      "hipaaCompliance": false,
+      "publicAccess": false
+    }
+  },
+  "createdAt": "2025-01-15T15:00:00.000Z",
+  "updatedAt": "2025-01-15T15:00:00.000Z"
+}
+```
+</ResponseExample>

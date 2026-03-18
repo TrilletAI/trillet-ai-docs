@@ -1,58 +1,296 @@
 {
-  "$schema": "https://jamdesk.com/docs.json",
-  "name": "Documentation",
-  "description": "Your documentation site powered by Jamdesk",
+  "$schema": "https://www.jamdesk.com/docs.json",
   "theme": "jam",
+  "name": "Trillet AI",
   "colors": {
-    "primary": "#6366F1",
-    "light": "#818CF8",
-    "dark": "#4F46E5"
+    "primary": "#0062E9",
+    "light": "#27A3FD",
+    "dark": "#0062E9"
+  },
+  "favicon": "favicon.svg",
+  "logo": {
+    "light": "/public/logo/Trillet-logo-light.png",
+    "dark": "/public/logo/Trillet-logo-dark.svg",
+    "href": "https://docs.trillet.ai/"
+  },
+  "api": {
+    "mdx": {
+      "server": "https://api.trillet.ai",
+      "auth": {
+        "method": "key",
+        "name": "x-api-key"
+      }
+    }
+  },
+  "appearance": {
+    "default": "light",
+    "strict": false
+  },
+  "background": {
+    "decoration": "windows",
+    "color": {
+      "light": "#f5f8ff",
+      "dark": "#000718"
+    }
   },
   "navbar": {
+    "links": [
+      {
+        "label": "Join Community",
+        "href": "https://discord.com/invite/4qbWtkbT93"
+      }
+    ],
     "primary": {
       "type": "button",
-      "label": "Get Started",
-      "href": "/introduction"
+      "label": "Get Started!",
+      "href": "https://app.trillet.ai"
+    }
+  },
+  "search": {
+    "prompt": "Expedite Development - Search Trillet..."
+  },
+  "seo": {
+    "indexing": "all"
+  },
+  "footer": {
+    "socials": {
+      "discord": "https://discord.com/invite/4qbWtkbT93",
+      "github": "https://github.com/TrilletAI",
+      "linkedin": "https://linkedin.com/company/trillet-ai"
     }
   },
   "navigation": {
     "tabs": [
       {
-        "tab": "Docs",
+        "tab": "Documentation",
         "icon": "book-open",
         "groups": [
           {
-            "group": "Get Started",
+            "group": "Getting Started",
+            "icon": "play",
             "pages": [
-              "introduction",
-              "quickstart"
+              "documentation/introduction",
+              "documentation/quickstart",
+              "documentation/best-practices",
+              "documentation/on-premise",
+              "documentation/platform-integrations",
+              "documentation/inbound-call-webhook"
             ]
           },
           {
-            "group": "Writing Content",
+            "group": "Web Integration",
+            "icon": "browser",
             "pages": [
-              "writing/pages",
-              "writing/components",
-              "writing/code-blocks"
+              "documentation/web-integration/text-agent",
+              "documentation/web-integration/voice-agent"
             ]
           }
         ]
       },
       {
-        "tab": "Components",
-        "icon": "puzzle-piece",
+        "tab": "Change Log",
+        "icon": "clock",
         "groups": [
           {
-            "group": "Components",
+            "group": "Changes",
+            "icon": "clock-rotate-left",
             "pages": [
-              "components/cards",
-              "components/callouts",
-              "components/tabs-and-accordions",
-              "components/steps"
+              "changelog/changelog"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference V1",
+        "icon": "square-terminal",
+        "groups": [
+          {
+            "group": "API Reference V1",
+            "icon": "square-terminal",
+            "pages": [
+              "v1/api-reference/introduction",
+              "v1/api-reference/authentication"
+            ]
+          },
+          {
+            "group": "Workspaces",
+            "icon": "briefcase",
+            "pages": [
+              "v1/api-reference/endpoints/workspace/create-workspace",
+              "v1/api-reference/endpoints/workspace/invite-team-member",
+              "v1/api-reference/endpoints/workspace/get-workspace-by-id",
+              "v1/api-reference/endpoints/workspace/get-pending-invitation",
+              "v1/api-reference/endpoints/workspace/update-name",
+              "v1/api-reference/endpoints/workspace/delete-workspace"
+            ]
+          },
+          {
+            "group": "Calls",
+            "icon": "phone-volume",
+            "pages": [
+              "v1/api-reference/endpoints/calls/initiate-call",
+              "v1/api-reference/endpoints/calls/call-history/export",
+              "v1/api-reference/endpoints/calls/call-history/list",
+              "v1/api-reference/endpoints/calls/call-history/get",
+              "v1/api-reference/endpoints/calls/call-history/get-phoneNumber",
+              "v1/api-reference/endpoints/calls/call-history/metrics",
+              "v1/api-reference/endpoints/calls/get-recording"
+            ]
+          },
+          {
+            "group": "Batch Calls",
+            "icon": "phone-intercom",
+            "pages": [
+              "v1/api-reference/endpoints/calls/batch/overview",
+              "v1/api-reference/endpoints/calls/batch/start",
+              "v1/api-reference/endpoints/calls/batch/list-calls",
+              "v1/api-reference/endpoints/calls/batch/get-status",
+              "v1/api-reference/endpoints/calls/batch/get-progress",
+              "v1/api-reference/endpoints/calls/batch/get-call-status",
+              "v1/api-reference/endpoints/calls/batch/cancel"
+            ]
+          },
+          {
+            "group": "Telephony",
+            "icon": "phone-office",
+            "pages": [
+              "v1/api-reference/endpoints/telephony/register-externalNumber",
+              "v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber",
+              "v1/api-reference/endpoints/telephony/unbind-call-to-phoneNumber",
+              "v1/api-reference/endpoints/phone-numbers/release",
+              "v1/api-reference/endpoints/phone-numbers/list"
+            ]
+          },
+          {
+            "group": "Conversations",
+            "icon": "comments",
+            "pages": [
+              "v1/api-reference/endpoints/conversations/generateMessage",
+              "v1/api-reference/endpoints/conversations/messageAction",
+              "v1/api-reference/endpoints/conversations/editCustomerDetails",
+              "v1/api-reference/endpoints/conversations/getAll",
+              "v1/api-reference/endpoints/conversations/getConvosByFlow",
+              "v1/api-reference/endpoints/conversations/getById",
+              "v1/api-reference/endpoints/conversations/deleteMessage",
+              "v1/api-reference/endpoints/conversations/deleteConvo"
+            ]
+          },
+          {
+            "group": "Folder Management",
+            "icon": "folder",
+            "pages": [
+              "v1/api-reference/endpoints/folder/create-folder",
+              "v1/api-reference/endpoints/folder/add-flow-to-folder",
+              "v1/api-reference/endpoints/folder/get-all-folders",
+              "v1/api-reference/endpoints/folder/get-folder-details",
+              "v1/api-reference/endpoints/folder/update-folder",
+              "v1/api-reference/endpoints/folder/remove-flow-from-folder",
+              "v1/api-reference/endpoints/folder/delete-folder"
+            ]
+          },
+          {
+            "group": "Call Flows",
+            "icon": "diagram-next",
+            "pages": [
+              "v1/api-reference/endpoints/flows/call-flows/create",
+              "v1/api-reference/endpoints/flows/call-flows/list",
+              "v1/api-reference/endpoints/flows/call-flows/get",
+              "v1/api-reference/endpoints/flows/call-flows/update",
+              "v1/api-reference/endpoints/flows/call-flows/delete"
+            ]
+          },
+          {
+            "group": "Message Flows",
+            "icon": "diagram-project",
+            "pages": [
+              "v1/api-reference/endpoints/flows/message-flows/create",
+              "v1/api-reference/endpoints/flows/message-flows/list",
+              "v1/api-reference/endpoints/flows/message-flows/get",
+              "v1/api-reference/endpoints/flows/message-flows/update",
+              "v1/api-reference/endpoints/flows/message-flows/toggle-autopilot",
+              "v1/api-reference/endpoints/flows/message-flows/delete"
+            ]
+          },
+          {
+            "group": "Call Agents",
+            "icon": "user-check",
+            "pages": [
+              "v1/api-reference/endpoints/agents/call/create",
+              "v1/api-reference/endpoints/agents/call/list",
+              "v1/api-reference/endpoints/agents/call/get",
+              "v1/api-reference/endpoints/agents/call/update",
+              "v1/api-reference/endpoints/agents/call/delete"
+            ]
+          },
+          {
+            "group": "Omni Flow Agents (Message)",
+            "icon": "users",
+            "pages": [
+              "v1/api-reference/endpoints/agents/omniflow/create",
+              "v1/api-reference/endpoints/agents/omniflow/list",
+              "v1/api-reference/endpoints/agents/omniflow/get",
+              "v1/api-reference/endpoints/agents/omniflow/update",
+              "v1/api-reference/endpoints/agents/omniflow/delete"
+            ]
+          },
+          {
+            "group": "Knowledge Base",
+            "icon": "book",
+            "pages": [
+              "v1/api-reference/endpoints/knowledge-base/create",
+              "v1/api-reference/endpoints/knowledge-base/upload-file",
+              "v1/api-reference/endpoints/knowledge-base/add-text",
+              "v1/api-reference/endpoints/knowledge-base/list",
+              "v1/api-reference/endpoints/knowledge-base/get",
+              "v1/api-reference/endpoints/knowledge-base/update",
+              "v1/api-reference/endpoints/knowledge-base/delete"
+            ]
+          },
+          {
+            "group": "Active Calls",
+            "icon": "phone-flip",
+            "pages": [
+              "v1/api-reference/endpoints/active-calls/list",
+              "v1/api-reference/endpoints/active-calls/get",
+              "v1/api-reference/endpoints/active-calls/get-insights"
+            ]
+          },
+          {
+            "group": "Recordings",
+            "icon": "circle-dot",
+            "pages": [
+              "v1/api-reference/endpoints/recordings/get"
             ]
           }
         ]
       }
     ]
-  }
+  },
+  "anchors": [
+    {
+      "name": "Documentation",
+      "href": "documentation",
+      "icon": "book-open-cover"
+    },
+    {
+      "name": "Community",
+      "href": "https://discord.com/invite/4qbWtkbT93",
+      "icon": "discord"
+    },
+    {
+      "name": "Enterprise",
+      "href": "https://form.typeform.com/to/qRRENIBp",
+      "icon": "building"
+    },
+    {
+      "name": "Blog",
+      "href": "https://www.trillet.ai/blogs",
+      "icon": "newspaper"
+    },
+    {
+      "name": "Change Log",
+      "href": "changelog",
+      "icon": "clock-rotate-left"
+    }
+  ]
 }

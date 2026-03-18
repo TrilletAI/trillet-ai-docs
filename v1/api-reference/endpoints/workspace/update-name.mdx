@@ -1,0 +1,51 @@
+---
+title: "Update Workspace Name"
+api: "PUT /v1/api/workspaces/{workspaceId}"
+description: "Update the name of an existing workspace. Only the owner of the workspace is authorized to perform this action."
+---
+
+### Path Parameters
+
+<ParamField path="workspaceId" type="string" required>
+  The unique identifier of the workspace to update.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The workspace ID (should match the `workspaceId` path parameter).
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  The new name for the workspace.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier of the workspace.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The updated name of the workspace.
+</ResponseField>
+
+
+<ResponseField name="initials" type="string">
+  The initials assigned to the workspace.
+</ResponseField>
+
+
+<ResponseField name="teamMembers" type="array">
+  List of team members associated with the workspace.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the workspace was created (ISO 8601 format).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the workspace was last updated (ISO 8601 format).
+</ResponseField>

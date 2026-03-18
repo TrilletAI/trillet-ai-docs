@@ -1,0 +1,56 @@
+---
+title: "Invite Team Member"
+api: "POST /v1/api/workspaces/{workspaceId}/invite"
+description: "Invite a new team member to join a workspace. Only workspace owners can send invitations."
+---
+
+### Path Parameters
+
+<ParamField path="workspaceId" type="string" required>
+  The unique identifier of the workspace where the invitation is being sent.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The unique identifier of the workspace being accessed (should match the path parameter `:workspaceId`).
+</ParamField>
+
+
+### Request Body
+
+<ParamField body="email" type="string" required>
+  The email address of the person to invite.
+</ParamField>
+
+<ParamField body="role" type="string" required>
+  The role to assign to the invited user ("admin", "editor", "viewer").
+</ParamField>
+
+### Description
+
+This endpoint allows a **workspace owner** to invite a new team member to their workspace by email.
+
+- The system checks for any existing pending invitation for the same email to prevent duplicates.
+- A new **invitation record** is created and stored with a 7-day expiration.
+- An invitation email is sent to the invitee with a secure link to accept the invitation.
+
+If the workspace is configured in **agency mode** with white-label settings, the invitation email will be sent using the workspace's verified custom email (if available).
+
+### Invitation Email Behavior
+
+- The email contains the inviter’s email, the workspace name, and a secure invitation acceptance link.
+- If the workspace has a **white-label custom domain**, the invitation link will use that domain.
+- If no custom domain is available, the link will use the default frontend URL.
+
+The invitation expires automatically after **7 days** if not accepted.
+
+### Response Fields
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the invitation was successfully sent.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A message confirming the outcome of the invitation process.
+</ResponseField>

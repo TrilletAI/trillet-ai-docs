@@ -1,0 +1,52 @@
+---
+title: "Get Workspace by ID"
+api: "GET /v1/api/workspaces/{workspaceId}"
+description: "Retrieve detailed information about a specific workspace where the authenticated user is either the owner or a team member."
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="workspaceId" type="string" required>
+  The unique identifier of the workspace to retrieve.
+</ParamField>
+
+### Description
+
+This endpoint returns the details of a specific workspace if the authenticated user is authorized to access it. The user must be either:
+- The **owner** of the workspace, or
+- A **team member** of the workspace (internal or external).
+
+If the workspace is not found or the user lacks permission, a `404 Not Found` is returned.
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  Unique identifier of the workspace.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Name of the workspace.
+</ResponseField>
+
+<ResponseField name="initials" type="string">
+  Initials of the workspace.
+</ResponseField>
+
+
+<ResponseField name="teamMembers" type="array">
+  List of team members associated with the workspace.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  ISO 8601 timestamp when the workspace was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  ISO 8601 timestamp when the workspace was last updated.
+</ResponseField>

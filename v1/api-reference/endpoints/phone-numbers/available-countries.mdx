@@ -1,0 +1,47 @@
+---
+title: "Get Available Countries"
+api: "GET /v1/api/twilio/available-countries"
+description: "Retrieve a list of countries where phone numbers are available for purchase."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="countries" type="array">
+Array of available countries.
+
+<ResponseField name="code" type="string">
+Country code (e.g., "US", "CA", "AU", "GB").
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Full country name.
+</ResponseField>
+
+<ResponseField name="available" type="boolean">
+Whether phone numbers are currently available in this country.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "countries": [
+    { "code": "US", "name": "United States", "available": true },
+    { "code": "CA", "name": "Canada", "available": true },
+    { "code": "AU", "name": "Australia", "available": true },
+    { "code": "GB", "name": "United Kingdom", "available": true }
+  ]
+}
+```
+</ResponseExample>

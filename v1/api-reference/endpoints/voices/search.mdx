@@ -1,0 +1,110 @@
+---
+title: "Search Voices"
+api: "GET /v1/api/voices/search"
+description: "Search available voices by name, category, gender, accent, age, use case, or provider."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="name" type="string">
+Search voices by name.
+</ParamField>
+
+<ParamField query="category" type="string">
+Filter by voice category.
+</ParamField>
+
+<ParamField query="gender" type="string">
+Filter by gender (e.g., "male", "female").
+</ParamField>
+
+<ParamField query="accent" type="string">
+Filter by accent (e.g., "american", "british", "australian").
+</ParamField>
+
+<ParamField query="age" type="string">
+Filter by age range (e.g., "young", "middle_aged", "old").
+</ParamField>
+
+<ParamField query="useCase" type="string">
+Filter by use case (e.g., "conversational", "narration").
+</ParamField>
+
+<ParamField query="provider" type="string">
+Filter by provider (e.g., "rime", "elevenlabs", "hume", "cartesia").
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="voices" type="array">
+Array of matching voice objects.
+
+<ResponseField name="_id" type="string">
+Unique identifier for the voice.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Display name of the voice.
+</ResponseField>
+
+<ResponseField name="voiceId" type="string">
+Voice ID used in TTS configuration.
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+TTS provider for this voice.
+</ResponseField>
+
+<ResponseField name="gender" type="string">
+Gender of the voice.
+</ResponseField>
+
+<ResponseField name="accent" type="string">
+Accent of the voice.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+Description of the voice characteristics.
+</ResponseField>
+
+<ResponseField name="previewUrl" type="string">
+URL to a voice preview audio sample.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+[
+  {
+    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+    "name": "Wildflower",
+    "voiceId": "mistv2_Wildflower",
+    "provider": "rime",
+    "gender": "female",
+    "accent": "american",
+    "description": "Alt Female, Smart",
+    "previewUrl": "https://example.com/preview.mp3"
+  },
+  {
+    "_id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "name": "Brook",
+    "voiceId": "mistv2_Brook",
+    "provider": "rime",
+    "gender": "male",
+    "accent": "american",
+    "description": "Male, Friendly"
+  }
+]
+```
+</ResponseExample>

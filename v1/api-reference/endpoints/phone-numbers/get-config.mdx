@@ -1,0 +1,77 @@
+---
+title: "Get Phone Number Configuration"
+api: "GET /v1/api/twilio/phone-numbers/{phoneNumberId}/config"
+description: "Retrieve the call flow and message flow configuration for a phone number."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="phoneNumberId" type="string" required>
+The unique identifier of the phone number.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="phoneNumberId" type="string">
+The phone number ID.
+</ResponseField>
+
+<ResponseField name="agentId" type="string">
+The call agent assigned to this phone number.
+</ResponseField>
+
+<ResponseField name="flowType" type="string">
+Type of flow assigned ("call" or "message").
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+Call direction configuration ("inbound", "outbound", "bidirectional").
+</ResponseField>
+
+<ResponseField name="status" type="string">
+Configuration status.
+</ResponseField>
+
+<ResponseField name="recording" type="boolean">
+Whether call recording is enabled.
+</ResponseField>
+
+<ResponseField name="officeHours" type="object">
+Office hours configuration for the phone number.
+</ResponseField>
+
+<ResponseField name="transferCallerIdMode" type="string">
+Caller ID mode for call transfers.
+</ResponseField>
+
+<ResponseField name="metadataTags" type="array">
+Array of metadata tags assigned to this phone number.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "phoneNumberId": "665a1b2c3d4e5f6a7b8c9d0e",
+  "agentId": "665a1b2c3d4e5f6a7b8c9d0f",
+  "flowType": "call",
+  "direction": "bidirectional",
+  "status": "active",
+  "recording": true,
+  "officeHours": {
+    "enabled": false
+  },
+  "transferCallerIdMode": "agent",
+  "metadataTags": ["sales", "priority"]
+}
+```
+</ResponseExample>

@@ -1,0 +1,53 @@
+---
+title: "Get Call Insights"
+api: "GET /v2/api/active-calls/{roomName}/insights"
+description: "Get AI-generated insights for an active call, including sentiment analysis and key topics."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="roomName" type="string" required>
+The LiveKit room name of the active call.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="sentiment" type="string">
+Overall sentiment of the conversation (e.g., "positive", "neutral", "negative").
+</ResponseField>
+
+<ResponseField name="topics" type="array">
+Key topics discussed in the call.
+</ResponseField>
+
+<ResponseField name="summary" type="string">
+AI-generated summary of the conversation so far.
+</ResponseField>
+
+<ResponseField name="suggestions" type="array">
+AI-generated suggestions for the agent.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "sentiment": "positive",
+  "topics": ["account inquiry", "billing"],
+  "summary": "Customer is asking about their recent invoice and payment options.",
+  "suggestions": [
+    "Offer to email a detailed invoice breakdown",
+    "Mention the available payment plans"
+  ]
+}
+```
+</ResponseExample>

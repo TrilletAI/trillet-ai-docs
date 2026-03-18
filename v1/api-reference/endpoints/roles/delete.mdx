@@ -1,0 +1,35 @@
+---
+title: "Delete Role"
+api: "DELETE /v1/api/roles-and-permissions/roles/{roleId}"
+description: "Delete a role from your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="roleId" type="string" required>
+The unique identifier of the role to delete.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the deletion was successful.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>

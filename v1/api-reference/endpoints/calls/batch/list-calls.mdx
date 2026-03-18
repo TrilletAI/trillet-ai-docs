@@ -1,0 +1,197 @@
+---
+title: "List Batch Calls"
+api: "GET /v1/api/batch-calls/{batchId}/calls"
+description: "Get a paginated list of all calls within a batch operation with optional status filtering"
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The unique identifier of the batch call operation
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination (1-based)
+</ParamField>
+
+<ParamField query="limit" type="number" default="20">
+  Number of results per page (maximum 100)
+</ParamField>
+
+<ParamField query="status" type="string" default="all">
+  Filter calls by status
+  - `all` - Return all calls regardless of status
+  - `waiting` - Only calls waiting in queue
+  - `active` - Only calls currently in progress
+  - `completed` - Only successfully completed calls
+  - `failed` - Only failed calls
+</ParamField>
+
+### Response
+
+<ResponseField name="calls" type="array">
+  Array of call objects in the batch
+  <Expandable title="Call Object">
+    <ResponseField name="jobId" type="string">
+      Unique identifier of the call job
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Current status of the call
+    </ResponseField>
+    <ResponseField name="phone_number" type="string">
+      Phone number that was called
+    </ResponseField>
+    <ResponseField name="startTime" type="number">
+      Timestamp when the call started (if applicable)
+    </ResponseField>
+    <ResponseField name="endTime" type="number">
+      Timestamp when the call ended (if completed/failed)
+    </ResponseField>
+    <ResponseField name="duration" type="number">
+      Call duration in seconds (if completed)
+    </ResponseField>
+    <ResponseField name="error" type="string">
+      Error message (if failed)
+    </ResponseField>
+    <ResponseField name="metadata" type="object">
+      Customer data from CSV row
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="pagination" type="object">
+  Pagination information
+  <Expandable title="Pagination Object">
+    <ResponseField name="page" type="number">
+      Current page number
+    </ResponseField>
+    <ResponseField name="limit" type="number">
+      Results per page
+    </ResponseField>
+    <ResponseField name="total" type="number">
+      Total number of calls matching the filter
+    </ResponseField>
+    <ResponseField name="totalPages" type="number">
+      Total number of pages
+    </ResponseField>
+    <ResponseField name="hasNext" type="boolean">
+      Whether there are more pages
+    </ResponseField>
+    <ResponseField name="hasPrev" type="boolean">
+      Whether there are previous pages
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="summary" type="object">
+  Summary statistics for the batch
+  <Expandable title="Summary Object">
+    <ResponseField name="total" type="number">
+      Total calls in batch
+    </ResponseField>
+    <ResponseField name="waiting" type="number">
+      Calls waiting in queue
+    </ResponseField>
+    <ResponseField name="active" type="number">
+      Calls currently active
+    </ResponseField>
+    <ResponseField name="completed" type="number">
+      Successfully completed calls
+    </ResponseField>
+    <ResponseField name="failed" type="number">
+      Failed calls
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Usage
+
+```bash
+# Get first page of all calls
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+
+# Get failed calls only, page 2
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls?status=failed&page=2&limit=50" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+### Example Response
+
+```json
+{
+  "calls": [
+    {
+      "jobId": "call_123",
+      "status": "completed",
+      "phone_number": "+1234567890",
+      "startTime": 1703097600000,
+      "endTime": 1703097642000,
+      "duration": 42,
+      "metadata": {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com"
+      }
+    },
+    {
+      "jobId": "call_124",
+      "status": "failed",
+      "phone_number": "+1987654321",
+      "startTime": 1703097600000,
+      "endTime": 1703097615000,
+      "error": "Number busy",
+      "metadata": {
+        "first_name": "Jane",
+        "last_name": "Smith",
+        "email": "jane.smith@example.com"
+      }
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "totalPages": 8,
+    "hasNext": true,
+    "hasPrev": false
+  },
+  "summary": {
+    "total": 150,
+    "waiting": 45,
+    "active": 5,
+    "completed": 95,
+    "failed": 5
+  }
+}
+```
+
+### Error Responses
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+
+**Common Error Codes:**
+- `500` - Server error retrieving batch calls
+
+### Use Cases
+
+- Build dashboards showing all calls in a batch
+- Filter and review failed calls for troubleshooting
+- Export call results for reporting and analysis
+- Monitor active calls in real-time

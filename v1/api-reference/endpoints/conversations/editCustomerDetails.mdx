@@ -1,0 +1,89 @@
+---
+title: 'Edit Customer Details'
+api: 'POST /v1/api/conversations/{conversationId}/customer/edit'
+description: 'Edit customers details in a specific conversation.'
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="conversationId" type="string" required>
+  The unique identifier for the conversation whose customer details need to be edited.
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string" optional> 
+The new name of the customer. Provide this field only if you wish to update the name. 
+</ParamField> 
+<ParamField body="phone" type="string" optional> 
+The new phone number of the customer in E.164 format (e.g., +1234567890). Provide this field only if you wish to update the phone number. 
+<Note>
+Make sure it is in E.164 format if you wish to change it.
+</Note>
+</ParamField> 
+<ParamField body="email" type="string" optional> 
+The new email address of the customer. Provide this field only if you wish to update the email. 
+</ParamField>
+
+
+### Response Fields
+
+<ResponseField name="status" type="string">
+  Indicates the status of the request. For successful requests, the value is "success".
+</ResponseField>
+
+<ResponseField name="conversationId" type="string">
+  The unique identifier for the conversation where customer details were updated.
+</ResponseField>
+
+<ResponseField name="updatedCustomerDetails" type="object">
+  An object containing the updated customer details.
+  <Expandable title="Properties">
+    <ResponseField name="name" type="string">
+      The updated name of the customer.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The updated email address of the customer.
+    </ResponseField>
+    <ResponseField name="phone" type="string">
+      The updated phone number of the customer in E.164 format.
+    </ResponseField>
+    <ResponseField name="_id" type="string">
+      The unique identifier of the customer in the conversation.
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      The timestamp when the customer was created in the conversation.
+    </ResponseField>
+    <ResponseField name="updatedAt" type="string">
+      The timestamp when the customer details were last updated.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+
+<ResponseExample>
+```json
+{
+    "status": "success",
+    "conversationId": "123e3a141eccd665d3ba8abc",
+    "updatedCustomerDetails": {
+        "name": "Alice",
+        "email": "alice@example.com",
+        "phone": "+1234567890",
+        "_id": "123c8e368824aa5f130b9xyz",
+        "createdAt": "2025-01-01T12:00:00.000Z",
+        "updatedAt": "2025-01-02T18:00:00.000Z"
+    }
+}
+```
+</ResponseExample>

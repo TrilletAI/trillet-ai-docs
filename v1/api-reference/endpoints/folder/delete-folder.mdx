@@ -1,0 +1,70 @@
+---
+title: "Delete Folder"
+api: "DELETE /v1/api/flow-folders/{folderId}"
+description: "Delete a specific folder identified by its folderId and remove its reference from associated flows."
+---
+
+### Path Parameters
+
+<ParamField path="folderId" type="string" required>
+  The unique identifier of the folder to delete.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier of the deleted folder.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the folder belonged.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the deleted folder.
+</ResponseField>
+
+<ResponseField name="color" type="string">
+  The color of the deleted folder, represented as a hex code.
+</ResponseField>
+
+<ResponseField name="icon" type="string">
+  The icon identifier for the deleted folder.
+</ResponseField>
+
+<ResponseField name="flowType" type="string">
+  The type of flow, either "call" or "message".
+</ResponseField>
+
+<ResponseField name="pathwayModel" type="string">
+  The model type for flows, derived from `flowType`.
+</ResponseField>
+
+<ResponseField name="pathways" type="array">
+  An array of flow IDs that were associated with the deleted folder.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the folder was created (ISO 8601 format).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the folder was last updated (ISO 8601 format).
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "_id": "folder123",
+  "workspaceId": "workspace456",
+  "name": "My Workflow Folder",
+  "color": "#FF0000",
+  "icon": "folder-icon",
+  "flowType": "call",
+  "pathwayModel": "Flow",
+  "pathways": ["flow123"],
+  "createdAt": "2023-10-15T09:30:00Z",
+  "updatedAt": "2023-10-15T10:00:00Z"
+}
+```
+</ResponseExample>

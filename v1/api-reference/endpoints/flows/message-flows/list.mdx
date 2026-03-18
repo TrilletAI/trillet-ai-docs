@@ -1,0 +1,110 @@
+---
+title: "List Message Flows"
+api: "GET /v1/api/message-flows"
+description: "Retrieve a list of all message flows."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Response Fields
+
+Each object in the response array represents a message flow, containing the following fields:
+
+<ResponseField name="_id" type="string">
+  The unique identifier for each message flow.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where each message flow is configured.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the message flow.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  Indicates the direction of the message flow, such as "bidirectional" or "outbound".
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A brief description of what the message flow is designed to handle.
+</ResponseField>
+
+<ResponseField name="agent" type="string">
+  The identifier of the agent associated with this message flow.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  The configuration settings for the message flow. This field may contain various subfields depending on the specific configurations set for each flow.
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  The system or initial prompt set for interacting through the message flow.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Indicates whether the message flow is currently active.
+</ResponseField>
+
+<ResponseField name="autopilot" type="boolean">
+  Specifies whether autopilot is enabled, allowing the message flow to operate automatically.
+</ResponseField>
+
+<ResponseField name="messageChannel" type="string">
+  The type of communication channel used by the message flow, such as "SMS" or "Email".
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  The timestamp when the message flow was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  The timestamp when the message flow was last updated.
+</ResponseField>
+
+<ResponseExample>
+```json
+[
+  {
+    "_id": "exampleId1",
+    "workspaceId": "exampleWorkspaceId1",
+    "name": "SMS Flow #1",
+    "direction": "bidirectional",
+    "description": "Example #1",
+    "agent": "exampleAgentId1",
+    "settings": {},
+    "prompt": "Short prompt for AI",
+    "isActive": true,
+    "autopilot": false,
+    "messageChannel": "SMS",
+    "createdAt": "2025-01-02T10:15:00Z",
+    "updatedAt": "2025-01-02T10:30:00Z"
+  },
+  {
+    "_id": "exampleId2",
+    "workspaceId": "exampleWorkspaceId2",
+    "name": "Email Nurture Flow",
+    "direction": "outbound",
+    "description": "Send follow-up emails to leads",
+    "agent": "exampleAgentId2",
+    "settings": {},
+    "prompt": "You are an email follow-up AI.",
+    "isActive": false,
+    "autopilot": false,
+    "messageChannel": "Email",
+    "createdAt": "2025-01-03T11:00:00Z",
+    "updatedAt": "2025-01-03T11:15:00Z"
+  }
+]
+
+```
+</ResponseExample>

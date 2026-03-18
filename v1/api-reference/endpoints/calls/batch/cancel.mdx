@@ -1,0 +1,119 @@
+---
+title: "Cancel Batch Operation"
+api: "DELETE /v1/api/batch-calls/{batchId}"
+description: "Cancel a batch call operation and stop any remaining calls from being processed"
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The unique identifier of the batch call operation to cancel
+</ParamField>
+
+### Response
+
+<ResponseField name="batchId" type="string">
+  The ID of the cancelled batch
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  New status of the batch (will be "cancelled")
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Confirmation message about the cancellation
+</ResponseField>
+
+<ResponseField name="details" type="object">
+  Summary of the cancellation impact
+  <Expandable title="Details Object">
+    <ResponseField name="completedCalls" type="number">
+      Number of calls that were already completed
+    </ResponseField>
+    <ResponseField name="failedCalls" type="number">
+      Number of calls that had already failed
+    </ResponseField>
+    <ResponseField name="cancelledCalls" type="number">
+      Number of calls that were cancelled (waiting + active)
+    </ResponseField>
+    <ResponseField name="totalCalls" type="number">
+      Total number of calls in the batch
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example Usage
+
+```bash
+curl -X DELETE "https://api.trillet.ai/v1/batch-calls/batch_7891011121314" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+### Example Response
+
+```json
+{
+  "batchId": "batch_7891011121314",
+  "status": "cancelled",
+  "message": "Batch cancelled successfully",
+  "details": {
+    "completedCalls": 95,
+    "failedCalls": 5,
+    "cancelledCalls": 50,
+    "totalCalls": 150
+  }
+}
+```
+
+### Cancellation Behavior
+
+When you cancel a batch operation:
+
+1. **Queued Calls**: All calls waiting in the queue are immediately cancelled and will not be processed
+2. **Active Calls**: Currently active calls will continue to completion but no new calls will start
+3. **Completed Calls**: Already completed calls are not affected
+4. **Batch Status**: The batch status is updated to "cancelled" 
+5. **History**: The cancellation is recorded in the batch history
+
+### Error Responses
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Additional context about the error
+</ResponseField>
+
+<ResponseField name="id" type="string">
+  The batch ID that was not found (for 404 errors)
+</ResponseField>
+
+**Common Error Codes:**
+- `404` - Batch not found with the specified ID
+- `500` - Server error during cancellation process
+
+### Use Cases
+
+- Stop a batch operation that was started with incorrect data
+- Cancel remaining calls when you've achieved your campaign goals
+- Emergency stop for batch operations
+- Cost control by stopping long-running batches
+
+### Important Notes
+
+- Cancellation cannot be undone
+- You will still be charged for completed calls
+- Active calls at the time of cancellation will finish normally
+- The batch cannot be restarted after cancellation

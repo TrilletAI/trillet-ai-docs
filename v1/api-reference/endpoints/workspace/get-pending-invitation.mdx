@@ -1,0 +1,31 @@
+---
+title: "Get Pending Invitations"
+api: "GET /v1/api/workspaces/invitations/pending"
+description: "Retrieve a list of pending workspace invitations for the authenticated user."
+---
+
+### Headers
+<ParamField header="x-workspace-id" type="string" optional>
+  The workspace ID related to the invitation context. *(Currently optional and not enforced in the query.)*
+</ParamField>
+
+### Description
+
+This endpoint returns all **pending workspace invitations** where the authenticated user's email matches the invitation's recipient email.
+
+The response includes:
+- Details about the invitation (role, type, token, expiration).
+- Information about the inviting user (name, email, picture).
+- Workspace details including name, initials, and white-label settings.
+
+If the email is not present in the authenticated user payload, it is fetched from the database using the user ID.
+
+### Response Fields
+
+<ResponseField name="success" type="boolean">
+  Indicates whether the request was successful.
+</ResponseField>
+
+<ResponseField name="invitations" type="array">
+  List of pending invitations for the authenticated user.
+</ResponseField>

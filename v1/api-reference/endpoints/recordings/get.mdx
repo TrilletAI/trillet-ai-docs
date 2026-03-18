@@ -1,0 +1,27 @@
+---
+title: "Get Recording"
+api: "GET /v2/api/recordings/{callHistoryId}"
+description: "Stream the audio recording for a specific call. Returns the recording file with appropriate audio headers."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="callHistoryId" type="string" required>
+The call history ID to retrieve the recording for.
+</ParamField>
+
+## Response
+
+The response streams the audio file directly with the following headers:
+
+- `Content-Type`: `audio/mp3` or `video/mp4` depending on the recording format
+- `Content-Disposition`: `inline; filename="recording.mp3"`
+- `Cache-Control`: `private, max-age=3600`
+
+The audio file is streamed directly and can be played in a browser or downloaded.

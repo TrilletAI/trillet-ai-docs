@@ -1,0 +1,80 @@
+---
+title: "Purchase Phone Number"
+api: "POST /v1/api/twilio/purchase-number"
+description: "Purchase a phone number for your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Request Body
+
+<ParamField body="country" type="string" required>
+Country code for the phone number (e.g., "US", "CA").
+</ParamField>
+
+<ParamField body="type" type="string" required>
+Type of phone number. Options: "local", "tollFree", "mobile".
+</ParamField>
+
+<ParamField body="phoneNumber" type="string" required>
+The specific phone number to purchase in E.164 format.
+</ParamField>
+
+<ParamField body="addressSid" type="string">
+Address SID for regulatory compliance (required for some countries).
+</ParamField>
+
+<ParamField body="coupon" type="string">
+Coupon code for a discount.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the purchase was successful.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="object">
+The purchased phone number details.
+
+<ResponseField name="_id" type="string">
+Unique identifier for the phone number record.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+The purchased phone number in E.164 format.
+</ResponseField>
+
+<ResponseField name="country" type="string">
+Country code.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+Phone number type.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "phoneNumber": {
+    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+    "phoneNumber": "+14155551234",
+    "country": "US",
+    "type": "local",
+    "status": "active",
+    "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e"
+  }
+}
+```
+</ResponseExample>

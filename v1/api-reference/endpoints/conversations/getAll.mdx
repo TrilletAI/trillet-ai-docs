@@ -1,0 +1,95 @@
+---
+
+title: 'Get All Conversations'
+api: 'GET /v1/api/conversations'
+description: 'Fetch all conversations associated with the authenticated user.'
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+
+### Response Body
+
+The response body will contain an array of the following fields:
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the conversation.
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  The unique identifier for the user associated with the conversation.
+</ResponseField>
+
+<ResponseField name="pathwayId" type="string">
+  The unique identifier for the flows associated with the conversation.
+</ResponseField>
+
+<ResponseField name="agentId" type="string">
+  The unique identifier for the agent handling the conversation.
+</ResponseField>
+
+<ResponseField name="customer" type="object">
+  Customer details associated with the conversation.
+  <Expandable title="properties">
+    <ParamField body="name" type="string">
+      The name of the customer.
+    </ParamField>
+    <ParamField body="email" type="string">
+      The email address of the customer.
+    </ParamField>
+    <ParamField body="phone" type="string">
+      The phone number of the customer.
+    </ParamField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="messages" type="array">
+  A list of messages within the conversation.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  The timestamp when the conversation was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  The timestamp when the conversation was last updated.
+</ResponseField>
+
+<ResponseExample>
+```json
+[
+  {
+    "_id": "675c8e368824aa5f130b94d6",
+    "userId": "674e29976b6acbac106d2651",
+    "pathwayId": "674e75bbe1456b11a194f091",
+    "agentId": "674e7579e1456b11a194f08b",
+    "customer": {
+      "name": "Test Customer Name",
+      "email": "customer@example.com",
+      "phone": "+123456789"
+    },
+    "messages": [
+      {
+        "direction": "outbound",
+        "sent": true,
+        "message": "Thank you for your feedback!",
+        "status": "approved",
+        "_id": "675c8e368824aa5f130b94d3",
+        "createdAt": "2024-12-01T08:45:00Z",
+        "updatedAt": "2024-12-01T09:00:00Z"
+      }
+    ],
+    "createdAt": "2024-12-01T08:45:00Z",
+    "updatedAt": "2024-12-01T09:00:00Z"
+  }
+]
+```
+</ResponseExample>

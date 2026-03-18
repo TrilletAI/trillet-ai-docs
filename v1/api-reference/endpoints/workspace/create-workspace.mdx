@@ -1,0 +1,43 @@
+---
+title: "Create Workspace"
+api: "POST /v1/api/workspaces"
+description: "Create a new workspace with the authenticated user as the owner."
+---
+
+### Request Body
+
+<ParamField body="name" type="string" required>
+  The name of the workspace (e.g., "Marketing Team Workspace").
+</ParamField>
+
+<ParamField body="initials" type="string" required>
+  Initials representing the workspace (e.g., "MT").
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the newly created workspace.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the workspace.
+</ResponseField>
+
+
+<ResponseField name="initials" type="string">
+  The initials assigned to the workspace.
+</ResponseField>
+
+
+<ResponseField name="teamMembers" type="array">
+  List of team members associated with the workspace, starting with the owner.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the workspace was created (ISO 8601 format).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the workspace was last updated (ISO 8601 format).
+</ResponseField>

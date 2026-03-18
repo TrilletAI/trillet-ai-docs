@@ -1,0 +1,74 @@
+---
+title: "Remove Flow from Folder"
+api: "DELETE /v1/api/flow-folders/{folderId}/flows/{pathwayId}"
+description: "Remove a specific flow from a folder identified by its folderId and flowId."
+---
+
+### Path Parameters
+
+<ParamField path="folderId" type="string" required>
+  The ID of the folder from which the flow will be removed.
+</ParamField>
+
+<ParamField path="pathwayId" type="string" required>
+  The ID of the flow to remove from the folder.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier of the folder.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the folder belongs.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the folder.
+</ResponseField>
+
+<ResponseField name="color" type="string">
+  The color of the folder, represented as a hex code.
+</ResponseField>
+
+<ResponseField name="icon" type="string">
+  The icon identifier for the folder.
+</ResponseField>
+
+<ResponseField name="flowType" type="string">
+  The type of flow, either "call" or "message".
+</ResponseField>
+
+<ResponseField name="pathwayModel" type="string">
+  The model type for flows, derived from `flowType`.
+</ResponseField>
+
+<ResponseField name="pathways" type="array">
+  An updated array of flow IDs associated with the folder after removal.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the folder was created (ISO 8601 format).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the folder was last updated (ISO 8601 format).
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "_id": "folder123",
+  "workspaceId": "workspace456",
+  "name": "My Workflow Folder",
+  "color": "#FF0000",
+  "icon": "folder-icon",
+  "flowType": "call",
+  "pathwayModel": "Flow",
+  "pathways": [],
+  "createdAt": "2023-10-15T09:30:00Z",
+  "updatedAt": "2023-10-15T11:00:00Z"
+}
+```
+</ResponseExample>

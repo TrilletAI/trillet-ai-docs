@@ -1,0 +1,61 @@
+---
+title: "List Custom Voices"
+api: "GET /v1/api/voices/custom"
+description: "Retrieve all custom voices created in your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="voices" type="array">
+Array of custom voice objects.
+
+<ResponseField name="_id" type="string">
+Unique identifier for the custom voice.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Name of the custom voice.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+Description of the custom voice.
+</ResponseField>
+
+<ResponseField name="language" type="string">
+Language code for the voice.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+Workspace that owns the custom voice.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+Timestamp when the voice was created.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+[
+  {
+    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+    "name": "Custom Sales Voice",
+    "description": "Friendly sales representative voice",
+    "language": "en",
+    "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+    "createdAt": "2024-06-01T09:00:00.000Z"
+  }
+]
+```
+</ResponseExample>

@@ -1,0 +1,85 @@
+---
+title: "Initiate Outbound Call"
+api: "POST /v1/api/call"
+description: "Send an AI-driven phone call to a given number."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Request Body
+
+<ParamField body="to" type="string" required>
+  The phone number to which the call will be made.
+</ParamField>
+
+<ParamField body="call_agent_id" type="string" required>
+  The ID of the agent assigned to make the call.
+</ParamField>
+
+<ParamField body="callback_url" type="string" optional>
+  A URL to receive webhook events about the call. If provided, this URL will be used for notifications.
+</ParamField>
+
+<ParamField body="dynamic_variables" type="object">
+  Dynamic variables that can be used to customize call scripts. Each key represents a variable that can be inserted into the call script dynamically. For example:
+
+  <Expandable title="Dynamic Variables Details">
+    <ParamField body="firstName" type="string">
+      First name of the person to address in the call.
+    </ParamField>
+    <ParamField body="lastName" type="string">
+      Last name of the person.
+    </ParamField>
+    <ParamField body="Zipcode" type="string">
+      Zip code for regional customization or information.
+    </ParamField>
+    <ParamField body="address" type="string">
+      Full address for detailed directions or service customization.
+    </ParamField>
+    <ParamField body="email" type="string">
+      Email address to reference or verify during the call.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="metadata" type="object" optional>
+  Any fields passed here will be sent to the call agent and directly passed to the webhook triggered by the agent under its 'metadata' header, but they will not be included in the call agent's context.
+  <Expandable title="Metadata Details">
+    
+  </Expandable>
+</ParamField>
+
+
+
+### Response Fields
+
+<ResponseField name="status" type="string">
+  The status of the request, indicating the success or failure of the call initiation.
+</ResponseField>
+
+<ResponseField name="call_id" type="string">
+  A unique identifier assigned to the initiated call. This ID can be used to track the call's progress or retrieve its details later.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  A message providing feedback about the call initiation process, typically confirming successful initiation or describing an error.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "status": "success",
+  "call_id": "123456789",
+  "message": "Call initiated successfully"
+}
+```
+</ResponseExample>

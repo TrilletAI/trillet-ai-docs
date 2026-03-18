@@ -1,0 +1,46 @@
+---
+title: "Start Recording"
+api: "POST /v2/api/recordings/start-recording"
+description: "Start recording an active call."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Request Body
+
+<ParamField body="pathwayId" type="string" required>
+The call flow pathway ID associated with the call.
+</ParamField>
+
+<ParamField body="roomName" type="string" required>
+The LiveKit room name of the active call to start recording.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="message" type="string">
+Confirmation message.
+</ResponseField>
+
+<ResponseField name="result" type="object">
+Recording result details from LiveKit.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "message": "Recording started successfully",
+  "result": {
+    "egressId": "EG_abc123"
+  }
+}
+```
+</ResponseExample>

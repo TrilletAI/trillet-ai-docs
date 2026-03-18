@@ -1,0 +1,151 @@
+---
+title: 'API Best Practices'
+description: 'Guidelines for integrating with Trillet AI API'
+---
+
+## Authentication
+
+### API Keys
+
+- Keep your API keys secure and never expose them in client-side code
+- Use different API keys for development and production
+- Rotate your API keys periodically
+- Monitor your API key usage for suspicious activity
+
+```bash
+# API Key format
+xxxxxxxxxxxxxxxxxxx
+```
+
+## Error Handling
+
+Implement proper error handling for API responses:
+
+```bash
+curl -X POST https://api.trillet.ai/api/v1/calls/send \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentId": "agent_123",
+    "toNumber": "+1234567890"
+  }'
+```
+
+Common error responses:
+```json
+{
+  "error": {
+    "code": "insufficient_credits",
+    "message": "Your account has insufficient credits"
+  }
+}
+```
+
+```json
+{
+  "error": {
+    "code": "invalid_number",
+    "message": "The provided phone number is invalid"
+  }
+}
+```
+
+## Rate Limits
+
+- Production API keys are limited to 60 requests per minute
+- Implement backoff when you hit rate limits
+- Monitor your API usage in the dashboard
+
+Rate limit response:
+```json
+{
+  "error": {
+    "code": "rate_limit_exceeded",
+    "message": "Too many requests. Please try again in 60 seconds.",
+    "reset_at": "2024-01-22T15:30:00Z"
+  }
+}
+```
+
+## Webhooks [Coming Soon!]
+
+
+### Configuring Webhooks
+
+1. Add your webhook URL in the dashboard
+2. Configure the events you want to receive
+3. Store your webhook secret securely
+
+### Verifying Webhooks
+
+Always verify webhook signatures using the `X-Trillet-Signature` header:
+
+```bash
+# Your webhook secret from the dashboard
+WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
+
+# Verify the signature before processing webhooks
+echo -n "$PAYLOAD" | openssl sha256 -hmac "$WEBHOOK_SECRET"
+```
+
+### Webhook Events
+
+- `call.started` - When a call begins
+- `call.completed` - When a call ends
+- `call.failed` - When a call fails
+- `sms.sent` - When an SMS is sent
+- `sms.delivered` - When an SMS is delivered
+
+Example webhook payload:
+```json
+{
+  "event": "call.completed",
+  "data": {
+    "callId": "call_xyz789",
+    "agentId": "agent_123abc",
+    "duration": 125,
+    "status": "completed"
+  }
+}
+```
+
+## Production Checklist
+
+1. **Authentication**
+   - Use production API keys
+   - Implement key rotation
+   - Secure key storage
+
+2. **Error Handling**
+   - Handle all error codes
+   - Implement retry logic
+   - Log errors appropriately
+
+3. **Monitoring**
+   - Track API response times
+   - Monitor error rates
+   - Set up alerts
+
+4. **Webhooks**
+   - Use HTTPS endpoints
+   - Verify signatures
+   - Implement retry logic
+   - Handle duplicate events
+
+## Need Help?
+
+<Columns cols={2}>
+  <Card
+    title="API Status [Coming Soon!]"
+    icon="signal"
+  >
+    Check our API status and uptime
+  </Card>
+  <Card
+    title="Support"
+    icon="headset"
+    href="mailto:support@trillet.ai"
+  >
+    Get technical support
+  </Card>
+</Columns>

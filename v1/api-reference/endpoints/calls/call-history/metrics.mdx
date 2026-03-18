@@ -1,0 +1,75 @@
+---
+title: "Get Call History Metrics"
+api: "GET /v2/api/call-history/metrics"
+description: "Retrieve aggregated metrics and analytics for call history records in your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="agentId" type="string">
+Filter metrics by a specific agent ID.
+</ParamField>
+
+<ParamField query="status" type="string">
+Filter by call status (e.g., "completed", "failed", "no-answer").
+</ParamField>
+
+<ParamField query="direction" type="string">
+Filter by call direction ("inbound", "outbound", "bidirectional").
+</ParamField>
+
+<ParamField query="pathwayId" type="string">
+Filter by call flow ID.
+</ParamField>
+
+<ParamField query="dateRange" type="string">
+JSON string with startDate and endDate in ISO format. Example: `{"startDate":"2024-01-01","endDate":"2024-01-31"}`
+</ParamField>
+
+<ParamField query="callType" type="string">
+Filter by call type: "sip" or "web".
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="totalCalls" type="number">
+Total number of calls matching the filters.
+</ResponseField>
+
+<ResponseField name="completedCalls" type="number">
+Number of completed calls.
+</ResponseField>
+
+<ResponseField name="failedCalls" type="number">
+Number of failed calls.
+</ResponseField>
+
+<ResponseField name="averageDuration" type="number">
+Average call duration in seconds.
+</ResponseField>
+
+<ResponseField name="totalCost" type="number">
+Total cost of all calls.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "totalCalls": 150,
+  "completedCalls": 120,
+  "failedCalls": 10,
+  "averageDuration": 180,
+  "totalCost": 45.50
+}
+```
+</ResponseExample>

@@ -1,0 +1,40 @@
+---
+title: "Delete Knowledge Base"
+api: "DELETE /v1/api/knowledgebase/{id}"
+description: "Delete a knowledge base and all its associated files."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique identifier of the knowledge base to delete.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the deletion was successful.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+Confirmation message.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Knowledge base deleted successfully"
+}
+```
+</ResponseExample>

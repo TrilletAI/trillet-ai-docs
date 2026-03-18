@@ -1,0 +1,141 @@
+---
+title: "Get Batch Status"
+api: "GET /v1/api/batch-calls/{batchId}"
+description: "Get detailed status information for a batch call operation"
+---
+
+### Headers
+
+<ParamField header="x-api-key" type="string" required>
+  API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The unique identifier of the batch call operation
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  The batch ID
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the batch operation
+  - `queued` - Batch is waiting to be processed
+  - `processing` - Calls are currently being made
+  - `completed` - All calls have been completed
+  - `cancelled` - Batch was cancelled
+  - `failed` - Batch failed due to an error
+</ResponseField>
+
+<ResponseField name="isComplete" type="boolean">
+  Whether the batch operation has finished
+</ResponseField>
+
+<ResponseField name="totalCalls" type="number">
+  Total number of calls in the batch
+</ResponseField>
+
+<ResponseField name="progress" type="object">
+  Detailed progress information
+  <Expandable title="Progress Object">
+    <ResponseField name="waiting" type="number">
+      Number of calls waiting in queue
+    </ResponseField>
+    <ResponseField name="active" type="number">
+      Number of calls currently being processed
+    </ResponseField>
+    <ResponseField name="completed" type="number">
+      Number of successfully completed calls
+    </ResponseField>
+    <ResponseField name="failed" type="number">
+      Number of failed calls
+    </ResponseField>
+    <ResponseField name="total" type="number">
+      Total number of calls in the batch
+    </ResponseField>
+    <ResponseField name="startTime" type="number">
+      Timestamp when the batch started processing
+    </ResponseField>
+    <ResponseField name="lastCompletedTime" type="number">
+      Timestamp of the last completed call
+    </ResponseField>
+    <ResponseField name="completedTime" type="number">
+      Timestamp when the batch was completed (if finished)
+    </ResponseField>
+    <ResponseField name="averageCallDuration" type="number">
+      Average duration of completed calls in seconds
+    </ResponseField>
+    <ResponseField name="recent_calls" type="array">
+      Array of recent call results for monitoring
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="timestamp" type="number">
+  Timestamp of when this status was retrieved
+</ResponseField>
+
+### Example Usage
+
+```bash
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+### Example Response
+
+```json
+{
+  "id": "batch_7891011121314",
+  "status": "processing",
+  "isComplete": false,
+  "totalCalls": 150,
+  "progress": {
+    "waiting": 45,
+    "active": 5,
+    "completed": 95,
+    "failed": 5,
+    "total": 150,
+    "startTime": 1703097600000,
+    "lastCompletedTime": 1703101200000,
+    "completedTime": null,
+    "averageCallDuration": 45.2,
+    "recent_calls": [
+      {
+        "jobId": "call_123",
+        "status": "completed",
+        "phone_number": "+1234567890",
+        "completedAt": 1703101200000
+      }
+    ]
+  },
+  "timestamp": 1703101300000
+}
+```
+
+### Error Responses
+
+<ResponseField name="error" type="string">
+  Error message describing what went wrong
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Additional context about the error
+</ResponseField>
+
+**Common Error Codes:**
+- `404` - Batch not found with the specified ID
+- `500` - Server error retrieving batch information
+
+### Status Monitoring
+
+You can poll this endpoint to monitor the progress of your batch calls. The response includes detailed metrics about call completion rates, timing information, and recent call results.

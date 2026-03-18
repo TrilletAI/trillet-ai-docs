@@ -1,0 +1,49 @@
+---
+title: "List User Workspaces"
+api: "GET /v1/api/workspaces"
+description: "Retrieve all workspaces associated with the authenticated user. If the user does not exist, a new user and default workspace may be automatically created."
+---
+
+### Description
+
+This endpoint returns a list of workspaces where the authenticated user is either:
+- The **owner** of the workspace,
+- An **internal team member**, or
+- An **external team member**.
+
+If the user is signing in for the first time, the system will:
+1. Check for any pending invitations and join the user to an existing workspace if one exists.
+2. If no invitation exists, create a default workspace for the user.
+
+The response includes both direct workspaces and external workspaces, sorted in the following order:
+1. Owned workspaces,
+2. Team memberships,
+3. Guest workspaces.
+
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  Unique identifier of the workspace.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Name of the workspace.
+</ResponseField>
+
+<ResponseField name="initials" type="string">
+  Initials of the workspace.
+</ResponseField>
+
+
+<ResponseField name="teamMembers" type="array">
+  List of team members associated with the workspace, including their roles and optional external workspace details.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the workspace was created (ISO 8601 format).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the workspace was last updated (ISO 8601 format).
+</ResponseField>

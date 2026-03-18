@@ -1,0 +1,44 @@
+---
+title: "Get WhatsApp Connection Status"
+api: "GET /v1/api/meta-whatsapp/status"
+description: "Check the current connection status of your Meta WhatsApp Business integration."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="connected" type="boolean">
+Whether the WhatsApp Business Account is connected.
+</ResponseField>
+
+<ResponseField name="wabaId" type="string">
+The WhatsApp Business Account ID (if connected).
+</ResponseField>
+
+<ResponseField name="wabaName" type="string">
+The WhatsApp Business Account name (if connected).
+</ResponseField>
+
+<ResponseField name="businessName" type="string">
+The Meta Business name (if connected).
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "connected": true,
+  "wabaId": "123456789",
+  "wabaName": "My Business WhatsApp",
+  "businessName": "My Company Inc."
+}
+```
+</ResponseExample>

@@ -1,0 +1,72 @@
+---
+title: "Clone Voice"
+api: "POST /v1/api/voices/clone"
+description: "Clone a voice from an audio file to create a custom voice with a unique voice embedding."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Request Body
+
+The request body should be sent as `multipart/form-data`.
+
+<ParamField body="file" type="file" required>
+Audio file to clone the voice from. Maximum file size: 50MB.
+</ParamField>
+
+<ParamField body="name" type="string">
+Name for the cloned voice.
+</ParamField>
+
+<ParamField body="description" type="string">
+Description of the cloned voice.
+</ParamField>
+
+<ParamField body="language" type="string">
+Language code for the voice (e.g., "en").
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="embedding" type="object">
+The voice embedding data generated from the audio file.
+</ResponseField>
+
+<ResponseField name="voice" type="object">
+The created custom voice object (if name was provided).
+
+<ResponseField name="_id" type="string">
+Unique identifier for the custom voice.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Name of the custom voice.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "embedding": {
+    "data": "...",
+    "format": "float32"
+  },
+  "voice": {
+    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+    "name": "My Custom Voice",
+    "description": "Cloned from recording",
+    "language": "en",
+    "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e"
+  }
+}
+```
+</ResponseExample>

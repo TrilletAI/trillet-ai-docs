@@ -1,0 +1,100 @@
+---
+title: "Create Role"
+api: "POST /v1/api/roles-and-permissions/roles"
+description: "Create a new role with specific permissions for your workspace."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+Name of the role (e.g., "Agent Manager", "Viewer").
+</ParamField>
+
+<ParamField body="description" type="string">
+Description of the role and its intended use.
+</ParamField>
+
+<ParamField body="permissions" type="array of strings" required>
+Array of permission ID strings to assign to this role. **Always required — pass an empty array `[]` if no permissions are needed.** Each item must be a plain string (e.g., `"agent_view"`), not an object. Use the [List Permissions](/v1/api-reference/endpoints/roles/list-permissions) endpoint to retrieve available permission IDs.
+</ParamField>
+
+<ParamField body="userIds" type="array">
+Array of user IDs to assign this role to.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="_id" type="string">
+Unique identifier for the created role.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Name of the role.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+Description of the role.
+</ResponseField>
+
+<ResponseField name="permissions" type="array">
+Array of permission objects assigned to the role.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+Workspace ID associated with the role.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+Timestamp when the role was created.
+</ResponseField>
+
+<RequestExample>
+```json With permissions
+{
+  "name": "Manager",
+  "description": "Full access to agents and call history",
+  "permissions": [
+    "agent_view",
+    "agent_create",
+    "agent_edit",
+    "call_history_view"
+  ]
+}
+```
+
+```json Minimal (no permissions)
+{
+  "name": "Viewer",
+  "description": "Read-only role",
+  "permissions": []
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "name": "Manager",
+  "description": "Full access to agents and call history",
+  "permissions": [
+    { "key": "agent_view", "category": "agents" },
+    { "key": "agent_create", "category": "agents" },
+    { "key": "agent_edit", "category": "agents" },
+    { "key": "call_history_view", "category": "calls" }
+  ],
+  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "createdAt": "2024-06-01T09:00:00.000Z"
+}
+```
+</ResponseExample>

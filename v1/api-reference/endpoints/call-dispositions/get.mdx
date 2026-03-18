@@ -1,0 +1,76 @@
+---
+title: "Get Call Disposition"
+api: "GET /v1/api/call-dispositions/{id}"
+description: "Retrieve a specific call disposition by its ID."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique identifier of the call disposition.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="_id" type="string">
+Unique identifier for the disposition.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+Phone number associated with the disposition.
+</ResponseField>
+
+<ResponseField name="disposition" type="string">
+Disposition type (e.g., "callback_scheduled", "no_answer", "completed").
+</ResponseField>
+
+<ResponseField name="status" type="string">
+Current status of the disposition.
+</ResponseField>
+
+<ResponseField name="scheduledAt" type="string">
+Scheduled callback time (if applicable).
+</ResponseField>
+
+<ResponseField name="attempt" type="number">
+Attempt number for this call.
+</ResponseField>
+
+<ResponseField name="agentId" type="string">
+Agent ID that handled the call.
+</ResponseField>
+
+<ResponseField name="batchId" type="string">
+Batch call ID (if part of a batch).
+</ResponseField>
+
+<ResponseField name="notes" type="string">
+Any notes from the call or disposition.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "phoneNumber": "+14155551234",
+  "disposition": "callback_scheduled",
+  "status": "pending",
+  "scheduledAt": "2024-06-02T14:00:00.000Z",
+  "attempt": 1,
+  "agentId": "665a1b2c3d4e5f6a7b8c9d0f",
+  "batchId": "665a1b2c3d4e5f6a7b8c9d10",
+  "notes": "Customer requested callback after 2pm",
+  "createdAt": "2024-06-01T10:00:00.000Z"
+}
+```
+</ResponseExample>

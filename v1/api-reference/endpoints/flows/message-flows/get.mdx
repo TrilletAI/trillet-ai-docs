@@ -1,0 +1,105 @@
+---
+title: "Get Message Flow"
+api: "GET /v1/api/message-flows/{id}"
+description: "Retrieve a specific message flow."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique ID of the message flow.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the message flow.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the message flow is configured.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the message flow.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  Indicates the direction of the message flow, such as "bidirectional".
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A brief description of what the message flow is designed to handle.
+</ResponseField>
+
+<ResponseField name="agent" type="string">
+  The identifier of the agent associated with this message flow.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  The configuration settings for the message flow.
+  <ResponseField name="knowledgeBases" type="array">
+    An array of knowledge base resources linked to the message flow, if any.
+  </ResponseField>
+  <ResponseField name="security" type="object">
+    Security settings associated with the message flow.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  The system or initial prompt set for interacting through the message flow.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Indicates whether the message flow is currently active.
+</ResponseField>
+
+<ResponseField name="autopilot" type="boolean">
+  Specifies whether autopilot is enabled, allowing the message flow to operate automatically.
+</ResponseField>
+
+<ResponseField name="messageChannel" type="string">
+  The type of communication channel used by the message flow, such as "SMS".
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  The timestamp when the message flow was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  The timestamp when the message flow was last updated.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "_id": "exampleId1",
+  "workspaceId": "exampleWorkspaceId1",
+  "name": "My-SMS-Flow",
+  "direction": "bidirectional",
+  "description": "Example message flow for SMS marketing",
+  "agent": "exampleAgentId1",
+  "settings": {
+    "knowledgeBases": [],
+    "security": {}
+  },
+  "prompt": "You are an AI that handles inbound messages.",
+  "isActive": true,
+  "autopilot": false,
+  "messageChannel": "SMS",
+  "createdAt": "2025-01-02T10:15:00Z",
+  "updatedAt": "2025-01-02T10:30:00Z"
+}
+```
+</ResponseExample>

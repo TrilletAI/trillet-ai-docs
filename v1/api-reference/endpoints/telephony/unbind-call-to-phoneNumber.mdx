@@ -1,0 +1,46 @@
+---
+title: "Unassign Phone Number from Agent"
+api: "POST /v1/api/agents/{agentId}/release/{phoneNumberId}"
+description: "Unassign a phone number from an agent's call flow. This removes the assignment and automatically cleans up associated SIP trunking."
+---
+
+### Path Parameters
+
+<ParamField path="agentId" type="string" required>
+  The ID of the agent whose phone number will be released.
+</ParamField>
+
+<ParamField path="phoneNumberId" type="string" required>
+  The ID of the phone number to release from the agent.
+</ParamField>
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API. Required to scope the release operation.
+</ParamField>
+
+### Request Body
+
+<ParamField body="confirmation" type="boolean" optional>
+  Are you sure you want to unbind this?
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="agent" type="object">
+  The updated agent object after the phone number has been released.
+</ResponseField>
+
+### Request Body
+
+No request body is required for this endpoint.
+
+<ResponseExample>
+```json
+{
+  "status": "success",
+  "message": "Call flow released from phone number successfully"
+}
+```
+</ResponseExample>

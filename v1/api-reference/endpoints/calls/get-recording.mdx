@@ -1,0 +1,41 @@
+---
+title: "Get Call Recording"
+api: "GET /v1/api/calls/recordings/{callSid}"
+description: "Retrieve audio recording for a completed call session."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+### Path Parameters
+
+<ParamField path="callSid" type="string" required>
+  The Twilio Call SID of the call whose recording you want.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="Content-Type" type="string">
+  Indicates the MIME type of the streamed content, which is 'audio/mpeg' for MP3 audio files.
+</ResponseField>
+
+<ResponseField name="Content-Disposition" type="string">
+  Describes how the content should be handled by the browser; set to 'inline' with a filename indicating the name of the downloaded or played file.
+</ResponseField>
+
+### Response
+
+An audio/mpeg file (MP3) is streamed back. You can download or play it in the browser.
+
+<ResponseExample>
+  ```json 
+  HTTP/1.1 200 OK 
+  Content-Type: audio/mpeg 
+  Content-Disposition: inline;
+  filename="exampleRecordingSid.mp3" 
+  ```
+</ResponseExample>

@@ -1,0 +1,50 @@
+---
+title: "Connect a Web Call"
+api: "POST /v1/api/calls/web/connect"
+description: "Initiate a live web-based call session with an AI agent."
+---
+
+Initiate a web call that runs entirely via WebRTC in the browser (no phone number required). The agent can interact via voice.  
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+
+### Request Body
+
+<ParamField body="agentId" type="string" required>
+  The ID of the agent that will handle this web call.
+</ParamField>
+
+<ParamField body="mode" type="string">
+  The mode of the call. Defaults to "voice".
+</ParamField>
+
+<ResponseExample>
+```json
+{
+  "status": "success",
+  "callId": "call1234",
+  "roomName": "web-genericAgent-call1234",
+  "token": "<REDACTED_JWT_TOKEN>",
+  "agent": {
+    "id": "agent12345678",
+    "name": "Generic Agent",
+    "model": "llm-mini",
+    "voice": {
+      "provider": "genericVoiceProvider",
+      "voiceId": "standard",
+      "language": "en"
+    }
+  }
+}
+```
+</ResponseExample>

@@ -1,0 +1,86 @@
+---
+title: "Get All Folders for Workspace"
+api: "GET /v1/api/flow-folders"
+description: "Retrieve all folders associated with a specific workspace, identified by the workspace ID in the request header."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The ID of the workspace whose folders are being requested.
+</ParamField>
+
+### Response Fields
+
+An array of folder objects, each containing the following fields:
+
+<ResponseField name="_id" type="string">
+  The unique identifier of the folder.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the folder belongs.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name of the folder.
+</ResponseField>
+
+<ResponseField name="color" type="string">
+  The color of the folder, represented as a hex code.
+</ResponseField>
+
+<ResponseField name="icon" type="string">
+  The icon identifier for the folder.
+</ResponseField>
+
+<ResponseField name="flowType" type="string">
+  The type of flow, either "call" or "message".
+</ResponseField>
+
+<ResponseField name="pathwayModel" type="string">
+  The model type for flows, derived from `flowType`.
+</ResponseField>
+
+<ResponseField name="pathways" type="array">
+  An array of flow IDs associated with the folder.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the folder was created (ISO 8601 format).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the folder was last updated (ISO 8601 format).
+</ResponseField>
+
+<ResponseExample>
+```json
+[
+  {
+    "_id": "folder123",
+    "workspaceId": "workspace456",
+    "name": "My Workflow Folder",
+    "color": "#FF0000",
+    "icon": "folder-icon",
+    "flowType": "call",
+    "pathwayModel": "Flow",
+    "pathways": ["flow123"],
+    "createdAt": "2023-10-15T09:30:00Z",
+    "updatedAt": "2023-10-15T10:00:00Z"
+  },
+  {
+    "_id": "folder124",
+    "workspaceId": "workspace456",
+    "name": "Message Folder",
+    "color": "#00FF00",
+    "icon": "message-icon",
+    "flowType": "message",
+    "pathwayModel": "MessageFlow",
+    "pathways": [],
+    "createdAt": "2023-10-14T08:00:00Z",
+    "updatedAt": "2023-10-14T08:00:00Z"
+  }
+]
+```
+</ResponseExample>

@@ -1,0 +1,785 @@
+---
+title: 'Text Chat Widget'
+description: 'Embed an AI-powered text chat widget on your website'
+icon: 'message'
+---
+
+## Prerequisites
+
+<Steps>
+  <Step title="Get your Workspace ID">
+    In the Trillet Portal sidebar, click the **workspace name dropdown** at the top. Your Workspace ID is displayed next to each workspace - click to copy.
+  </Step>
+  <Step title="Get your Agent ID">
+    Navigate to **Call Flows** in the sidebar. Each call flow card displays its **Agent ID** - copy it from the card.
+  </Step>
+  <Step title="Whitelist your domain">
+    Go to **Settings → Domain** and add the domain where you'll embed the widget (e.g. `https://yoursite.com`). This is required to avoid CORS errors. Allow up to 24 hours for propagation. Skip this if you're using a whitelabelled custom domain.
+  </Step>
+  <Step title="Enable public access">
+    Open your call flow, go to the **Settings** tab, and toggle **Public Access** on. Without this, `startPublicCall()` will be rejected.
+  </Step>
+</Steps>
+
+<Warning>
+  Never expose your API key in client-side code. The widget uses `startPublicCall()` which only requires the Workspace ID and Agent ID.
+</Warning>
+
+## Integration
+
+Choose between a minimal quick-start snippet or a complete styled widget, then pick your framework.
+
+<Accordion title="Quick Start - Minimal snippet">
+  Paste this before the closing `</body>` tag. A chat bubble appears in the bottom-right corner.
+
+  <Tabs>
+    <Tab title="HTML / CDN">
+```html
+<script type="module">
+  import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm';
+
+  const WORKSPACE_ID = 'your-workspace-id';
+  const AGENT_ID = 'your-agent-id';
+
+  const container = document.createElement('div');
+  container.innerHTML = `
+    <div id="trillet-chat-bubble" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;background:#0066ff;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,0.08);z-index:9999;border:1px solid rgba(0,102,255,0.2);transition:all 0.1s ease-in-out;">
+      <svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+    </div>
+  `;
+  document.body.appendChild(container);
+
+  const bubble = document.getElementById('trillet-chat-bubble');
+  let chatWindow = null;
+  let agent = null;
+  let isConnected = false;
+
+  bubble.addEventListener('click', () => {
+    if (chatWindow) {
+      chatWindow.style.display = chatWindow.style.display === 'none' ? 'flex' : 'none';
+      return;
+    }
+    openChat();
+  });
+
+  function openChat() {
+    chatWindow = document.createElement('div');
+    chatWindow.style.cssText = 'position:fixed;bottom:88px;right:24px;width:380px;height:520px;background:#fff;border-radius:12px;border:1px solid #e5e7eb;box-shadow:0 4px 12px -1px rgba(0,0,0,0.05);display:flex;flex-direction:column;overflow:hidden;z-index:9999;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;';
+    chatWindow.innerHTML = `
+      <div style="background:#fff;border-bottom:1px solid #e5e7eb;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-weight:600;font-size:14px;color:#111827;">Assistant</div><div id="trillet-status" style="font-size:12px;color:#6b7280;">Connecting...</div></div>
+        <button id="trillet-close" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:16px;padding:4px;">&#x2715;</button>
+      </div>
+      <div id="trillet-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;background:#f9fafb;"></div>
+      <div style="padding:12px;border-top:1px solid #e5e7eb;display:flex;gap:8px;">
+        <input id="trillet-input" type="text" placeholder="Type a message..." disabled style="flex:1;padding:9px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none;color:#111827;background:#fff;transition:border-color 0.2s;">
+        <button id="trillet-send" disabled style="padding:9px 14px;border:none;border-radius:8px;background:#0066ff;color:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:background 0.1s;">Send</button>
+      </div>
+    `;
+    document.body.appendChild(chatWindow);
+
+    document.getElementById('trillet-close').onclick = () => chatWindow.style.display = 'none';
+    document.getElementById('trillet-input').onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+    document.getElementById('trillet-send').onclick = sendMessage;
+
+    connectAgent();
+  }
+
+  async function connectAgent() {
+    try {
+      agent = new TrilletAgent({ workspaceId: WORKSPACE_ID, agentId: AGENT_ID, mode: 'text' });
+
+      agent.on('connected', () => {
+        isConnected = true;
+        document.getElementById('trillet-status').textContent = 'Online';
+        document.getElementById('trillet-status').style.color = '#10b981';
+        document.getElementById('trillet-input').disabled = false;
+        document.getElementById('trillet-send').disabled = false;
+        document.getElementById('trillet-input').focus();
+      });
+
+      agent.on('disconnected', () => {
+        isConnected = false;
+        document.getElementById('trillet-status').textContent = 'Offline';
+        document.getElementById('trillet-status').style.color = '#6b7280';
+        document.getElementById('trillet-input').disabled = true;
+        document.getElementById('trillet-send').disabled = true;
+      });
+
+      agent.on('error', () => addMsg('Something went wrong. Please try again.', 'system'));
+
+      ['message', 'transcript', 'transcriptUpdate'].forEach(evt => {
+        agent.on(evt, (data) => {
+          let text = typeof data === 'string' ? data : data?.text || data?.content || data?.message;
+          if (data?.role && data.role !== 'assistant') return;
+          if (data?.isFinal === false) return;
+          if (text) addMsg(text, 'assistant');
+        });
+      });
+
+      await agent.startPublicCall();
+    } catch (err) {
+      document.getElementById('trillet-status').textContent = 'Failed to connect';
+      addMsg('Could not connect. Please refresh and try again.', 'system');
+    }
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('trillet-input');
+    const text = input.value.trim();
+    if (!text || !isConnected) return;
+    addMsg(text, 'user');
+    input.value = '';
+    try {
+      agent.sendTextMessage?.(text) || agent.sendText?.(text) || agent.sendMessage?.(text);
+    } catch (e) {
+      addMsg('Failed to send message.', 'system');
+    }
+  }
+
+  const displayed = new Set();
+  function addMsg(text, type) {
+    const key = type + ':' + text;
+    if (displayed.has(key)) return;
+    displayed.add(key);
+    const el = document.createElement('div');
+    const isUser = type === 'user';
+    el.style.cssText = `max-width:80%;padding:9px 13px;border-radius:10px;font-size:13px;line-height:1.5;${
+      isUser ? 'background:#0066ff;color:#fff;align-self:flex-end;'
+      : type === 'system' ? 'background:#f3f4f6;color:#6b7280;align-self:center;font-size:12px;padding:6px 12px;'
+      : 'background:#fff;color:#111827;align-self:flex-start;border:1px solid #e5e7eb;'
+    }`;
+    el.textContent = text;
+    const container = document.getElementById('trillet-messages');
+    container.appendChild(el);
+    container.scrollTop = container.scrollHeight;
+  }
+</script>
+```
+    </Tab>
+    <Tab title="React / Next.js">
+```bash
+npm install @trillet-ai/web-sdk
+```
+
+```tsx
+import { useRef, useState, useEffect } from 'react';
+import { TrilletAgent } from '@trillet-ai/web-sdk';
+
+export default function TrilletChat({ workspaceId, agentId }) {
+  const agentRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || agentRef.current) return;
+
+    const agent = new TrilletAgent({ workspaceId, agentId, mode: 'text' });
+    agentRef.current = agent;
+
+    agent.on('connected', () => setConnected(true));
+    agent.on('disconnected', () => setConnected(false));
+
+    ['message', 'transcript'].forEach(evt => {
+      agent.on(evt, (data) => {
+        const text = typeof data === 'string' ? data : data?.text || data?.content;
+        if (data?.role && data.role !== 'assistant') return;
+        if (text) setMessages(m => [...m, { type: 'assistant', text }]);
+      });
+    });
+
+    agent.startPublicCall();
+    return () => agent.endCall?.();
+  }, [isOpen]);
+
+  const send = () => {
+    if (!input.trim() || !connected) return;
+    setMessages(m => [...m, { type: 'user', text: input }]);
+    agentRef.current?.sendTextMessage?.(input);
+    setInput('');
+  };
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(!isOpen)}
+        style={{ position: 'fixed', bottom: 24, right: 24, width: 52, height: 52,
+          borderRadius: 12, background: '#0066ff', border: '1px solid rgba(0,102,255,0.2)',
+          cursor: 'pointer', color: 'white', fontSize: 20, zIndex: 9999,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+        {isOpen ? '✕' : '💬'}
+      </button>
+      {isOpen && (
+        <div style={{ position: 'fixed', bottom: 88, right: 24, width: 380, height: 520,
+          background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
+          boxShadow: '0 4px 12px -1px rgba(0,0,0,0.05)',
+          display: 'flex', flexDirection: 'column', zIndex: 9999,
+          fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
+            <div style={{ fontWeight: 600, fontSize: 14, color: '#111827' }}>Assistant</div>
+            <div style={{ fontSize: 12, color: connected ? '#10b981' : '#6b7280' }}>
+              {connected ? 'Online' : 'Connecting...'}
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex',
+            flexDirection: 'column', gap: 8, background: '#f9fafb' }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ alignSelf: m.type === 'user' ? 'flex-end' : 'flex-start',
+                background: m.type === 'user' ? '#0066ff' : '#fff',
+                color: m.type === 'user' ? '#fff' : '#111827',
+                border: m.type === 'user' ? 'none' : '1px solid #e5e7eb',
+                padding: '9px 13px', borderRadius: 10, maxWidth: '80%', fontSize: 13 }}>
+                {m.text}
+              </div>
+            ))}
+          </div>
+          <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', gap: 8 }}>
+            <input value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && send()}
+              placeholder="Type a message..." disabled={!connected}
+              style={{ flex: 1, padding: '9px 14px', borderRadius: 8,
+                border: '1px solid #e5e7eb', outline: 'none', fontSize: 13 }} />
+            <button onClick={send} disabled={!connected}
+              style={{ padding: '9px 14px', borderRadius: 8, background: '#0066ff',
+                color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+Usage:
+```tsx
+<TrilletChat workspaceId="your-workspace-id" agentId="your-agent-id" />
+```
+    </Tab>
+  </Tabs>
+</Accordion>
+
+<Accordion title="Full Widget - Complete styled chat widget">
+  A polished chat widget with status indicators, typing animation, and transcript polling. Self-contained HTML file you can use directly or hand off.
+
+  <Tabs>
+    <Tab title="HTML / CDN">
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trillet Chat Widget</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    #trillet-bubble {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 52px;
+      height: 52px;
+      background: #0066ff;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 102, 255, 0.2);
+      z-index: 9999;
+      transition: all 0.1s ease-in-out;
+    }
+    #trillet-bubble:hover { background: #0052cc; }
+    #trillet-bubble svg { width: 22px; height: 22px; fill: white; }
+
+    #trillet-panel {
+      position: fixed;
+      bottom: 88px;
+      right: 24px;
+      width: 380px;
+      height: 540px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 12px -1px rgba(0, 0, 0, 0.05);
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 9999;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+    #trillet-panel.open { display: flex; animation: trillet-in 0.15s cubic-bezier(0.16,1,0.3,1); }
+
+    @keyframes trillet-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .trillet-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+    }
+    .trillet-header h3 { font-size: 14px; font-weight: 600; margin: 0; color: #111827; }
+    .trillet-header .status {
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 1px;
+    }
+    .trillet-header .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #d1d5db;
+    }
+    .trillet-header .status-dot.online { background: #10b981; }
+    .trillet-close {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      line-height: 1;
+      transition: color 0.1s;
+    }
+    .trillet-close:hover { color: #6b7280; }
+
+    .trillet-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #f9fafb;
+    }
+    .trillet-msg {
+      max-width: 82%;
+      padding: 9px 13px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .trillet-msg.user {
+      background: #0066ff;
+      color: #fff;
+      align-self: flex-end;
+    }
+    .trillet-msg.assistant {
+      background: #fff;
+      color: #111827;
+      align-self: flex-start;
+      border: 1px solid #e5e7eb;
+    }
+    .trillet-msg.system {
+      background: #f3f4f6;
+      color: #6b7280;
+      align-self: center;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .trillet-typing {
+      display: flex;
+      gap: 4px;
+      padding: 10px 14px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      align-self: flex-start;
+    }
+    .trillet-typing span {
+      width: 5px; height: 5px;
+      background: #9ca3af;
+      border-radius: 50%;
+      animation: trillet-dot 1.4s infinite ease-in-out;
+    }
+    .trillet-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .trillet-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes trillet-dot {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-3px); opacity: 1; }
+    }
+
+    .trillet-input-area {
+      padding: 12px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 8px;
+      background: #fff;
+    }
+    .trillet-input-area input {
+      flex: 1;
+      padding: 9px 14px;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      color: #111827;
+      transition: border-color 0.2s;
+    }
+    .trillet-input-area input:focus { border-color: #0066ff; }
+    .trillet-input-area input:disabled { background: #f9fafb; color: #9ca3af; }
+    .trillet-send {
+      padding: 9px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #0066ff;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background 0.1s;
+    }
+    .trillet-send:hover:not(:disabled) { background: #0052cc; }
+    .trillet-send:disabled { background: #d1d5db; cursor: not-allowed; }
+
+    @media (max-width: 480px) {
+      #trillet-panel {
+        width: calc(100vw - 24px);
+        height: calc(100vh - 140px);
+        right: 12px;
+        bottom: 88px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Paste everything below into your website -->
+  <button id="trillet-bubble">
+    <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>
+  </button>
+
+  <div id="trillet-panel">
+    <div class="trillet-header">
+      <div>
+        <h3>Assistant</h3>
+        <div class="status">
+          <div class="status-dot" id="trillet-dot"></div>
+          <span id="trillet-status-text">Ready</span>
+        </div>
+      </div>
+      <button class="trillet-close" id="trillet-close">&#x2715;</button>
+    </div>
+    <div class="trillet-messages" id="trillet-messages"></div>
+    <div class="trillet-input-area">
+      <input type="text" id="trillet-input" placeholder="Type a message..." disabled>
+      <button class="trillet-send" id="trillet-send" disabled>Send</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm';
+
+    // ── REPLACE THESE WITH YOUR VALUES ──
+    const WORKSPACE_ID = 'your-workspace-id';
+    const AGENT_ID = 'your-agent-id';
+    // ─────────────────────────────────────
+
+    const $ = (id) => document.getElementById(id);
+    const bubble = $('trillet-bubble');
+    const panel = $('trillet-panel');
+
+    let agent = null;
+    let isConnected = false;
+    let hasConnected = false;
+    const displayed = new Set();
+
+    bubble.addEventListener('click', () => {
+      panel.classList.toggle('open');
+      if (!hasConnected) {
+        hasConnected = true;
+        connectAgent();
+      }
+    });
+
+    $('trillet-close').addEventListener('click', () => panel.classList.remove('open'));
+    $('trillet-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    $('trillet-send').addEventListener('click', sendMessage);
+
+    async function connectAgent() {
+      setStatus('Connecting...', false);
+      try {
+        agent = new TrilletAgent({
+          workspaceId: WORKSPACE_ID,
+          agentId: AGENT_ID,
+          mode: 'text',
+        });
+
+        agent.on('connected', () => {
+          isConnected = true;
+          setStatus('Online', true);
+          $('trillet-input').disabled = false;
+          $('trillet-send').disabled = false;
+          $('trillet-input').focus();
+          startPolling();
+        });
+
+        agent.on('disconnected', () => {
+          isConnected = false;
+          setStatus('Offline', false);
+          $('trillet-input').disabled = true;
+          $('trillet-send').disabled = true;
+          addMsg('Session ended.', 'system');
+        });
+
+        agent.on('error', () => addMsg('Something went wrong. Please try again.', 'system'));
+
+        ['message', 'transcript', 'transcriptUpdate', 'response'].forEach(evt => {
+          agent.on(evt, (data) => {
+            hideTyping();
+            let text = typeof data === 'string' ? data : data?.text || data?.content || data?.message;
+            if (data?.role && data.role !== 'assistant') return;
+            if (data?.isFinal === false) return;
+            if (text) addMsg(text, 'assistant');
+          });
+        });
+
+        agent.on('assistantStartedSpeaking', showTyping);
+        agent.on('assistantStoppedSpeaking', hideTyping);
+
+        await agent.startPublicCall();
+      } catch (err) {
+        setStatus('Failed', false);
+        addMsg('Could not connect. Please refresh and try again.', 'system');
+      }
+    }
+
+    let pollInterval = null;
+    function startPolling() {
+      let lastCount = 0;
+      pollInterval = setInterval(() => {
+        if (!agent || !isConnected) return;
+        try {
+          const transcripts = agent.getTranscripts?.() || [];
+          for (let i = lastCount; i < transcripts.length; i++) {
+            const t = transcripts[i];
+            if (t.role === 'assistant' && t.text) { hideTyping(); addMsg(t.text, 'assistant'); }
+          }
+          lastCount = transcripts.length;
+        } catch (e) {}
+      }, 500);
+    }
+
+    function sendMessage() {
+      const input = $('trillet-input');
+      const text = input.value.trim();
+      if (!text || !isConnected) return;
+      addMsg(text, 'user');
+      input.value = '';
+      showTyping();
+      try {
+        if (agent.sendTextMessage) agent.sendTextMessage(text);
+        else if (agent.sendText) agent.sendText(text);
+        else if (agent.sendMessage) agent.sendMessage(text);
+      } catch (e) {
+        hideTyping();
+        addMsg('Failed to send message.', 'system');
+      }
+    }
+
+    function setStatus(text, online) {
+      $('trillet-status-text').textContent = text;
+      $('trillet-dot').classList.toggle('online', online);
+    }
+
+    function addMsg(text, type) {
+      if (!text?.trim()) return;
+      const key = type + ':' + text;
+      if (displayed.has(key)) return;
+      displayed.add(key);
+      const el = document.createElement('div');
+      el.className = 'trillet-msg ' + type;
+      el.textContent = text;
+      $('trillet-messages').appendChild(el);
+      $('trillet-messages').scrollTop = $('trillet-messages').scrollHeight;
+    }
+
+    function showTyping() {
+      if (document.getElementById('trillet-typing')) return;
+      const el = document.createElement('div');
+      el.className = 'trillet-typing';
+      el.id = 'trillet-typing';
+      el.innerHTML = '<span></span><span></span><span></span>';
+      $('trillet-messages').appendChild(el);
+      $('trillet-messages').scrollTop = $('trillet-messages').scrollHeight;
+    }
+
+    function hideTyping() {
+      document.getElementById('trillet-typing')?.remove();
+    }
+  </script>
+
+</body>
+</html>
+```
+    </Tab>
+    <Tab title="React / Next.js">
+```bash
+npm install @trillet-ai/web-sdk
+```
+
+```tsx
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { TrilletAgent } from '@trillet-ai/web-sdk';
+
+export default function TrilletChat({ workspaceId, agentId }) {
+  const agentRef = useRef(null);
+  const messagesRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState('');
+  const [connected, setConnected] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || agentRef.current) return;
+
+    const agent = new TrilletAgent({ workspaceId, agentId, mode: 'text' });
+    agentRef.current = agent;
+
+    agent.on('connected', () => setConnected(true));
+    agent.on('disconnected', () => setConnected(false));
+
+    ['message', 'transcript'].forEach(evt => {
+      agent.on(evt, (data) => {
+        const text = typeof data === 'string' ? data : data?.text || data?.content;
+        if (data?.role && data.role !== 'assistant') return;
+        if (text) setMessages(m => [...m, { type: 'assistant', text }]);
+      });
+    });
+
+    agent.startPublicCall();
+
+    // Poll transcripts as fallback
+    let lastCount = 0;
+    const poll = setInterval(() => {
+      const transcripts = agent.getTranscripts?.() || [];
+      for (let i = lastCount; i < transcripts.length; i++) {
+        const t = transcripts[i];
+        if (t.role === 'assistant' && t.text) {
+          setMessages(m => [...m, { type: 'assistant', text: t.text }]);
+        }
+      }
+      lastCount = transcripts.length;
+    }, 500);
+
+    return () => { clearInterval(poll); agent.endCall?.(); };
+  }, [isOpen]);
+
+  useEffect(() => {
+    messagesRef.current?.scrollTo(0, messagesRef.current.scrollHeight);
+  }, [messages]);
+
+  const send = useCallback(() => {
+    if (!input.trim() || !connected) return;
+    setMessages(m => [...m, { type: 'user', text: input }]);
+    agentRef.current?.sendTextMessage?.(input);
+    setInput('');
+  }, [input, connected]);
+
+  const styles = {
+    bubble: { position: 'fixed', bottom: 24, right: 24, width: 52, height: 52,
+      borderRadius: 12, background: '#0066ff', border: '1px solid rgba(0,102,255,0.2)',
+      cursor: 'pointer', color: '#fff', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: 9999, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' },
+    panel: { position: 'fixed', bottom: 88, right: 24, width: 380, height: 540,
+      background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
+      boxShadow: '0 4px 12px -1px rgba(0,0,0,0.05)',
+      display: 'flex', flexDirection: 'column', zIndex: 9999,
+      fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, sans-serif' },
+    header: { padding: '14px 16px', borderBottom: '1px solid #e5e7eb',
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+    msgUser: { alignSelf: 'flex-end', background: '#0066ff', color: '#fff',
+      padding: '9px 13px', borderRadius: 10, maxWidth: '80%', fontSize: 13 },
+    msgBot: { alignSelf: 'flex-start', background: '#fff', color: '#111827',
+      border: '1px solid #e5e7eb', padding: '9px 13px', borderRadius: 10,
+      maxWidth: '80%', fontSize: 13 },
+  };
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(!isOpen)} style={styles.bubble}>
+        {isOpen
+          ? <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          : <svg width="22" height="22" fill="#fff" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>}
+      </button>
+      {isOpen && (
+        <div style={styles.panel}>
+          <div style={styles.header}>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: '#111827' }}>Assistant</div>
+              <div style={{ fontSize: 12, color: connected ? '#10b981' : '#6b7280' }}>
+                {connected ? 'Online' : 'Connecting...'}
+              </div>
+            </div>
+            <button onClick={() => setIsOpen(false)}
+              style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', fontSize: 16 }}>
+              &#x2715;
+            </button>
+          </div>
+          <div ref={messagesRef} style={{ flex: 1, overflowY: 'auto', padding: 16,
+            display: 'flex', flexDirection: 'column', gap: 8, background: '#f9fafb' }}>
+            {messages.map((m, i) => (
+              <div key={i} style={m.type === 'user' ? styles.msgUser : styles.msgBot}>
+                {m.text}
+              </div>
+            ))}
+          </div>
+          <div style={{ padding: 12, borderTop: '1px solid #e5e7eb', display: 'flex', gap: 8 }}>
+            <input value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && send()}
+              placeholder="Type a message..." disabled={!connected}
+              style={{ flex: 1, padding: '9px 14px', borderRadius: 8,
+                border: '1px solid #e5e7eb', outline: 'none', fontSize: 13 }} />
+            <button onClick={send} disabled={!connected}
+              style={{ padding: '9px 14px', borderRadius: 8, background: '#0066ff',
+                color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500 }}>
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+```
+
+Usage:
+```tsx
+<TrilletChat workspaceId="your-workspace-id" agentId="your-agent-id" />
+```
+    </Tab>
+  </Tabs>
+</Accordion>
+
+## Events Reference
+
+The SDK emits these events you can listen to:
+
+| Event | Description |
+|---|---|
+| `connected` | Agent is connected and ready |
+| `disconnected` | Session ended |
+| `error` | An error occurred |
+| `message` | New message received |
+| `transcript` | Transcript update received |
+| `assistantStartedSpeaking` | Agent begins responding |
+| `assistantStoppedSpeaking` | Agent finished responding |
+
+```js
+agent.on('connected', (details) => {
+  console.log('Connected:', details.callId);
+});
+```

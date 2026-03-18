@@ -1,0 +1,127 @@
+---
+title: 'Get Conversations By Flow ID'
+api: 'GET /v1/api/conversations/flow/{flowId}'
+description: 'Fetch the conversations for a specific flow.'
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+<ParamField path="flowId" type="string" required>
+  The unique identifier of the message flow.
+</ParamField>
+
+
+### Response Fields
+The response body will contain an array of the following fields:
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the conversation.
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  The unique identifier for the user associated with the conversation.
+</ResponseField>
+
+<ResponseField name="pathwayId" type="string">
+  The unique identifier for the flow associated with the conversation.
+</ResponseField>
+
+<ResponseField name="agentId" type="string">
+  The unique identifier for the agent handling the conversation.
+</ResponseField>
+
+<ResponseField name="customer" type="object">
+  Customer details associated with the conversation.
+  <ResponseField name="customer.name" type="string">
+    The name of the customer.
+  </ResponseField>
+  <ResponseField name="customer.email" type="string">
+    The email address of the customer.
+  </ResponseField>
+  <ResponseField name="customer.phone" type="string">
+    The phone number of the customer.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="messages" type="array">
+  An array of messages exchanged in the conversation.
+  <Expandable title="Message Details">
+    <ResponseField name="direction" type="string">
+      The direction of the message (e.g., "outbound" or "inbound").
+    </ResponseField>
+    <ResponseField name="sent" type="boolean">
+      Indicates whether the message was sent successfully.
+    </ResponseField>
+    <ResponseField name="message" type="string">
+      The content of the message.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      The status of the message (e.g., "approved", "received").
+    </ResponseField>
+    <ResponseField name="_id" type="string">
+      The unique identifier for the message.
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      Timestamp when the message was created.
+    </ResponseField>
+    <ResponseField name="updatedAt" type="string">
+      Timestamp when the message was last updated.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the conversation was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the conversation was last updated.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "_id": "112ec528bf7946a12ab0fs21",
+  "userId": "60d9e3c2f42e4d03800e01a5",
+  "pathwayId": "pw12345",
+  "agentId": "ag67890",
+  "customer": {
+      "name": "Test Customer Name",
+      "email": "customer@example.com",
+      "phone": "+123456789"
+    },
+  "messages": [
+      {
+        "direction": "outbound",
+        "sent": true,
+        "message": "Thank you for your feedback!",
+        "status": "approved",
+        "_id": "675c8e368824aa5f130b94d3",
+        "createdAt": "2024-12-01T08:45:00Z",
+        "updatedAt": "2024-12-01T09:00:00Z"
+      },
+    {
+        "direction": "inbound",
+        "sent": true,
+        "message": "No worries!",
+        "status": "received",
+        "_id": "675c8e368824aa5f130b94d3",
+        "createdAt": "2024-12-01T08:55:00Z",
+        "updatedAt": "2024-12-01T09:00:00Z"
+      }
+  ],
+  "createdAt": "2024-12-01T08:45:00Z",
+  "updatedAt": "2024-12-03T12:30:00Z"
+}
+```
+
+</ResponseExample>

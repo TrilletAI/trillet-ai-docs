@@ -1,0 +1,98 @@
+---
+title: "Update Folder"
+api: "PATCH /v1/api/flow-folders/{folderId}"
+description: "Update the details of a specific folder identified by its folderId."
+---
+
+### Path Parameters
+
+<ParamField path="folderId" type="string" required>
+  The unique identifier of the folder to update.
+</ParamField>
+
+### Request Body
+
+<ParamField body="name" type="string">
+  The updated name of the folder (e.g., "Updated Workflow Folder").
+</ParamField>
+
+<ParamField body="color" type="string" required>
+  The color of the folder, specified as one of the following color names with their corresponding hex codes: blue (#3B82F6), green (#10B981), teal (#14B8A6), purple (#8B5CF6), orange (#F97316), red (#EF4444).
+</ParamField>
+
+<ParamField body="icon" type="string" required>
+  The icon identifier for the folder, specified as one of the following: folder, file, phone, headphone, voice, message.
+</ParamField>
+
+<ParamField body="flowType" type="string">
+  The updated type of flow, either "call" or "message".
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier of the folder.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the folder belongs.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The updated name of the folder.
+</ResponseField>
+
+<ResponseField name="color" type="string">
+  The updated color of the folder, represented as a hex code.
+</ResponseField>
+
+<ResponseField name="icon" type="string">
+  The updated icon identifier for the folder.
+</ResponseField>
+
+<ResponseField name="flowType" type="string">
+  The updated type of flow, either "call" or "message".
+</ResponseField>
+
+<ResponseField name="pathwayModel" type="string">
+  The model type for flows, derived from `flowType`.
+</ResponseField>
+
+<ResponseField name="pathways" type="array">
+  An array of flow IDs associated with the folder.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the folder was created (ISO 8601 format).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the folder was last updated (ISO 8601 format).
+</ResponseField>
+
+### Example Request
+
+```json
+{
+  "name": "Updated Workflow Folder",
+  "color": "#00FF00",
+  "icon": "new-folder-icon"
+}
+```
+
+<ResponseExample>
+```json
+{
+  "_id": "folder123",
+  "workspaceId": "workspace456",
+  "name": "Updated Workflow Folder",
+  "color": "#00FF00",
+  "icon": "new-folder-icon",
+  "flowType": "call",
+  "pathwayModel": "Flow",
+  "pathways": ["flow123"],
+  "createdAt": "2023-10-15T09:30:00Z",
+  "updatedAt": "2023-10-16T12:00:00Z"
+}
+```
+</ResponseExample>

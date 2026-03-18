@@ -1,0 +1,35 @@
+---
+title: "Install Google Calendar"
+api: "GET /v1/api/gcal/install"
+description: "Get the Google Calendar OAuth authorization URL to connect your Google Calendar."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="pathwayId" type="string" required>
+The call flow pathway ID to connect Google Calendar to.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="url" type="string">
+The Google OAuth authorization URL. Redirect the user to this URL to authorize the connection.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "url": "https://accounts.google.com/o/oauth2/v2/auth?client_id=...&redirect_uri=...&scope=...&state=..."
+}
+```
+</ResponseExample>

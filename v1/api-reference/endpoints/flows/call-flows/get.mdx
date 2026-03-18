@@ -1,0 +1,135 @@
+---
+title: "Get Call Flow"
+api: "GET /v1/api/call-flows/{id}"
+description: "Retrieve a specific call flow by its ID."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique ID of the call flow.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the call flow.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace where the call flow is configured.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The name assigned to the call flow.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  Indicates the direction of the call flow, such as "inbound".
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A brief description of what the call flow is designed to handle.
+</ResponseField>
+
+<ResponseField name="agent" type="string">
+  The ID of the agent associated with this call flow.
+</ResponseField>
+
+<ResponseField name="promptType" type="string">
+  The type of prompt used in the call flow, such as "simple".
+</ResponseField>
+
+<ResponseField name="flowData" type="object">
+  Contains the configuration of nodes and edges defining the call routing logic.
+  <ResponseField name="nodes" type="array">
+    An array detailing each node in the call flow.
+  </ResponseField>
+  <ResponseField name="edges" type="array">
+    An array detailing the edges connecting the nodes.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="prompt" type="string">
+  The initial or system prompt that is presented in the call flow.
+</ResponseField>
+
+<ResponseField name="isActive" type="boolean">
+  Indicates whether the call flow is currently active.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  The configuration settings for the call flow, including details on knowledge bases, response settings, security measures, and call settings.
+  <ResponseField name="knowledgeBases" type="array">
+    An array of references to knowledge bases included in the call flow.
+  </ResponseField>
+  <ResponseField name="responseSettings" type="object">
+    Settings related to response timing within the call flow.
+    <ResponseField name="delay" type="number">
+      The delay before a response is issued, measured in seconds.
+    </ResponseField>
+  </ResponseField>
+  <ResponseField name="security" type="object">
+    Security settings relevant to the call flow.
+    <ResponseField name="hipaaCompliance" type="boolean">
+      Indicates whether HIPAA compliance is enabled.
+    </ResponseField>
+  </ResponseField>
+  <ResponseField name="callSetting" type="object">
+    Call-related settings for managing the call duration and handling silence.
+    <ResponseField name="maxCallDuration" type="number">
+      The maximum duration for the call, measured in seconds.
+    </ResponseField>
+    <ResponseField name="endCallOnSilence" type="number">
+      The duration of silence that triggers the end of the call, measured in seconds.
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+    Timestamp when the call flow was created.
+</ResponseField>
+<ResponseField name="updatedAt" type="string">
+    Timestamp when the call flow was last updated.
+</ResponseField>
+
+<ResponseExample>
+
+```json
+{
+  "_id": "exampleId",
+  "workspaceId": "workspacePlaceholder",
+  "name": "Customer Support Flow",
+  "direction": "inbound",
+  "description": "Handles inbound support calls",
+  "agent": "agentPlaceholder",
+  "promptType": "simple",
+  "flowData": {
+    "nodes": [],
+    "edges": []
+  },
+  "prompt": "Keep the conversation short and friendly.",
+  "isActive": true,
+  "settings": {
+    "knowledgeBases": [],
+    "responseSettings": { "delay": 0 },
+    "security": { "hipaaCompliance": false },
+    "callSetting": { "maxCallDuration": 600, "endCallOnSilence": 10 }
+  },
+  "createdAt": "2025-01-03T11:00:00Z",
+  "updatedAt": "2025-01-03T11:10:00Z"
+}
+```
+
+</ResponseExample>

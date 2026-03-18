@@ -1,0 +1,72 @@
+---
+title: "Get Knowledge Base"
+api: "GET /v1/api/knowledgebase/{id}"
+description: "Retrieve a specific knowledge base by its ID."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique identifier of the knowledge base.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="_id" type="string">
+Unique identifier for the knowledge base.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Name of the knowledge base.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+Description of the knowledge base.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+Workspace ID associated with the knowledge base.
+</ResponseField>
+
+<ResponseField name="files" type="array">
+Array of files uploaded to the knowledge base.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+Timestamp when the knowledge base was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+Timestamp when the knowledge base was last updated.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "name": "Product Documentation",
+  "description": "All product-related documentation and FAQs",
+  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "files": [
+    {
+      "name": "product-guide.pdf",
+      "size": 1048576,
+      "type": "application/pdf",
+      "uploadedAt": "2024-06-01T10:00:00.000Z"
+    }
+  ],
+  "createdAt": "2024-06-01T09:00:00.000Z",
+  "updatedAt": "2024-06-01T10:00:00.000Z"
+}
+```
+</ResponseExample>

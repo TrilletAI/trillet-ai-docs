@@ -1,0 +1,76 @@
+---
+title: "Get Omni Flow Agent"
+api: "GET /v1/api/omni-flow-agents/{id}"
+description: "Retrieve the details of a single call agent based on its unique identifier."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the agent.
+</ParamField>
+
+<ResponseExample>
+```json
+{
+  "workspaceId": "674b9687d56a35c024db9cce",
+  "userId": "674b9687d56a35c024db9ccc",
+  "name": "test",
+  "llmModel": "gpt-4o-mini",
+  "phoneNumberId": null,
+  "status": "ready",
+  "createdAt": "2025-01-19T03:18:22.604Z",
+  "updatedAt": "2025-01-19T03:18:22.604Z",
+  "messageChannel": "SMS"
+}
+```
+</ResponseExample>
+
+### Response Fields
+
+<ResponseField name="workspaceId" type="string">
+  Workspace ID associated with the agent.
+</ResponseField>
+
+<ResponseField name="userId" type="string">
+  User ID of the agent creator.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  Name of the agent.
+</ResponseField>
+
+<ResponseField name="llmModel" type="string">
+  Language model used by the agent (e.g., `gpt-4o-mini`).
+</ResponseField>
+
+<ResponseField name="phoneNumberId" type="object" nullable>
+  The phone number ID associated with the agent, if available.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the agent (e.g., `ready`).
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the agent was created.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the agent was last updated.
+</ResponseField>
+
+<ResponseField name="messageChannel" type="string">
+  The channel used by the agent for communication (e.g., `SMS`).
+</ResponseField>

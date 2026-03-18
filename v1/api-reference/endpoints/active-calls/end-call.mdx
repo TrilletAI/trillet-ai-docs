@@ -1,0 +1,50 @@
+---
+title: "End Active Call"
+api: "POST /v2/api/active-calls/{roomName}/end-call"
+description: "End an active call by its room name."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="roomName" type="string" required>
+The LiveKit room name of the active call to end.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the call was ended successfully.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+Confirmation message.
+</ResponseField>
+
+<ResponseField name="roomName" type="string">
+The room name of the ended call.
+</ResponseField>
+
+<ResponseField name="endTime" type="string">
+ISO timestamp when the call was ended.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Call ended successfully",
+  "roomName": "call-abc123",
+  "endTime": "2024-06-01T10:05:00.000Z"
+}
+```
+</ResponseExample>

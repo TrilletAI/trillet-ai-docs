@@ -1,0 +1,130 @@
+---
+title: "Get a Specific Call History"
+api: "GET /v2/api/call-history/{callHistoryId}"
+description: "Retrieve detailed information about a specific call history entry."
+---
+
+### Headers  
+
+<ParamField header="x-api-key" type="string" required>  
+API key used for authenticating requests to the API.
+</ParamField>  
+
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="callHistoryId" type="string" required>
+  The unique identifier of the call record in the database.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="_id" type="string">
+  The unique identifier for the call history record.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The identifier of the workspace associated with this call history.
+</ResponseField>
+
+<ResponseField name="agentId" type="string">
+  The identifier of the agent involved in the call.
+</ResponseField>
+
+<ResponseField name="callFlowId" type="string">
+  The identifier of the call flow used during the call.
+</ResponseField>
+
+<ResponseField name="roomName" type="string">
+  The virtual room name where the call took place.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  The direction of the call (e.g., "inbound" or "outbound").
+</ResponseField>
+
+<ResponseField name="fromPhoneNumber" type="string">
+  The phone number from which the call originated.
+</ResponseField>
+
+<ResponseField name="toPhoneNumber" type="string">
+  The phone number to which the call was made.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The final status of the call (e.g., "completed", "failed", "ongoing").
+</ResponseField>
+
+<ResponseField name="startTime" type="number">
+  The start time of the call as a Unix timestamp.
+</ResponseField>
+
+<ResponseField name="endTime" type="number">
+  The end time of the call as a Unix timestamp.
+</ResponseField>
+
+<ResponseField name="cost" type="object">
+  Details of the costs incurred during the call.
+  <ResponseField name="customer_charge" type="number">
+    The charge to the customer for the call.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="metadata" type="object">
+  Additional metadata associated with the call.
+</ResponseField>
+
+<ResponseField name="functionCalls" type="array">
+  An array detailing any functional calls made during the interaction.
+</ResponseField>
+
+<ResponseField name="summary" type="string">
+  A brief summary of the call.
+</ResponseField>
+
+<ResponseField name="analyzedData" type="object">
+  Analyzed data from the call that may include additional fields.
+  <ResponseField name="additional_field" type="string">
+    Additional details from the analyzed data.
+  </ResponseField>
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+    Timestamp when the call history was created.
+</ResponseField>
+<ResponseField name="updatedAt" type="string">
+  Timestamp when the call history was last updated.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "_id": "1234567890abcdef",
+  "workspaceId": "abcdef1234567890",
+  "agentId": "abcdef1234567890",
+  "callFlowId": "abcdef1234567890",
+  "roomName": "web-1234abcd",
+  "direction": "outbound",
+  "fromPhoneNumber": "+10000000000",
+  "toPhoneNumber": "+10000000001",
+  "status": "completed",
+  "startTime": 1680000000,
+  "endTime": 1680000300,
+  "cost": {
+    "customer_charge": 0.10
+  },
+  "metadata": {},
+  "functionCalls": [],
+  "summary": "Generic conversation summary about customer engagement.",
+  "analyzedData": {
+    "additional_field": "generic details"
+  },
+  "createdAt": "2025-01-01T10:00:00Z",
+  "updatedAt": "2025-01-01T10:05:00Z"
+}
+```
+</ResponseExample>

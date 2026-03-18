@@ -1,0 +1,31 @@
+---
+title: "Delete API Key"
+api: "DELETE /v1/api/keys/{id}"
+description: "Delete an API key. The key will immediately stop working for authentication."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique identifier of the API key to delete.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the deletion was successful.
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>

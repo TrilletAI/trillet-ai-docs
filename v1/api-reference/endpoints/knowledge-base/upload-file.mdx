@@ -1,0 +1,65 @@
+---
+title: "Upload File to Knowledge Base"
+api: "POST /v1/api/knowledgebase/{id}/files"
+description: "Upload a file to an existing knowledge base. Supports PDF, TXT, DOCX, MD, CSV, and JSON files up to 50MB."
+---
+
+## Headers
+
+<ParamField header="x-api-key" type="string" required>
+API key used for authenticating requests to the API.
+</ParamField>
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique identifier of the knowledge base to upload the file to.
+</ParamField>
+
+## Request Body
+
+The request body should be sent as `multipart/form-data`.
+
+<ParamField body="uploadedFile" type="file" required>
+The file to upload. Supported formats: PDF, TXT, DOCX, MD, CSV, JSON. Maximum file size: 50MB.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="success" type="boolean">
+Whether the file was uploaded successfully.
+</ResponseField>
+
+<ResponseField name="file" type="object">
+Details of the uploaded file.
+
+<ResponseField name="name" type="string">
+Name of the uploaded file.
+</ResponseField>
+
+<ResponseField name="size" type="number">
+Size of the file in bytes.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+MIME type of the file.
+</ResponseField>
+
+</ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "file": {
+    "name": "product-guide.pdf",
+    "size": 1048576,
+    "type": "application/pdf"
+  }
+}
+```
+</ResponseExample>
