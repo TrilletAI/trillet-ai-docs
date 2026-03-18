@@ -1,6 +1,6 @@
 {
   "$schema": "https://www.jamdesk.com/docs.json",
-  "theme": "jam",
+  "theme": "pulsar",
   "name": "Trillet AI",
   "colors": {
     "primary": "#0062E9",
