@@ -37,7 +37,7 @@
     "links": [
       {
         "label": "Join Community",
-        "href": "https://discord.com/invite/4qbWtkbT93"
+        "href": "https://www.skool.com/trillet-ai"
       }
     ],
     "primary": {
@@ -54,7 +54,7 @@
   },
   "footer": {
     "socials": {
-      "discord": "https://discord.com/invite/4qbWtkbT93",
+      "website": "https://www.skool.com/trillet-ai",
       "github": "https://github.com/TrilletAI",
       "linkedin": "https://linkedin.com/company/trillet-ai"
     }
@@ -274,8 +274,8 @@
     },
     {
       "name": "Community",
-      "href": "https://discord.com/invite/4qbWtkbT93",
-      "icon": "discord"
+      "href": "https://www.skool.com/trillet-ai",
+      "icon": "people-line"
     },
     {
       "name": "Enterprise",
@@ -289,7 +289,7 @@
     },
     {
       "name": "Change Log",
-      "href": "changelog",
+      "href": "https://www.skool.com/trillet-ai/-/search?q=Release",
       "icon": "clock-rotate-left"
     }
   ]
