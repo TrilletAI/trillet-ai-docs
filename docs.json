@@ -289,7 +289,7 @@
     },
     {
       "name": "Change Log",
-      "href": "changelog",
+      "href": "changelog/changelog",
       "icon": "clock-rotate-left"
     }
   ]
