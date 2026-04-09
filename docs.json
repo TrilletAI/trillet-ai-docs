@@ -7,7 +7,7 @@
     "light": "#27A3FD",
     "dark": "#0062E9"
   },
-  "favicon": "favicon.svg",
+  "favicon": "/images/favicon.svg",
   "logo": {
     "light": "/public/logo/Trillet-logo-light.png",
     "dark": "/public/logo/Trillet-logo-dark.svg",
