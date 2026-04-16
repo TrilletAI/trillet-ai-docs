@@ -4,6 +4,12 @@ api: "POST /v1/api/workspaces"
 description: "Create a new workspace with the authenticated user as the owner."
 ---
 
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The unique identifier of any workspace you are a member of. Required by the auth middleware when using API key authentication — this does not need to match any specific workspace; the new workspace will still be created for the authenticated user.
+</ParamField>
+
 ### Request Body
 
 <ParamField body="name" type="string" required>

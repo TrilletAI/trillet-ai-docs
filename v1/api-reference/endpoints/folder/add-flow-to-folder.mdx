@@ -4,6 +4,12 @@ api: "POST /v1/api/flow-folders/{folderId}/flows"
 description: "Add a flow to a specific folder identified by its folderId."
 ---
 
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The unique identifier of the workspace being accessed.
+</ParamField>
+
 ### Path Parameters
 
 <ParamField path="folderId" type="string" required>

@@ -4,6 +4,12 @@ api: "DELETE /v1/api/flow-folders/{folderId}/flows/{pathwayId}"
 description: "Remove a specific flow from a folder identified by its folderId and flowId."
 ---
 
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The unique identifier of the workspace being accessed.
+</ParamField>
+
 ### Path Parameters
 
 <ParamField path="folderId" type="string" required>
