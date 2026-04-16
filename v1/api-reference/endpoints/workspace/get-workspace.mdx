@@ -4,6 +4,12 @@ api: "GET /v1/api/workspaces"
 description: "Retrieve all workspaces associated with the authenticated user. If the user does not exist, a new user and default workspace may be automatically created."
 ---
 
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The unique identifier of any workspace you are a member of. Required by the auth middleware when using API key authentication — this endpoint still returns all workspaces the authenticated user has access to, regardless of which workspace ID is provided here.
+</ParamField>
+
 ### Description
 
 This endpoint returns a list of workspaces where the authenticated user is either:

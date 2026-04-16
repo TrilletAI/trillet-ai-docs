@@ -4,6 +4,12 @@ api: "GET /v1/api/flow-folders/{folderId}"
 description: "Retrieve the details of a specific folder, including its associated flows, by its folderId."
 ---
 
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  The unique identifier of the workspace being accessed.
+</ParamField>
+
 ### Path Parameters
 
 <ParamField path="folderId" type="string" required>

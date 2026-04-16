@@ -15,6 +15,56 @@ API key used for authenticating requests to the API.
   Workspace identifier for the API.
 </ParamField>
 
+### Query Parameters
+
+<ParamField query="page" type="integer">
+  Page number for pagination. Defaults to `1`.
+</ParamField>
+
+<ParamField query="limit" type="integer">
+  Number of records per page. Defaults to `10`.
+</ParamField>
+
+<ParamField query="agentId" type="string">
+  Filter call histories by agent ID.
+</ParamField>
+
+<ParamField query="pathwayId" type="string">
+  Filter call histories by call flow (pathway) ID.
+</ParamField>
+
+<ParamField query="batchId" type="string">
+  Filter call histories belonging to a specific batch call.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by call status (e.g. `completed`, `failed`, `in-progress`).
+</ParamField>
+
+<ParamField query="direction" type="string">
+  Filter by call direction: `inbound` or `outbound`.
+</ParamField>
+
+<ParamField query="callType" type="string">
+  Filter by call type: `sip` or `web`.
+</ParamField>
+
+<ParamField query="search" type="string">
+  Free-text search across phone numbers / call metadata.
+</ParamField>
+
+<ParamField query="callIds" type="string">
+  JSON-stringified array of specific call IDs to fetch (e.g. `["abc","def"]`).
+</ParamField>
+
+<ParamField query="dateRange" type="string">
+  JSON-stringified object with `from` and `to` ISO timestamps (e.g. `{"from":"2024-01-01","to":"2024-01-31"}`).
+</ParamField>
+
+<ParamField query="postAnalysis" type="string">
+  JSON-stringified filter object for post-call analysis fields.
+</ParamField>
+
 ### Response Fields
 
 <ResponseField name="_id" type="string">
