@@ -61,20 +61,30 @@ description: "Send an AI-driven phone call to a given number."
   The status of the request, indicating the success or failure of the call initiation.
 </ResponseField>
 
-<ResponseField name="call_id" type="string">
+<ResponseField name="message" type="string">
+  A message providing feedback about the call initiation process, typically confirming successful initiation or describing an error.
+</ResponseField>
+
+<ResponseField name="callId" type="string">
   A unique identifier assigned to the initiated call. This ID can be used to track the call's progress or retrieve its details later.
 </ResponseField>
 
-<ResponseField name="message" type="string">
-  A message providing feedback about the call initiation process, typically confirming successful initiation or describing an error.
+<ResponseField name="roomName" type="string">
+  The name of the LiveKit room created for this call session.
+</ResponseField>
+
+<ResponseField name="jobId" type="string">
+  The identifier of the background job scheduled to execute the outbound call.
 </ResponseField>
 
 <ResponseExample>
 ```json
 {
   "status": "success",
-  "call_id": "123456789",
-  "message": "Call initiated successfully"
+  "message": "Outbound call job scheduled for agent a1b2c3d4e5f6a7b8c9d0e1f2 to number +1234567890",
+  "callId": "f9e8d7c6b5a4f3e2d1c0b9a8",
+  "roomName": "a1b2c3d4e5f6a7b8c9d0e1f2-x7k2m9p4q1",
+  "jobId": "123"
 }
 ```
 </ResponseExample>
