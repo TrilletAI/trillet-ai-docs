@@ -269,7 +269,7 @@
   "anchors": [
     {
       "name": "Documentation",
-      "href": "documentation",
+      "href": "/documentation/introduction",
       "icon": "book-open-cover"
     },
     {
