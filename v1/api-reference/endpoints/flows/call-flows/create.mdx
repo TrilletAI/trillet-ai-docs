@@ -4,6 +4,10 @@ api: "POST /v1/api/call-flows"
 description: "Create a new call flow with full settings."
 ---
 
+<Note>
+  Every call flow runs on an agent. To choose the voice and model yourself, create the agent with [Create Call Agent](/v1/api-reference/endpoints/agents/call/create) first and pass its `_id` as `agent`. If you skip that, a default agent is created for you. There is no separate agents page in the dashboard. You edit the agent inside its call flow, and you pick it on the Phone Numbers page.
+</Note>
+
 ### Headers  
 <ParamField header="x-workspace-id" type="string" required>
   Workspace identifier for the API.
@@ -24,7 +28,9 @@ description: "Create a new call flow with full settings."
 </ParamField>
 
 <ParamField body="agent" type="string">
-  ID of the agent to associate with this flow. If provided, the system looks for a pending phone number for that agent and activates it.
+  ID of the agent this flow uses. Create the agent first with [Create Call Agent](/v1/api-reference/endpoints/agents/call/create) and pass the `_id` from that response here. The agent holds the name, voice and model the flow speaks with, and it is what you pick when you give the flow a phone number. If the agent has a pending phone number, it is activated.
+
+  If you leave this out, a default agent is created for you and linked to the flow. It is named after the flow and uses the default model, the Astra voice in English and Speechmatics speech recognition. Its ID comes back in the `agent` field of the response, and you can change it later with [Update Call Agent](/v1/api-reference/endpoints/agents/call/update) or from the call flow editor.
 </ParamField>
 
 <ParamField body="promptType" default="simple" type="string" required>
@@ -262,7 +268,7 @@ description: "Create a new call flow with full settings."
 </ResponseField>
 
 <ResponseField name="agent" type="string">
-  The identifier of the agent associated with this call flow.
+  The identifier of the agent associated with this call flow. This is the agent you passed in, or the default agent created for the flow when you did not pass one.
 </ResponseField>
 
 <ResponseField name="promptType" default="simple" type="string">
