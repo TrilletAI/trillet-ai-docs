@@ -219,7 +219,8 @@
               "v1/api-reference/endpoints/agents/call/list",
               "v1/api-reference/endpoints/agents/call/get",
               "v1/api-reference/endpoints/agents/call/update",
-              "v1/api-reference/endpoints/agents/call/delete"
+              "v1/api-reference/endpoints/agents/call/delete",
+              "v1/api-reference/endpoints/agents/call/list-models"
             ]
           },
           {
