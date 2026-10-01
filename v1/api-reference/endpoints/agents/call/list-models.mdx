@@ -1,0 +1,103 @@
+---
+title: "List Available Models"
+api: "GET /v1/api/llm-models/call-flow-models"
+description: "List the language models currently available to your workspace."
+---
+
+Returns every language model your workspace can use, so you can pass a valid `id` as `llmModel` when creating or updating a call agent.
+
+The available models change over time. Read this endpoint rather than hardcoding a list.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+The unique identifier of the workspace being accessed.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="id" type="string">
+The model identifier. This is the value to pass as `llmModel` on agent create and update.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+Display name for the model.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+Short description, usually the context window. May be empty.
+</ResponseField>
+
+<ResponseField name="speed" type="string">
+Relative speed score, as a percentage. May be empty.
+</ResponseField>
+
+<ResponseField name="quality" type="string">
+Relative quality score, as a percentage. May be empty.
+</ResponseField>
+
+<ResponseField name="tier" type="string">
+Broad performance band, for example `fast` or `balanced`.
+</ResponseField>
+
+<ResponseField name="isRecommended" type="boolean">
+Whether the model is recommended for general use.
+</ResponseField>
+
+<ResponseField name="isTopPick" type="boolean">
+Whether the model is the current default choice. Exactly one model carries this.
+</ResponseField>
+
+<ResponseField name="averageLatency" type="number">
+Mean time to first token in seconds, measured across recent calls. Present only once a model has enough traffic to report on.
+</ResponseField>
+
+### Response
+
+<ResponseExample>
+
+```json
+[
+  {
+    "id": "platform-llm",
+    "name": "Platform LLM",
+    "description": "",
+    "speed": "",
+    "quality": "",
+    "tier": "fast",
+    "tags": [],
+    "isRecommended": true,
+    "isTopPick": true,
+    "allowedFlowIds": [],
+    "averageLatency": 0.32
+  },
+  {
+    "id": "gpt-4.1",
+    "name": "GPT-4.1",
+    "description": "1M context window",
+    "speed": "93%",
+    "quality": "94%",
+    "tier": "balanced",
+    "tags": [],
+    "isRecommended": true,
+    "isTopPick": false,
+    "allowedFlowIds": [],
+    "averageLatency": 0.88
+  },
+  {
+    "id": "gemini-2.5-flash",
+    "name": "Gemini 2.5 Flash",
+    "description": "1M context window",
+    "speed": "99%",
+    "quality": "98%",
+    "tier": "balanced",
+    "tags": [],
+    "isRecommended": false,
+    "isTopPick": false,
+    "allowedFlowIds": [],
+    "averageLatency": 0.83
+  }
+]
+```
+
+</ResponseExample>

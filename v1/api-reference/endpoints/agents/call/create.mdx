@@ -71,8 +71,12 @@ Number of hours to wait before the next attempt.
 Array of phone number IDs to associate with the agent.
 </ParamField>
 
-<ParamField body="llmModel" type="string" default='gpt-4o-mini' required>
-Language Model to be used by the agent to generate responses. Must be one of: gpt-4o-mini, gpt-4o, gpt-4o-enterprise, gpt-4.1, gpt-4.1-mini, gpt-4.1-enterprise, gpt-4.1-mini-enterprise, gemini-2.5-flash, gemini-2.0-flash-001.
+<ParamField body="llmModel" type="string" default='platform-llm'>
+Language model the agent uses to generate responses.
+
+Defaults to `platform-llm`, the managed platform model. It is tuned for voice agents and kept current without any change to your configuration, and it is what agents created in the dashboard start on.
+
+To pin a specific model instead, pass its id, for example `gpt-4.1` or `gemini-2.5-flash`. The models on offer change over time, so call [List Available Models](/v1/api-reference/endpoints/agents/call/list-models) for the current set rather than hardcoding one.
 </ParamField>
 
 <ParamField body="settings" type="object">
@@ -196,7 +200,7 @@ Timestamp when the agent was last updated.
     "name": "Sophie",
     "language": "en"
   },
-  "llmModel": "gpt-4o",
+  "llmModel": "platform-llm",
   "type": "voice",
   "smartCallback": true,
   "maxAttemptsForSmartCallback": 3,

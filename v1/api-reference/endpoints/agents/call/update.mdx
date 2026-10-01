@@ -21,8 +21,10 @@ The unique identifier of the agent to update.
 New name for the agent.
 </ParamField>
 
-<ParamField body="llmModel" type="string" default='gpt-4o-mini' required>
-New language model to be used by the agent to generate responses. Must be one of: gpt-4o-mini, gpt-4o-enterprise, gpt-4.1, gpt-4.1-mini, gemini-2.5-flash-preview-native-audio-dialog, gemini-2.5-flash, gemini-live-2.5-flash-preview, geminiaudiopipeline:gemini-2.5-flash-preview-native-audio-dialog, gemini-2.0-flash-live-001, gpt-5.
+<ParamField body="llmModel" type="string">
+New language model for the agent. Omit it to leave the current one unchanged.
+
+Pass `platform-llm` for the managed platform model, or a specific model id such as `gpt-4.1` or `gemini-2.5-flash`. The models on offer change over time, so call [List Available Models](/v1/api-reference/endpoints/agents/call/list-models) for the current set rather than hardcoding one.
 </ParamField>
 
 <ParamField body="ttsModel" type="object">
@@ -207,7 +209,7 @@ Timestamp when the agent was last updated.
 ```json
 {
   "name": "Updated Customer Support Agent",
-  "llmModel": "claude-3-5-sonnet-latest",
+  "llmModel": "claude-haiku-4-5",
   "ttsModel": {
     "provider": "11labs_byo",
     "voiceId": "21m00Tcm4TlvDq8ikWAM",
