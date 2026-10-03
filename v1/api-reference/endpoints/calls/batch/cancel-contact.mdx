@@ -1,0 +1,23 @@
+---
+title: "Cancel Batch Contact"
+api: "DELETE /v1/api/batch-calls/{batchId}/contacts/{phone}"
+description: "Cancel a batch job by phone number."
+---
+
+Cancel the batch job for one phone number.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The batch that contains the contact.
+</ParamField>
+
+<ParamField path="phone" type="string" required>
+  The destination phone number to cancel.
+</ParamField>

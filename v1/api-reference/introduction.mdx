@@ -13,20 +13,20 @@ The Trillet AI API provides programmatic access to create and manage AI agents, 
 
 ## Authentication
 
-All API requests require authentication using an API key in the `x-api-key` header:
+All API requests require an API key in the `x-api-key` header and a workspace id in the `x-workspace-id` header. See [Authentication](/v1/api-reference/authentication).
 
 ```bash
-curl https://api.trillet.ai/v1/api/
-  -H "x-api-key: YOUR_API_KEY"
-  -H "Content-Type: application/json"
+curl https://api.trillet.ai/v1/api/agents \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
 
 <ParamField header="x-api-key" type="string" required>
-  Your API key for authentication. Include this in the request headers.
+  Your API key. Send the key in this header. Do not send it as an `Authorization: Bearer` token.
 </ParamField>
 
-<ParamField header="Content-Type" type="string" required>
-  Must be set to `application/json`.
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace the request applies to.
 </ParamField>
 
 <Note>
@@ -46,11 +46,11 @@ curl https://api.trillet.ai/v1/api/
     personalities through our REST API
   </Card>
   <Card
-    title="Omni Flow Agents API"
-    icon="message-bot"
-    href="/v1/api-reference/endpoints/agents/omniflow/create"
+    title="Voices API"
+    icon="microphone"
+    href="/v1/api-reference/endpoints/voices/search"
   >
-    Create and manage messaging AI agents with unique through our REST API
+    Search the public voice catalog and manage custom voices
   </Card>
   <Card
     title="Call Flows API"
@@ -94,45 +94,6 @@ curl https://api.trillet.ai/v1/api/
 | --------- | ------------------- | ---------------- |
 | Developer | 60                  | 1                |
 
-## Webhooks [Coming Soon!]
-
-Configure webhooks to receive real-time updates about events in your account. Each webhook request includes an event type and relevant data:
-
-```json
-{
-  "event": "call.completed",
-  "data": {
-    "callId": "call_xyz789",
-    "agentId": "agent_123abc",
-    "duration": 125,
-    "status": "completed"
-  }
-}
-```
-
-### Webhook Events
-
-- `call.started` - When a call begins
-- `call.completed` - When a call ends
-- `call.failed` - When a call fails to connect
-- `sms.sent` - When an SMS is sent
-- `sms.delivered` - When an SMS is delivered
-- `agent.created` - When a new agent is created
-- `agent.updated` - When an agent is updated
-- `flow.created` - When a new flow is created
-- `flow.updated` - When a flow is updated
-
-### Webhook Security
-
-Verify webhook signatures using the signature in the `X-Trillet-Signature` header:
-
-```bash
-# Your webhook secret from the dashboard
-WEBHOOK_SECRET=whsec_xxxxxxxxxxxxx
-
-# Verify the signature before processing webhooks
-```
-
 ## Error Handling
 
 The API uses conventional HTTP response codes:
@@ -158,11 +119,6 @@ Error responses include a message and error code:
 
 ## Need Help?
 
-<Columns cols={2}>
-  <Card title="API Status [Coming Soon!]" icon="signal">
-    Check our API status and uptime
-  </Card>
-  <Card title="Support" icon="headset" href="mailto:support@trillet.ai">
-    Get technical support
-  </Card>
-</Columns>
+<Card title="Support" icon="headset" href="mailto:support@trillet.ai">
+  Get technical support
+</Card>

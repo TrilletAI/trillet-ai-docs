@@ -1,0 +1,19 @@
+---
+title: "Cancel Phone Number Release"
+api: "POST /v1/api/twilio/phone-numbers/{phoneNumberSid}/cancel-release"
+description: "Cancel a scheduled release for a phone number."
+---
+
+Cancel a scheduled release and keep the phone number.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="phoneNumberSid" type="string" required>
+  The phone number whose scheduled release should be cancelled.
+</ParamField>
