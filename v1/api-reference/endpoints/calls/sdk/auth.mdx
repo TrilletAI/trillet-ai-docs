@@ -1,0 +1,17 @@
+---
+title: "Create SDK Token"
+api: "POST /v1/api/calls/sdk/auth"
+description: "Mint a token for the browser SDK. The token is valid for 24 hours."
+---
+
+Use this when a web or mobile client needs to start a call without holding the workspace API key. The API key stays on your server. The client uses the returned token.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Response
+
+The response includes an SDK token that expires 24 hours after it is minted.

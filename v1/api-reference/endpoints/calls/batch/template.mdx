@@ -1,0 +1,22 @@
+---
+title: "Download Batch CSV Template"
+api: "GET /v1/api/batch-calls/template"
+description: "Download the CSV template for a batch call upload."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+The response is a CSV file. [Start Batch Calls](/v1/api-reference/endpoints/calls/batch/start) expects this file, including a `phone_number` column.
+
+### Example
+
+```bash
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/template" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -o batch-template.csv
+```

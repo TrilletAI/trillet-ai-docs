@@ -9,8 +9,8 @@
   },
   "favicon": "/images/favicon.svg",
   "logo": {
-    "light": "/public/logo/Trillet-logo-light.png",
-    "dark": "/public/logo/Trillet-logo-dark.svg",
+    "light": "/public/logo/light.svg",
+    "dark": "/public/logo/dark.svg",
     "href": "https://docs.trillet.ai/"
   },
   "api": {
@@ -129,11 +129,16 @@
             "icon": "phone-volume",
             "pages": [
               "v1/api-reference/endpoints/calls/initiate-call",
+              "v1/api-reference/endpoints/calls/web/connect",
+              "v1/api-reference/endpoints/calls/web/disconnect",
+              "v1/api-reference/endpoints/calls/sdk/auth",
               "v1/api-reference/endpoints/calls/call-history/export",
               "v1/api-reference/endpoints/calls/call-history/list",
               "v1/api-reference/endpoints/calls/call-history/get",
               "v1/api-reference/endpoints/calls/call-history/get-phoneNumber",
               "v1/api-reference/endpoints/calls/call-history/metrics",
+              "v1/api-reference/endpoints/calls/call-history/metrics-daily",
+              "v1/api-reference/endpoints/calls/call-history/phonebook",
               "v1/api-reference/endpoints/calls/get-recording"
             ]
           },
@@ -143,11 +148,17 @@
             "pages": [
               "v1/api-reference/endpoints/calls/batch/overview",
               "v1/api-reference/endpoints/calls/batch/start",
+              "v1/api-reference/endpoints/calls/batch/template",
+              "v1/api-reference/endpoints/calls/batch/validate",
+              "v1/api-reference/endpoints/calls/batch/preview",
               "v1/api-reference/endpoints/calls/batch/list-calls",
               "v1/api-reference/endpoints/calls/batch/get-status",
               "v1/api-reference/endpoints/calls/batch/get-progress",
               "v1/api-reference/endpoints/calls/batch/get-call-status",
-              "v1/api-reference/endpoints/calls/batch/cancel"
+              "v1/api-reference/endpoints/calls/batch/cancel",
+              "v1/api-reference/endpoints/calls/batch/cancel-job",
+              "v1/api-reference/endpoints/calls/batch/cancel-contact",
+              "v1/api-reference/endpoints/calls/batch/export"
             ]
           },
           {
@@ -166,12 +177,9 @@
             "icon": "comments",
             "pages": [
               "v1/api-reference/endpoints/conversations/generateMessage",
-              "v1/api-reference/endpoints/conversations/messageAction",
-              "v1/api-reference/endpoints/conversations/editCustomerDetails",
               "v1/api-reference/endpoints/conversations/getAll",
               "v1/api-reference/endpoints/conversations/getConvosByFlow",
               "v1/api-reference/endpoints/conversations/getById",
-              "v1/api-reference/endpoints/conversations/deleteMessage",
               "v1/api-reference/endpoints/conversations/deleteConvo"
             ]
           },
@@ -196,7 +204,9 @@
               "v1/api-reference/endpoints/flows/call-flows/list",
               "v1/api-reference/endpoints/flows/call-flows/get",
               "v1/api-reference/endpoints/flows/call-flows/update",
-              "v1/api-reference/endpoints/flows/call-flows/delete"
+              "v1/api-reference/endpoints/flows/call-flows/delete",
+              "v1/api-reference/endpoints/flows/call-flows/knowledgebase-upload",
+              "v1/api-reference/endpoints/flows/call-flows/knowledgebase-delete"
             ]
           },
           {
@@ -224,14 +234,14 @@
             ]
           },
           {
-            "group": "Omni Flow Agents (Message)",
-            "icon": "users",
+            "group": "Voices",
+            "icon": "microphone",
             "pages": [
-              "v1/api-reference/endpoints/agents/omniflow/create",
-              "v1/api-reference/endpoints/agents/omniflow/list",
-              "v1/api-reference/endpoints/agents/omniflow/get",
-              "v1/api-reference/endpoints/agents/omniflow/update",
-              "v1/api-reference/endpoints/agents/omniflow/delete"
+              "v1/api-reference/endpoints/voices/search",
+              "v1/api-reference/endpoints/voices/list-custom",
+              "v1/api-reference/endpoints/voices/create",
+              "v1/api-reference/endpoints/voices/clone",
+              "v1/api-reference/endpoints/voices/delete"
             ]
           },
           {
@@ -239,27 +249,20 @@
             "icon": "book",
             "pages": [
               "v1/api-reference/endpoints/knowledge-base/create",
-              "v1/api-reference/endpoints/knowledge-base/upload-file",
-              "v1/api-reference/endpoints/knowledge-base/add-text",
               "v1/api-reference/endpoints/knowledge-base/list",
               "v1/api-reference/endpoints/knowledge-base/get",
               "v1/api-reference/endpoints/knowledge-base/update",
-              "v1/api-reference/endpoints/knowledge-base/delete"
-            ]
-          },
-          {
-            "group": "Active Calls",
-            "icon": "phone-flip",
-            "pages": [
-              "v1/api-reference/endpoints/active-calls/list",
-              "v1/api-reference/endpoints/active-calls/get",
-              "v1/api-reference/endpoints/active-calls/get-insights"
+              "v1/api-reference/endpoints/knowledge-base/delete",
+              "v1/api-reference/endpoints/knowledge-base/add-text",
+              "v1/api-reference/endpoints/knowledge-base/upload-file",
+              "v1/api-reference/endpoints/knowledge-base/get-usage"
             ]
           },
           {
             "group": "Recordings",
             "icon": "circle-dot",
             "pages": [
+              "v1/api-reference/endpoints/recordings/start",
               "v1/api-reference/endpoints/recordings/get"
             ]
           }

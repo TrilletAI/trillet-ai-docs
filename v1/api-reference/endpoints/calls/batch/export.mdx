@@ -1,0 +1,28 @@
+---
+title: "Export Batch Results"
+api: "GET /v1/api/batch-calls/{batchId}/export-results"
+description: "Download the results of a batch as a CSV file."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The batch whose results to export.
+</ParamField>
+
+The response is a CSV file.
+
+### Example
+
+```bash
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/export-results" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -o batch-results.csv
+```

@@ -33,7 +33,7 @@ phone_number,first_name,last_name,email,custom_field_1,custom_field_2
 Start the batch call operation by uploading your CSV file and specifying the agent to use:
 
 ```bash
-curl -X POST "https://api.trillet.ai/v1/batch-calls" \
+curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@your-contacts.csv" \
@@ -45,7 +45,7 @@ curl -X POST "https://api.trillet.ai/v1/batch-calls" \
 Track the progress of your batch operation in real-time:
 
 ```bash
-curl -X GET "https://api.trillet.ai/v1/batch-calls/batch_7891011121314" \
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
