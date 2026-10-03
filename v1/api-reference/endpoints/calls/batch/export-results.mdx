@@ -1,0 +1,19 @@
+---
+title: "Export Batch Results"
+api: "GET /v1/api/batch-calls/{batchId}/export-results"
+description: "Download the results of a batch as a CSV."
+---
+
+Download a CSV of results for a batch.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The batch to export.
+</ParamField>

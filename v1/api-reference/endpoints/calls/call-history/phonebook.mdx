@@ -1,7 +1,7 @@
 ---
 title: "Get Call Phonebook"
 api: "GET /v2/api/call-history/phonebook"
-description: "Retrieve the most frequently called phone numbers in your workspace."
+description: "List recent destination numbers from call history."
 ---
 
 ## Headers
@@ -12,7 +12,7 @@ Workspace identifier for the API.
 ## Response Fields
 
 <ResponseField name="data" type="array">
-Array of phone number objects ordered by frequency.
+Recent destination phone numbers.
 
 <ResponseField name="toPhoneNumber" type="string">
 The phone number in E.164 format.
