@@ -4,54 +4,7 @@ description: 'Add a Trillet voice agent to your website with the drop-in trillet
 icon: 'microphone'
 ---
 
-Trillet ships two ways to put a voice agent on your website, both from the same npm package — [`@trillet-ai/web-sdk`](https://www.npmjs.com/package/@trillet-ai/web-sdk):
-
-<Columns cols={2}>
-  <Card title="Drop-in widget" icon="puzzle-piece" href="#quick-start">
-    A self-contained `<trillet-widget>` element with a built-in launcher, call panel, and animated orb. One script tag, no build step. Unbranded by default and fully customizable via HTML attributes (or React props).
-  </Card>
-  <Card title="Headless SDK" icon="code" href="#headless-usage">
-    The `TrilletAgent` class with no UI at all. You bring your own interface and wire it to the SDK's events — full control over every pixel.
-  </Card>
-</Columns>
-
-Whichever you choose, there are two ways to authenticate calls:
-
-| Path | How it works | Use it when |
-| --- | --- | --- |
-| **Secure (recommended)** | Your backend mints call credentials with your API key using `createCall()`; the browser only ever receives a short-lived room token. | Production. Your API key never ships to the browser. |
-| **Public (legacy)** | The browser calls Trillet directly with your `workspace-id`. Protected by domain allowlisting and rate limits, but the IDs are visible to anyone who views source. | Quick demos and prototyping. |
-
-<Warning>
-  The voice widget requires **microphone permissions** and must be served over **HTTPS** (or localhost). The SDK refuses to start on insecure origins.
-</Warning>
-
-## Quick start
-
-Get a working voice widget on a page in about two minutes using the public flow. You can switch to the secure flow later by changing a single attribute.
-
-### Prerequisites
-
-<Steps>
-  <Step title="Get your Agent ID">
-    Navigate to **Call Flows** in the Trillet Portal sidebar. Each call flow card displays its **Agent ID** — copy it from the card.
-  </Step>
-  <Step title="Get your Workspace ID">
-    Click the **workspace name dropdown** at the top of the sidebar. Your Workspace ID is displayed next to each workspace — click to copy. (Only needed for the public flow; the [secure setup](#secure-setup-recommended) doesn't use it.)
-  </Step>
-  <Step title="Enable public access">
-    Open your call flow, go to the **Settings** tab, and toggle **Public Access** on. Without it, public calls are rejected.
-  </Step>
-  <Step title="Register your domain">
-    Add the domain you'll embed the widget on under **Settings → Domains** in the Portal. See [Domain allowlisting](#domain-allowlisting) below.
-  </Step>
-</Steps>
-
-### Embed the widget
-
-<Tabs>
-  <Tab title="HTML / CDN">
-    Paste this anywhere in your page. The script auto-registers the `<trillet-widget>` custom element and the widget mounts itself — no build step, no other includes.
+Paste this into your page. The script loads [`@trillet-ai/web-sdk`](https://www.npmjs.com/package/@trillet-ai/web-sdk) `1.9.1` and registers `<trillet-widget>`. A launcher floats in the bottom-right corner. There is no build step, and the API key stays off the page.
 
 ```html index.html
 <script src="https://unpkg.com/@trillet-ai/web-sdk/dist/widget.umd.js" async></script>
@@ -62,16 +15,42 @@ Get a working voice widget on a page in about two minutes using the public flow.
 ></trillet-widget>
 ```
 
-    You can also load the bundle from jsDelivr: `https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/dist/widget.umd.js`.
-  </Tab>
-  <Tab title="React / Next.js">
-    Install the package:
+The same file is on jsDelivr: `https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/dist/widget.umd.js`.
+
+Click the launcher, then **Start a call**. The widget needs microphone permission and must be served over **HTTPS** (or localhost).
+
+`agent-id` and `workspace-id` are the public credential pair. To mint the call on your server instead, swap `workspace-id` for [`signed-url-endpoint`](#secure-setup-recommended). For your own interface, use the [headless SDK](#custom-ui) (`TrilletAgent`).
+
+## Before it will connect
+
+<Steps>
+  <Step title="Copy the Agent ID">
+    In the Portal sidebar, open **Call Flows**. Each call flow card shows its **Agent ID**.
+  </Step>
+  <Step title="Copy the Workspace ID">
+    Open the **workspace name dropdown** at the top of the sidebar. The Workspace ID is listed next to each workspace. The [secure setup](#secure-setup-recommended) does not need it.
+  </Step>
+  <Step title="Turn on public access">
+    Open the call flow, go to the **Settings** tab, and turn **Public Access** on. Public calls are rejected while it is off.
+  </Step>
+  <Step title="Register a domain when you want to lock the origin">
+    Add the site that embeds the widget under **Settings → Domain**.
+
+    The public web-call path allows every origin until the workspace registers its first domain. That first domain turns enforcement on, and calls from other origins are rejected. See [Domain allowlisting](#domain-allowlisting).
+  </Step>
+</Steps>
+
+<Warning>
+  `workspace-id` and `agent-id` are visible in page source. Never put your API key in the page. Use the [secure setup](#secure-setup-recommended) for a public site.
+</Warning>
+
+### React
+
+`<TrilletWidget>` is the same element, with camelCase props:
 
 ```bash
 npm install @trillet-ai/web-sdk
 ```
-
-    Then render the `<TrilletWidget>` wrapper. It's a thin layer over the same custom element, with camelCase props:
 
 ```tsx App.tsx
 import { TrilletWidget } from '@trillet-ai/web-sdk/widget';
@@ -86,16 +65,8 @@ export default function App() {
 }
 ```
 
-    <Note>
-      In Next.js the widget must render in a **client component** (add `'use client'`) — it registers a browser custom element and can't run during server rendering.
-    </Note>
-  </Tab>
-</Tabs>
-
-A launcher button appears in the bottom-right corner. Clicking it opens the call panel; **Start a call** connects the visitor to your agent.
-
 <Note>
-  This quick start uses the **public flow** (`workspace-id`), which exposes your workspace and agent IDs in page source. For production, switch to the [secure setup](#secure-setup-recommended) — it's a one-attribute change on the widget.
+  In Next.js the widget must render in a **client component** (add `'use client'`). It registers a browser custom element and cannot run during server rendering.
 </Note>
 
 ## Secure setup (recommended)
@@ -223,7 +194,7 @@ export default function App() {
     </Warning>
   </Step>
   <Step title="Or join from your own UI (headless)">
-    If you're not using the widget, fetch the same room details in the browser and pass them to `TrilletAgent.joinRoom()` — see [Headless usage](#headless-usage).
+    If you're not using the widget, fetch the same room details in the browser and pass them to `TrilletAgent.joinRoom()` — see [Custom UI](#custom-ui).
   </Step>
 </Steps>
 
@@ -241,7 +212,7 @@ All configuration is set as **kebab-case HTML attributes** on `<trillet-widget>`
 | `signed-url-endpoint` | `signedUrlEndpoint` | URL of your token endpoint. Fetched with `GET` at call-start; must return `TrilletRoomDetails` JSON. The secure default. |
 | — | `getRoomDetails` | JS-only. Async function invoked at call-start that returns `TrilletRoomDetails`. |
 | — | `roomDetails` | JS-only. Static, pre-minted `TrilletRoomDetails` object. The token may expire between page load and the visitor clicking start — prefer `signed-url-endpoint`. |
-| `workspace-id` | `workspaceId` | Public/legacy fallback: the browser calls Trillet's public endpoint directly. |
+| `workspace-id` | `workspaceId` | Public path: the browser calls Trillet's public endpoint directly. Use with `agent-id`. |
 
 ### Behavior
 
@@ -369,28 +340,15 @@ Public-facing call buttons attract bots and freeloaders. Trillet layers several 
 
 ### Domain allowlisting
 
-{/* <!-- VERIFY POST-MERGE: this section documents the TRI-400 backend + portal changes,
-     which are built but not yet merged/deployed. Re-verify the walkthrough against the
-     live Portal UI, capture screenshots, and remove this marker once TRI-400 ships. --> */}
+Public calls that use `workspace-id` are origin-checked on the public web-call path:
 
-Registering your domains scopes the **public flow** (`workspace-id`) to your own websites: once your workspace has at least one registered domain, public calls from any other origin are rejected.
+- With **no domains registered**, every origin is allowed.
+- After the **first domain** is registered, enforcement turns on and other origins are rejected.
+- Trillet-hosted demo links, `localhost`, and `127.0.0.1` stay allowed, so Portal demos and local development keep working.
 
-<Steps>
-  <Step title="Open the Domains settings">
-    In the Trillet Portal, go to **Settings → Domains** (under the Developer group). You need workspace edit permission to manage domains.
-    {/* <!-- SCREENSHOT PLACEHOLDER: Portal Settings → Domains tab --> */}
-  </Step>
-  <Step title="Add your domain">
-    Click **Add Domain** and enter the bare domain, e.g. `yoursite.com`. Protocols and paths are stripped automatically, and a registered domain also covers its subdomains (`app.yoursite.com`).
-    {/* <!-- SCREENSHOT PLACEHOLDER: Add Domain dialog --> */}
-  </Step>
-</Steps>
+In the Portal, turn **Public Access** on from the call flow **Settings** tab, and add the embedding site under **Settings → Domain**. You need permission to edit the workspace to change the domain list.
 
-<Note>
-  First-party origins — Trillet-hosted demo links, `localhost`, and `127.0.0.1` — are always allowed, so local development and Portal demo links keep working without registration.
-</Note>
-
-Trillet also rate-limits the public endpoint per IP, per workspace, and per browser fingerprint. The secure flow is not origin-checked — it's protected by your API key staying on your backend, and by whatever auth you put on your token endpoint.
+Trillet also rate-limits the public endpoint per IP, per workspace, and per browser fingerprint. The secure flow is not origin-checked. It is protected by keeping the API key on your backend, and by whatever auth you put on your token endpoint.
 
 ### reCAPTCHA (optional, bring your own)
 
@@ -432,9 +390,11 @@ const agent = new TrilletAgent({
 
 A rejection propagates to the caller and is also emitted on the agent's `error` event. `onBeforeCall` is a `TrilletAgent` config option — the widget's equivalent gate is its reCAPTCHA checkbox.
 
-## Headless usage
+## Custom UI
 
-Use the `TrilletAgent` class directly when you want your own UI. The secure pattern: fetch room details from [your token endpoint](#secure-setup-recommended), then join.
+Use the headless `TrilletAgent` class when you want your own interface. This is the custom-UI path. The drop-in `<trillet-widget>` above is the default.
+
+`startCall()` sends your API key, so it belongs on a server, not in the page. In the browser, fetch room details from [your token endpoint](#secure-setup-recommended) and call `joinRoom()`.
 
 ```javascript
 import { TrilletAgent } from '@trillet-ai/web-sdk';
@@ -467,6 +427,8 @@ await agent.joinRoom(roomDetails);
 
 | Method | Description |
 | --- | --- |
+| `startCall()` | **Server-side only.** Starts a call with your API key. Do not call it from the page. Prefer `createCall()` from `@trillet-ai/web-sdk/server`, then `joinRoom()` in the browser. |
+| `startPublicCall()` | Browser public path. Same `workspaceId` + `agentId` pair as the paste snippet, with your own UI. |
 | `joinRoom(roomDetails)` | Join a room minted by your backend's `createCall()`. The secure browser entry point. |
 | `endCall()` | End the session and disconnect. |
 | `toggleMicrophone(enabled)` | Mute (`false`) / unmute (`true`) the visitor's microphone. |
@@ -491,10 +453,10 @@ await agent.joinRoom(roomDetails);
   Headless `mode` accepts `'voice'` or `'text'` only — the mid-session modality switch (`mode="both"`) is a widget feature.
 </Note>
 
-## Legacy: public calls with workspace-id
+### Public calls from your own UI
 
 <Warning>
-  This is the **legacy, less-secure pattern**: it puts your workspace and agent IDs in browser-visible code, where anyone can copy them. New integrations should use the [secure setup](#secure-setup-recommended). It remains supported for demos and is protected by [domain allowlisting](#domain-allowlisting) and rate limits.
+  `startPublicCall()` uses the same public pair as the paste snippet (`workspace-id` and `agent-id`). Those IDs are visible in your JavaScript. For a custom UI that keeps the API key on the server, use [`joinRoom()`](#secure-setup-recommended) instead. Public calls are still limited by [domain allowlisting](#domain-allowlisting) and rate limits.
 </Warning>
 
 ```javascript
@@ -509,6 +471,6 @@ const agent = new TrilletAgent({
 await agent.startPublicCall();
 ```
 
-Requirements: **Public Access** toggled on for the call flow, and your domain registered under **Settings → Domains**.
+Requirements: **Public Access** turned on for the call flow (**Settings** tab), and — once you want origin enforcement — your site added under **Settings → Domain**. Until the first domain is registered, any origin is allowed.
 
-**Migrating to the secure flow** is two changes: move call creation to your backend with [`createCall()`](#secure-setup-recommended), and replace `startPublicCall()` with `joinRoom(roomDetails)` in the browser (drop `workspaceId` from the constructor). If you're using the widget, just swap the `workspace-id` attribute for `signed-url-endpoint`.
+To keep the API key on the server, move call creation to [`createCall()`](#secure-setup-recommended) and replace `startPublicCall()` with `joinRoom(roomDetails)` (drop `workspaceId` from the constructor). On the widget, swap the `workspace-id` attribute for `signed-url-endpoint`.
