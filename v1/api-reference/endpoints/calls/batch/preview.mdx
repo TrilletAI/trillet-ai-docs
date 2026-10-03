@@ -1,0 +1,28 @@
+---
+title: "Preview Batch CSV"
+api: "POST /v1/api/batch-calls/preview"
+description: "Preview the rows in a batch-call CSV before starting the batch."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Request Body
+
+This endpoint accepts `multipart/form-data`.
+
+<ParamField body="file" type="file" required>
+  CSV file to preview. Maximum file size: 20MB.
+</ParamField>
+
+### Example
+
+```bash
+curl -X POST "https://api.trillet.ai/v1/api/batch-calls/preview" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -F "file=@contacts.csv"
+```

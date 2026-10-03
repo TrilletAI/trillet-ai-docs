@@ -285,13 +285,13 @@ Simply select the agent you want to map the number to (the same agent you assign
 You can also use our [Voice Calls API](/v1/api-reference/endpoints/calls/initiate-call) to programmatically initiate calls:
 
 ```bash
-curl -X POST https://api.trillet.ai/api/v1/calls/send \
-  -H "Authorization: Bearer YOUR_API_KEY" \
+curl -X POST https://api.trillet.ai/v1/api/call \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -H "Content-Type: application/json" \
   -d '{
-    "agentId": "your_agent_id",
-    "toNumber": "+1234567890",
-    "fromNumber": "your_assigned_number"
+    "call_agent_id": "your_agent_id",
+    "to": "+1234567890"
   }'
 ```
 
