@@ -1,0 +1,283 @@
+---
+title: "Connect Trillet over MCP"
+sidebarTitle: "MCP Server"
+description: "Build and operate Trillet voice agents from Claude, Cursor, and any other MCP client."
+---
+
+Trillet ships an official [Model Context Protocol](https://modelcontextprotocol.io) server. Point an MCP client at it and your assistant can build agents, write call flows, wire in-call API tools, attach knowledge bases, buy and bind phone numbers, run workflows, and read real call transcripts — without you leaving the chat.
+
+The server exposes **77 tools**. Every tool is annotated read-only or destructive, and the destructive ones refuse to run without an explicit `confirm: true`.
+
+<Note>
+  The MCP server is a wrapper around the same public API documented in the [API Reference](/v1/api-reference/introduction). Anything the server can do, your API key can already do.
+</Note>
+
+## Before you start
+
+You need two values from your Trillet workspace.
+
+<Columns cols={2}>
+  <Card title="API key" icon="key" href="https://app.trillet.ai/settings?section=api-keys">
+    **Settings → Developer → API Keys.** Create a key and copy it — it is shown once.
+  </Card>
+  <Card title="Workspace ID" icon="briefcase" href="https://app.trillet.ai/settings?section=workspace-details">
+    **Settings → Workspace → Workspace Details.** A 24-character hex id, with one-click copy. It is also under **Copy workspace ID** in the sidebar workspace switcher.
+  </Card>
+</Columns>
+
+<Warning>
+  Your API key is a secret with full access to the workspace. Keep it out of shared chats, screenshots, and source control. You can revoke and reissue a key at any time from the same settings page.
+</Warning>
+
+## Choose a route
+
+There are two ways to connect. They expose the same tools.
+
+| | Hosted server | Local (stdio) |
+|---|---|---|
+| **How** | Your client connects to `https://mcp.trillet.ai/mcp` | Your client runs `npx -y @trillet-ai/mcp` on your machine |
+| **Needs** | A client that supports remote MCP **and custom headers** | Node.js 18+ |
+| **Good for** | Claude Code, and anything that speaks streamable HTTP | Claude Desktop, Cursor, and any stdio client |
+| **Updates** | Always current | Pulled on each launch with `@latest` |
+
+If your client supports remote MCP servers with custom headers, use the hosted server. Otherwise use the local route — it is not a lesser option, just a different transport.
+
+## Hosted server
+
+```
+POST https://mcp.trillet.ai/mcp
+```
+
+Streamable HTTP, MCP protocol revision `2025-06-18`. Authentication is two headers:
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer <your Trillet API key>`
+</ParamField>
+
+<ParamField header="X-Trillet-Workspace-Id" type="string" required>
+  The 24-character workspace id the session should act on.
+</ParamField>
+
+<Note>
+  This differs from the REST API, which uses an `x-api-key` header. The MCP endpoint uses `Authorization: Bearer` because that is what MCP clients send.
+</Note>
+
+If your client lets you set a URL but only **one** header, you can pass the workspace id as a query parameter instead:
+
+```
+https://mcp.trillet.ai/mcp?workspace=<your workspace id>
+```
+
+The workspace id is not a secret, so it is safe in a URL. The API key is accepted **only** in the `Authorization` header — never in the query string — so it stays out of browser history and server logs.
+
+### Claude Code
+
+```bash
+claude mcp add --transport http trillet https://mcp.trillet.ai/mcp \
+  --header "Authorization: Bearer YOUR_API_KEY" \
+  --header "X-Trillet-Workspace-Id: YOUR_WORKSPACE_ID"
+```
+
+Then confirm it is live:
+
+```bash
+claude mcp list
+```
+
+### Any HTTP client
+
+A raw request, to verify connectivity or to wire up a client we have not documented:
+
+```bash
+curl -X POST https://mcp.trillet.ai/mcp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "X-Trillet-Workspace-Id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-06-18",
+      "capabilities": {},
+      "clientInfo": { "name": "my-client", "version": "1.0.0" }
+    }
+  }'
+```
+
+A successful response carries an `Mcp-Session-Id` header. Send it on every subsequent request.
+
+## Local server (stdio)
+
+The same server, published on npm as [`@trillet-ai/mcp`](https://www.npmjs.com/package/@trillet-ai/mcp). It reads both credentials from environment variables and talks to the Trillet API directly.
+
+<Tabs>
+  <Tab title="Claude Desktop">
+    Open **Settings → Developer → Edit Config** and add:
+
+    ```json
+    {
+      "mcpServers": {
+        "trillet": {
+          "command": "npx",
+          "args": ["-y", "@trillet-ai/mcp@latest"],
+          "env": {
+            "TRILLET_API_KEY": "YOUR_API_KEY",
+            "TRILLET_WORKSPACE_ID": "YOUR_WORKSPACE_ID"
+          }
+        }
+      }
+    }
+    ```
+
+    Restart Claude Desktop. Trillet appears in the tools menu.
+  </Tab>
+  <Tab title="Cursor">
+    Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per project):
+
+    ```json
+    {
+      "mcpServers": {
+        "trillet": {
+          "command": "npx",
+          "args": ["-y", "@trillet-ai/mcp@latest"],
+          "env": {
+            "TRILLET_API_KEY": "YOUR_API_KEY",
+            "TRILLET_WORKSPACE_ID": "YOUR_WORKSPACE_ID"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add trillet \
+      -e TRILLET_API_KEY=YOUR_API_KEY \
+      -e TRILLET_WORKSPACE_ID=YOUR_WORKSPACE_ID \
+      -- npx -y @trillet-ai/mcp@latest
+    ```
+  </Tab>
+  <Tab title="Other clients">
+    Any stdio MCP client works. The command is:
+
+    ```bash
+    TRILLET_API_KEY=YOUR_API_KEY \
+    TRILLET_WORKSPACE_ID=YOUR_WORKSPACE_ID \
+    npx -y @trillet-ai/mcp@latest
+    ```
+
+    Optional: set `TRILLET_API_URL` to override the API base (defaults to `https://api.trillet.ai`).
+  </Tab>
+</Tabs>
+
+## ChatGPT and the connector directories
+
+**Trillet is not currently installable from the ChatGPT connector UI, the Claude connector directory, or any other one-click MCP directory.**
+
+Those surfaces discover and authorise a server through OAuth. The Trillet MCP server authenticates with a static API key and does not implement OAuth — there is no `/.well-known/oauth-protected-resource` or `/.well-known/oauth-authorization-server` endpoint to discover, so the directories have nothing to connect to.
+
+In practice:
+
+- **ChatGPT** — not supported today. The connector dialog has no field for a custom header, so the workspace id cannot be supplied. Even with the `?workspace=` query parameter above, whether you can set a bearer token at all depends on your ChatGPT release. We do not recommend this path.
+- **Claude connector directory** — Trillet is not listed. Use the Claude Code or Claude Desktop setup above instead; both are fully supported.
+- **Everything else** — if the client can set custom headers, the hosted endpoint works. If it can run a command, the stdio package works.
+
+<Note>
+  OAuth support is on the roadmap and is what unlocks one-click install in the directories. If that matters to your team, tell us — demand is how we prioritise it.
+</Note>
+
+## Agencies and multiple workspaces
+
+Every tool accepts an optional `workspace_id` argument that overrides the connection's default workspace for that one call. One connection can therefore operate across several client workspaces, as long as your API key's user is a member of each.
+
+Ask your assistant to "list the agents in workspace `<id>`" and it will pass the override through.
+
+## What you can do
+
+<AccordionGroup>
+  <Accordion title="Agents and voices (6 tools)">
+    `trillet_list_agents`, `trillet_get_agent`, `trillet_create_agent`, `trillet_update_agent`, `trillet_delete_agent`, `trillet_search_voices`
+  </Accordion>
+  <Accordion title="Call flows (13 tools)">
+    `trillet_list_call_flows`, `trillet_get_call_flow`, `trillet_create_call_flow`, `trillet_update_call_flow`, `trillet_update_prompt`, `trillet_set_incall_api_tools`, `trillet_set_post_call_analysis`, `trillet_list_drafts`, `trillet_deactivate_drafts`, `trillet_publish_draft`, `trillet_duplicate_call_flow`, `trillet_archive_call_flow`, `trillet_delete_call_flow`
+  </Accordion>
+  <Accordion title="Flow settings (8 tools)">
+    `trillet_set_transfers`, `trillet_set_office_hours`, `trillet_set_call_settings`, `trillet_set_speech_settings`, `trillet_set_welcome_message`, `trillet_set_code_actions`, `trillet_set_background_audio`, `trillet_set_security_settings`
+  </Accordion>
+  <Accordion title="Node flows (10 tools)">
+    `trillet_node_flow_reference`, `trillet_list_node_flows`, `trillet_get_node_flow`, `trillet_create_node_flow`, `trillet_list_node_flow_templates`, `trillet_update_node_graph`, `trillet_validate_node_graph`, `trillet_publish_node_graph`, `trillet_simulate_node_graph`, `trillet_list_node_flow_runs`
+  </Accordion>
+  <Accordion title="Phone numbers (8 tools)">
+    `trillet_list_phone_numbers`, `trillet_search_available_numbers`, `trillet_purchase_phone_number`, `trillet_bind_phone_number`, `trillet_release_phone_number`, `trillet_get_phone_number_config`, `trillet_update_phone_number_config`, `trillet_register_external_number`
+  </Accordion>
+  <Accordion title="Knowledge bases (7 tools)">
+    `trillet_list_knowledge_bases`, `trillet_get_knowledge_base`, `trillet_create_knowledge_base`, `trillet_add_kb_text`, `trillet_upload_kb_file`, `trillet_attach_knowledge_bases`, `trillet_delete_knowledge_base`
+  </Accordion>
+  <Accordion title="Workflows (12 tools)">
+    `trillet_workflow_reference`, `trillet_list_workflows`, `trillet_get_workflow`, `trillet_create_workflow`, `trillet_update_workflow`, `trillet_activate_workflow`, `trillet_pause_workflow`, `trillet_delete_workflow`, `trillet_test_workflow`, `trillet_run_workflow`, `trillet_list_workflow_runs`, `trillet_get_workflow_run`
+  </Accordion>
+  <Accordion title="Calls (5 tools)">
+    `trillet_list_calls`, `trillet_get_call_metrics`, `trillet_get_call`, `trillet_review_calls`, `trillet_start_outbound_call`
+  </Accordion>
+  <Accordion title="Text calls (3 tools)">
+    `trillet_start_text_call`, `trillet_say`, `trillet_end_text_call`
+  </Accordion>
+  <Accordion title="Secrets (3 tools)">
+    `trillet_list_secrets` (always masked), `trillet_set_secret`, `trillet_delete_secret`
+  </Accordion>
+  <Accordion title="Account (2 tools)">
+    `trillet_get_usage`, `trillet_list_transactions`
+  </Accordion>
+</AccordionGroup>
+
+### Tools that cost money or change the world
+
+These are annotated destructive and will not run unless the call includes `confirm: true`, so your assistant has to ask you first:
+
+`trillet_start_outbound_call` (places a real call) · `trillet_purchase_phone_number` (bills the workspace) · `trillet_run_workflow` (real run, real side effects) · `trillet_register_external_number` · and every delete tool.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The client says connected, but every tool fails with 401">
+    Connecting does not validate your credentials — the handshake succeeds even with a wrong API key, and the failure only appears on the first real tool call.
+
+    To actually confirm a connection, ask your assistant to list your agents. If you see `Unauthorized Api Key`, either the key is wrong or the key's user is not a member of the workspace id you supplied. Re-copy both values from the settings pages above.
+  </Accordion>
+  <Accordion title="Missing Trillet API key">
+    The `Authorization` header is absent or malformed. It must read `Authorization: Bearer <key>` — the word `Bearer`, a single space, then the key.
+  </Accordion>
+  <Accordion title="Missing Trillet workspace">
+    The `X-Trillet-Workspace-Id` header is absent. Add it, or append `?workspace=<id>` to the endpoint URL if your client cannot set a second header.
+  </Accordion>
+  <Accordion title="My changes are not taking effect on test calls">
+    This is almost always an active editor draft. Drafts override production for dashboard test calls. Ask your assistant to check `trillet_get_call_flow` — it reports `has_active_draft` — then either publish the draft or run `trillet_deactivate_drafts` to return the flow to production.
+  </Accordion>
+  <Accordion title="The agent greets the caller twice">
+    The greeting is scripted in the prompt as well as set as the welcome message. The platform already plays the welcome message, so remove the opening line from the prompt.
+  </Accordion>
+  <Accordion title="npx cannot find the package">
+    You need Node.js 18 or later. Check with `node --version`, then run `npx -y @trillet-ai/mcp@latest` directly in a terminal to see the real error.
+  </Accordion>
+</AccordionGroup>
+
+## Security
+
+- The API key and workspace id are read from headers or environment variables and are never logged.
+- The API key is never accepted in a URL, so it cannot leak through browser history, referrers, or access logs.
+- `trillet_list_secrets` always returns masked values.
+- Tools with real-world or irreversible effects are annotated destructive and gated behind `confirm: true`.
+- Revoke a key at any time from **Settings → Developer → API Keys**. Revocation takes effect immediately on both routes.
+
+## Getting help
+
+<Columns cols={2}>
+  <Card title="Community" icon="people-line" href="https://www.skool.com/trillet-ai">
+    Ask in the Trillet community — the fastest way to get an answer.
+  </Card>
+  <Card title="API Reference" icon="square-terminal" href="/v1/api-reference/introduction">
+    Every endpoint the MCP server calls under the hood.
+  </Card>
+</Columns>

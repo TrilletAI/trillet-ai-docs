@@ -74,6 +74,7 @@
               "documentation/best-practices",
               "documentation/on-premise",
               "documentation/platform-integrations",
+              "mcp",
               "documentation/inbound-call-webhook"
             ]
           },
