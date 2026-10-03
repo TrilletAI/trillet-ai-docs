@@ -44,11 +44,11 @@ If your client supports remote MCP servers with custom headers, use the hosted s
 
 ## Hosted server
 
-<ParamField path="Endpoint" type="string" required>
-  `https://mcp.trillet.ai/mcp` — streamable HTTP (MCP protocol `2025-06-18`)
-</ParamField>
+```
+POST https://mcp.trillet.ai/mcp
+```
 
-Authentication is two headers:
+Streamable HTTP, MCP protocol revision `2025-06-18`. Authentication is two headers:
 
 <ParamField header="Authorization" type="string" required>
   `Bearer <your Trillet API key>`
