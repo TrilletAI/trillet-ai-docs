@@ -1,10 +1,10 @@
 ---
-title: "Delete Knowledge Base File"
-api: "DELETE /v1/api/call-flows/{id}/knowledge-base/{fileKey}"
-description: "Delete a knowledge base file associated with a specific call flow."
+title: "Delete Call Flow Knowledge File"
+api: "DELETE /v1/api/call-flows/knowledge-base/{fileKey}"
+description: "Delete a knowledge file uploaded for call flows."
 ---
 
-### Headers  
+### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
   Workspace identifier for the API.
@@ -12,43 +12,7 @@ description: "Delete a knowledge base file associated with a specific call flow.
 
 ### Path Parameters
 
-<ParamField path="id" type="string" required>
-  The unique identifier of the call flow from which the knowledge base file will
-  be deleted.
-</ParamField>
-
 <ParamField path="fileKey" type="string" required>
-  The key of the knowledge base file to be deleted. The file key is typically a
-  unique identifier or filename used in the storage system.
+  File key returned when the knowledge file was uploaded. The path does not
+  include a call flow id.
 </ParamField>
-
-### Response Fields
-
-<ResponseField name="_id" type="string">
-  The unique identifier for the call flow from which the knowledge base file was deleted.
-</ResponseField>
-
-<ResponseField name="workspaceId" type="string">
-  The identifier of the workspace associated with the call flow.
-</ResponseField>
-
-<ResponseField name="settings" type="object">
-  Contains updated settings for the call flow following the deletion of the knowledge base file.
-  <ResponseField name="knowledgeBaseFiles" type="array">
-    An array representing the remaining knowledge base files after the deletion. Each element in the array is an object that includes details such as the file name, type, and any other relevant metadata.
-  </ResponseField>
-</ResponseField>
-
-<ResponseExample>
-  ```json
-  {
-    "_id": "callFlowId",
-    "workspaceId": "workspaceIdExample",
-    "settings": {
-      "knowledgeBaseFiles": [
-        // Remaining files after deletion
-      ]
-    }
-  }
-```
-</ResponseExample>

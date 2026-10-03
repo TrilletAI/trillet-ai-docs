@@ -1,0 +1,29 @@
+---
+title: "Cancel Batch Job"
+api: "DELETE /v1/api/batch-calls/{batchId}/calls/{jobId}"
+description: "Cancel one job in a batch."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The batch that contains the job.
+</ParamField>
+
+<ParamField path="jobId" type="string" required>
+  The job to cancel. Job ids come from [List Batch Calls](/v1/api-reference/endpoints/calls/batch/list-calls).
+</ParamField>
+
+### Example
+
+```bash
+curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls/job_123" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```

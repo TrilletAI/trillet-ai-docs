@@ -1,0 +1,31 @@
+---
+title: "Cancel Batch Contact"
+api: "DELETE /v1/api/batch-calls/{batchId}/contacts/{phone}"
+description: "Cancel the batch job for one phone number."
+---
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="batchId" type="string" required>
+  The batch that contains the contact.
+</ParamField>
+
+<ParamField path="phone" type="string" required>
+  Phone number of the contact to cancel, in the same form stored on the batch job.
+</ParamField>
+
+### Example
+
+```bash
+curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/contacts/%2B14155551234" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+URL-encode the phone number. A leading `+` is `%2B`.
