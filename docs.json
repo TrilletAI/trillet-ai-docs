@@ -9,8 +9,8 @@
   },
   "favicon": "/images/favicon.svg",
   "logo": {
-    "light": "/public/logo/light.svg",
-    "dark": "/public/logo/dark.svg",
+    "light": "/logo/Trillet-logo-light.svg",
+    "dark": "/logo/Trillet-logo-dark.svg",
     "href": "https://docs.trillet.ai/"
   },
   "api": {
