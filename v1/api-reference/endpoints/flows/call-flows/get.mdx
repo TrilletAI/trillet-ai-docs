@@ -90,6 +90,20 @@ description: "Retrieve a specific call flow by its ID."
       The duration of silence that triggers the end of the call, measured in seconds.
     </ResponseField>
   </ResponseField>
+  <ResponseField name="welcomeMessageConfig" type="object">
+    How the agent opens a call: an `Inbound` and an `Outbound` greeting, each with `selected`, `customMessage`, `aiGreetingPrompt`, `userFirstFallbackDelaySeconds` and `userFirstFallbackMessage`. Some flows can be missing a direction, a field, or the whole object; a missing `selected` means `aiFirst`. [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) explains each field and how to change it.
+
+    Some older flows also return `welcomeMessage` and `customWelcomeMessage`, at the top level or inside `settings`. Nothing reads them; the greeting is `welcomeMessageConfig`.
+
+    If the flow has unpublished changes from the call flow editor, this shows that draft's greeting instead of the live one.
+
+    <ResponseField name="Inbound" type="object">
+      The greeting for calls received on the flow's phone number.
+    </ResponseField>
+    <ResponseField name="Outbound" type="object">
+      The greeting for calls the flow places and for web calls made with the Web SDK.
+    </ResponseField>
+  </ResponseField>
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -120,7 +134,23 @@ description: "Retrieve a specific call flow by its ID."
     "knowledgeBases": [],
     "responseSettings": { "delay": 0 },
     "security": { "hipaaCompliance": false },
-    "callSetting": { "maxCallDuration": 600, "endCallOnSilence": 10 }
+    "callSetting": { "maxCallDuration": 600, "endCallOnSilence": 10 },
+    "welcomeMessageConfig": {
+      "Inbound": {
+        "aiGreetingPrompt": "",
+        "customMessage": "Thanks for calling Acme Plumbing, how can I help you?",
+        "selected": "customMessage",
+        "userFirstFallbackDelaySeconds": 10,
+        "userFirstFallbackMessage": ""
+      },
+      "Outbound": {
+        "aiGreetingPrompt": "",
+        "customMessage": "",
+        "selected": "aiFirst",
+        "userFirstFallbackDelaySeconds": 10,
+        "userFirstFallbackMessage": ""
+      }
+    }
   },
   "createdAt": "2025-01-03T11:00:00Z",
   "updatedAt": "2025-01-03T11:10:00Z"

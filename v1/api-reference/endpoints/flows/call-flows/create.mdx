@@ -48,11 +48,23 @@ description: "Create a new call flow with full settings."
 </ParamField>
 
 <ParamField body="welcomeMessage" type="string">
-  Welcome message type. Possible values: "user_initiated", "ai_dynamic", "ai_custom". Defaults to "user_initiated".
+  A shortcut that gives both directions, `Inbound` and `Outbound`, the same greeting type. To set each direction separately or to use the other greeting options, send `settings.welcomeMessageConfig` instead. The value is case-sensitive:
+
+  - `aiFirst` or `ai_dynamic`: the AI writes the greeting. Saved as `aiFirst` (AI Generated in the editor).
+  - `customMessage` or `ai_custom`: the agent opens with the text in `customWelcomeMessage`. Saved as `customMessage` (Custom Message in the editor).
+  - `userFirst` or `user_initiated`: the agent waits for the caller to speak first. Saved as `userFirst` (Wait for Caller in the editor).
+
+  Any other value returns `400` with `code: "GREETING_TYPE_INVALID"`, and the flow is not created.
+
+  If you send no greeting, both directions use `aiFirst`. Earlier versions of this page said the default was `user_initiated`. It is `aiFirst`, and `user_initiated` makes the agent wait for the caller to speak first.
+
+  The shortcut is saved into `settings.welcomeMessageConfig`, so `welcomeMessage` and `customWelcomeMessage` are not stored and do not come back in the response. You can also send both fields inside `settings`. If you send a field in both places, the top-level value wins. If the request also includes `settings.welcomeMessageConfig`, the shortcut is ignored.
 </ParamField>
 
 <ParamField body="customWelcomeMessage" type="string">
-  Custom welcome message text when welcomeMessage is set to "ai_custom" only.
+  The text the agent says for a `customMessage` greeting, saved as `customMessage` in both directions. If you send non-blank text without `welcomeMessage`, the greeting type is set to `customMessage`.
+
+  When the greeting type is `customMessage`, this text must not be blank. Otherwise the request returns `400` with `code: "GREETING_TEXT_REQUIRED"`, and the flow is not created.
 </ParamField>
 
 <ParamField body="flowData" type="object">
@@ -169,17 +181,75 @@ description: "Create a new call flow with full settings."
   Main configuration object for the call flow.
 
   <Expandable title="settings">
-    <ParamField body="welcomeMessage" type="string">
-      Welcome message type. Possible values: "user_initiated", "ai_dynamic", "ai_custom".
-    </ParamField>
-    <ParamField body="customWelcomeMessage" type="string">
-      Custom welcome message text.
+    <ParamField body="welcomeMessageConfig" type="object">
+      How the agent opens a call, set separately for each direction. The keys `Inbound` and `Outbound`, the field names and the `selected` values are case-sensitive.
+
+      - `Inbound` is used for calls received on the flow's phone number.
+      - `Outbound` is used for calls the flow places and for web calls made with the Web SDK. A flow with `direction: "outbound"` only uses `Outbound`, and an older flow with `direction: "inbound"` uses `Inbound` for these calls too.
+      - Test calls from the dashboard, and calls started with [Connect a Web Call](/v1/api-reference/endpoints/calls/web/connect), use `Inbound`, except on an outbound-only flow, where they use `Outbound`. Unless the flow is outbound-only, you can switch a dashboard test call to `Outbound`.
+
+      Fields you leave out keep their defaults, so you can send one direction, or only `selected` and `customMessage`. The greeting is used from the flow's first call; nothing has to be published.
+
+      `settings.welcomeMessage` and `settings.customWelcomeMessage` are the same shortcut as the top-level `welcomeMessage` and `customWelcomeMessage`.
+
+      If any greeting input is not valid, the flow is not created. The response is a `400` that lists every problem at once, with the body `{ "message", "code", "field", "errors" }`: `errors` has one message per problem, `message` joins them, and `code` and `field` describe the first one.
+
+      - `400` with `code: "GREETING_TYPE_INVALID"`: `selected` is not `aiFirst`, `customMessage` or `userFirst`, or `welcomeMessage` is not one of its accepted values.
+      - `400` with `code: "GREETING_FIELD_UNKNOWN"`: a direction key other than `Inbound` or `Outbound` (such as `inbound`), a direction field other than the five below, a greeting setting such as `welcomeMessageConfig` or `welcomeMessageDelay` sent outside `settings`, or a greeting-like name that the API does not use, such as `greeting` or `firstMessage`.
+      - `400` with `code: "GREETING_VALUE_INVALID"`: `welcomeMessageConfig` or a direction is not an object, a text field (including `customWelcomeMessage`) is not a string, or `userFirstFallbackDelaySeconds` is not a number from 1 to 30.
+      - `400` with `code: "GREETING_TEXT_REQUIRED"`: a direction's `selected` would be `customMessage` while its `customMessage` text is blank.
+
+      <Expandable title="welcomeMessageConfig">
+        <ParamField body="Inbound" type="object">
+          The greeting for calls received on the flow's phone number.
+          <Expandable title="Inbound">
+            <ParamField body="selected" type="string">
+              How the agent opens the call: `aiFirst` (AI Generated in the editor), `customMessage` (Custom Message) or `userFirst` (Wait for Caller). The older names `ai_dynamic`, `ai_custom` and `user_initiated` only work in the `welcomeMessage` shortcut. Defaults to `aiFirst`.
+            </ParamField>
+            <ParamField body="customMessage" type="string">
+              What the agent says when `selected` is `customMessage`. It must not be blank for that type. `{{variable}}` placeholders are filled in on each call. Defaults to `""`.
+            </ParamField>
+            <ParamField body="aiGreetingPrompt" type="string">
+              Instructions for the greeting the AI writes when `selected` is `aiFirst`. If empty, the AI writes the greeting from the flow's prompt. Defaults to `""`.
+            </ParamField>
+            <ParamField body="userFirstFallbackDelaySeconds" type="number">
+              When `selected` is `userFirst`, how many seconds the agent waits for the caller to speak (Waiting timeout in the editor): a number from 1 to 30. Defaults to `10`.
+            </ParamField>
+            <ParamField body="userFirstFallbackMessage" type="string">
+              When `selected` is `userFirst`, what the agent says if the caller is still silent after the wait (Fallback message in the editor). If it is empty, the agent says "Hello", but only when the wait is shorter than `settings.callSetting.endCallOnSilence`; otherwise the flow's usual silence handling applies. Defaults to `""`.
+            </ParamField>
+          </Expandable>
+        </ParamField>
+        <ParamField body="Outbound" type="object">
+          The greeting for calls the flow places and for web calls made with the Web SDK.
+          <Expandable title="Outbound">
+            <ParamField body="selected" type="string">
+              How the agent opens the call: `aiFirst` (AI Generated in the editor), `customMessage` (Custom Message) or `userFirst` (Wait for Caller). The older names `ai_dynamic`, `ai_custom` and `user_initiated` only work in the `welcomeMessage` shortcut. Defaults to `aiFirst`.
+            </ParamField>
+            <ParamField body="customMessage" type="string">
+              What the agent says when `selected` is `customMessage`. It must not be blank for that type. `{{variable}}` placeholders are filled in on each call. Defaults to `""`.
+            </ParamField>
+            <ParamField body="aiGreetingPrompt" type="string">
+              Instructions for the greeting the AI writes when `selected` is `aiFirst`. If empty, the AI writes the greeting from the flow's prompt. Defaults to `""`.
+            </ParamField>
+            <ParamField body="userFirstFallbackDelaySeconds" type="number">
+              When `selected` is `userFirst`, how many seconds the agent waits for the caller to speak (Waiting timeout in the editor): a number from 1 to 30. Defaults to `10`.
+            </ParamField>
+            <ParamField body="userFirstFallbackMessage" type="string">
+              When `selected` is `userFirst`, what the agent says if the caller is still silent after the wait (Fallback message in the editor). If it is empty, the agent says "Hello", but only when the wait is shorter than `settings.callSetting.endCallOnSilence`; otherwise the flow's usual silence handling applies. Defaults to `""`.
+            </ParamField>
+          </Expandable>
+        </ParamField>
+      </Expandable>
     </ParamField>
     <ParamField body="enableHumanLikeVoiceAndTone" type="boolean">
       Enable human-like voice and tone. Defaults to false.
     </ParamField>
     <ParamField body="welcomeMessageDelay" type="number">
       Delay in seconds before welcome message. Defaults to 0.
+    </ParamField>
+    <ParamField body="welcomeMessageInterruptible" type="boolean">
+      Whether the caller can talk over the greeting (Allow caller to interrupt in the editor). Defaults to true.
     </ParamField>
     <ParamField body="webhooks" type="object">
       Webhook URLs for different events.
@@ -269,14 +339,6 @@ description: "Create a new call flow with full settings."
   Only "simple" prompt types allowed now.
 </ResponseField>
 
-<ResponseField name="welcomeMessage" type="string">
-  Welcome message type configuration.
-</ResponseField>
-
-<ResponseField name="customWelcomeMessage" type="string">
-  Custom welcome message text if configured.
-</ResponseField>
-
 <ResponseField name="flowData" type="object">
   The configuration of nodes and edges that define the call routing logic within the flow.
   <ResponseField name="nodes" type="array">
@@ -341,6 +403,15 @@ description: "Create a new call flow with full settings."
 
 <ResponseField name="settings" type="object">
   Configuration settings for various aspects of the call flow, including welcome messages, webhooks, knowledge bases, call settings, and security.
+  <ResponseField name="welcomeMessageConfig" type="object">
+    The greeting for each direction. Both directions have all five fields, `selected`, `customMessage`, `aiGreetingPrompt`, `userFirstFallbackDelaySeconds` and `userFirstFallbackMessage`, with the default for any field you did not send.
+    <ResponseField name="Inbound" type="object">
+      The greeting for calls received on the flow's phone number.
+    </ResponseField>
+    <ResponseField name="Outbound" type="object">
+      The greeting for calls the flow places and for web calls made with the Web SDK.
+    </ResponseField>
+  </ResponseField>
   <ResponseField name="security" type="object">
     Security settings with processed values.
     <ResponseField name="hipaaCompliance" type="boolean">
@@ -361,8 +432,40 @@ description: "Create a new call flow with full settings."
 </ResponseField>
 
 
+<RequestExample>
+```json Same greeting for every call (shortcut)
+{
+  "name": "Acme Plumbing - Call Flow",
+  "direction": "bidirectional",
+  "promptType": "simple",
+  "welcomeMessage": "customMessage",
+  "customWelcomeMessage": "Thanks for calling Acme Plumbing, how can I help you?"
+}
+```
+
+```json Different greeting per direction
+{
+  "name": "Acme Plumbing - Call Flow",
+  "direction": "bidirectional",
+  "promptType": "simple",
+  "settings": {
+    "welcomeMessageConfig": {
+      "Inbound": {
+        "selected": "customMessage",
+        "customMessage": "Thanks for calling Acme Plumbing, how can I help you?"
+      },
+      "Outbound": {
+        "selected": "aiFirst",
+        "aiGreetingPrompt": "Introduce yourself as the booking assistant for Acme Plumbing and say you are calling to confirm the customer's appointment."
+      }
+    }
+  }
+}
+```
+</RequestExample>
+
 <ResponseExample>
-```json
+```json 201 Created
 {
   "_id": "676b8e123456789012345678",
   "workspaceId": "6764d172953253138a3a70f4",
@@ -375,8 +478,6 @@ description: "Create a new call flow with full settings."
   "description": "Handles inbound support calls",
   "agent": "676b8e123456789012345679",
   "promptType": "simple",
-  "welcomeMessage": "user_initiated",
-  "customWelcomeMessage": "",
   "flowData": {
     "nodes": [
       {
@@ -412,8 +513,22 @@ description: "Create a new call flow with full settings."
   "locations": [],
   "webhooks": [],
   "settings": {
-    "welcomeMessage": "user_initiated",
-    "customWelcomeMessage": "",
+    "welcomeMessageConfig": {
+      "Inbound": {
+        "aiGreetingPrompt": "",
+        "customMessage": "Thanks for calling Acme Plumbing, how can I help you?",
+        "selected": "customMessage",
+        "userFirstFallbackDelaySeconds": 10,
+        "userFirstFallbackMessage": ""
+      },
+      "Outbound": {
+        "aiGreetingPrompt": "",
+        "customMessage": "Thanks for calling Acme Plumbing, how can I help you?",
+        "selected": "customMessage",
+        "userFirstFallbackDelaySeconds": 10,
+        "userFirstFallbackMessage": ""
+      }
+    },
     "enableHumanLikeVoiceAndTone": false,
     "welcomeMessageDelay": 0,
     "webhooks": {
@@ -435,6 +550,17 @@ description: "Create a new call flow with full settings."
   },
   "createdAt": "2025-01-15T15:00:00.000Z",
   "updatedAt": "2025-01-15T15:00:00.000Z"
+}
+```
+
+```json 400 Greeting error
+{
+  "message": "welcomeMessage must be \"aiFirst\", \"customMessage\" or \"userFirst\" (the older names \"ai_dynamic\", \"ai_custom\" and \"user_initiated\" also work). Got \"custom\".",
+  "code": "GREETING_TYPE_INVALID",
+  "field": "welcomeMessage",
+  "errors": [
+    "welcomeMessage must be \"aiFirst\", \"customMessage\" or \"userFirst\" (the older names \"ai_dynamic\", \"ai_custom\" and \"user_initiated\" also work). Got \"custom\"."
+  ]
 }
 ```
 </ResponseExample>
