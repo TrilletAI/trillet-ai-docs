@@ -47,7 +47,7 @@ description: "Send an AI-driven phone call to a given number."
 
   Spell each key exactly as you send it, including upper and lower case, and put no spaces inside the braces. A `first_name` key fills in `{{first_name}}`, but not `{{firstName}}`, `{{First_Name}}` or `{{ first_name }}`.
 
-  Send every variable your greeting and voicemail use: a missing one is spoken as written.
+  Send every variable your call flow uses. An unfilled placeholder is spoken as written, except in the AI greeting prompt, where it is left out.
 
   The request example on this page suits a call flow whose Outbound greeting is the custom message `{{greeting_text}}`, whose voicemail message is `{{voicemail_message}}`, and whose prompt refers to the person as `{{first_name}}`. Because the text is sent per call, each call can have its greeting and voicemail in a different language.
 </ParamField>
@@ -75,8 +75,6 @@ When the call flow has calling hours turned on, a call requested outside them is
 If our servers can't start a call the API accepted, for example because its call flow was deactivated after the request, the call is marked Failed in Call History. Its `status` is `failed`, `callEndReason` gives the reason, such as `no_active_call_flow`, and `error` explains it. These calls do not trigger `callback_url`. A system error while the call is connecting can leave it Scheduled instead.
 
 To check on a call, read its record with [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get) using the `callId` from the response.
-
-
 
 ### Response Fields
 
@@ -122,10 +120,6 @@ To check on a call, read its record with [Get a Specific Call History](/v1/api-r
   Returned with `OUTSIDE_CALLING_HOURS`. When the call flow's next calling window opens, as an ISO 8601 time in UTC. It is `null` when there is no calling window in the next 30 days.
 </ResponseField>
 
-<ResponseField name="timezone" type="string">
-  Returned with `OUTSIDE_CALLING_HOURS`. The time zone of the call flow's calling hours, such as `America/New_York`, or `null` if the call flow has no time zone set.
-</ResponseField>
-
 <RequestExample>
 ```json Personalized greeting and voicemail
 {
@@ -141,7 +135,7 @@ To check on a call, read its record with [Get a Specific Call History](/v1/api-r
 </RequestExample>
 
 <ResponseExample>
-```json 200 Success
+```json
 {
   "status": "success",
   "message": "Outbound call job scheduled for agent a1b2c3d4e5f6a7b8c9d0e1f2 to number +1234567890",
@@ -149,46 +143,6 @@ To check on a call, read its record with [Get a Specific Call History](/v1/api-r
   "callId": "f9e8d7c6b5a4f3e2d1c0b9a8",
   "roomName": "a1b2c3d4e5f6a7b8c9d0e1f2-x7k2m9p4q1",
   "jobId": "123"
-}
-```
-
-```json 409 Outside calling hours
-{
-  "status": "error",
-  "message": "Failed to initiate call",
-  "error": "This call flow is outside its calling hours. Next window opens at 2026-10-20T13:00:00Z (America/New_York).",
-  "code": "OUTSIDE_CALLING_HOURS",
-  "next_available_at": "2026-10-20T13:00:00Z",
-  "timezone": "America/New_York"
-}
-```
-
-```json 409 No calling window
-{
-  "status": "error",
-  "message": "Failed to initiate call",
-  "error": "This call flow is outside its calling hours. No calling window in the next 30 days.",
-  "code": "OUTSIDE_CALLING_HOURS",
-  "next_available_at": null,
-  "timezone": "America/New_York"
-}
-```
-
-```json 422 No live call flow
-{
-  "status": "error",
-  "message": "Failed to initiate call",
-  "error": "This agent has no live call flow, so the call can't run. Use an agent whose call flow is live, or create one in the portal.",
-  "code": "NO_ACTIVE_CALL_FLOW"
-}
-```
-
-```json 422 Inbound-only call flow
-{
-  "status": "error",
-  "message": "Failed to initiate call",
-  "error": "This agent's call flow is inbound-only.",
-  "code": "CALL_FLOW_INBOUND_ONLY"
 }
 ```
 </ResponseExample>
