@@ -59,6 +59,23 @@ description: "Send an AI-driven phone call to a given number."
   </Expandable>
 </ParamField>
 
+<ParamField body="reject_outside_hours" type="boolean" default="false">
+  Refuse the call, instead of queueing it, when the call flow is outside its calling hours. The hours are checked when the request is received and again when the call is about to dial:
+
+  - If the call flow is outside its hours when the request is received, the API returns 409 with code `OUTSIDE_CALLING_HOURS`. No call is queued and nothing is added to Call History.
+  - If the hours close before the call dials, the call is marked Failed in Call History with `callEndReason` `outside_calling_hours`, and it is not queued again.
+
+  With the default, `false`, a call outside calling hours is queued for the next window. See [Calling hours](#calling-hours). Calls from a WhatsApp number do not use calling hours, so this option does not affect them. Send `true` or `false`; any other value returns 400.
+</ParamField>
+
+### Calling hours
+
+When the call flow has calling hours turned on, a call requested outside them is queued by default and dials when the next window opens. Until then it shows in Call History as Scheduled, with the reason "Outside office hours", and its call history record has `status` `pending` and `pendingReason` `office_hours`. If no window opens in the next 30 days, the call is marked Failed instead, with `callEndReason` `outside_calling_hours`. A queued call cannot be cancelled yet. To have the API refuse these calls instead, send `reject_outside_hours: true`.
+
+If our servers can't start a call the API accepted, for example because its call flow was deactivated after the request, the call is marked Failed in Call History. Its `status` is `failed`, `callEndReason` gives the reason, such as `no_active_call_flow`, and `error` explains it. These calls do not trigger `callback_url`. A system error while the call is connecting can leave it Scheduled instead.
+
+To check on a call, read its record with [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get) using the `callId` from the response.
+
 
 
 ### Response Fields
@@ -87,6 +104,28 @@ description: "Send an AI-driven phone call to a given number."
   The identifier of the background job scheduled to execute the outbound call.
 </ResponseField>
 
+<ResponseField name="error" type="string">
+  Returned when the call could not be initiated. Explains why, in text you can show to your users. Some 400 responses have no `error` and give the reason in `message` instead: a missing field, a field of the wrong type, or a `call_agent_id` and `call_flow_id` that refer to different agents.
+</ResponseField>
+
+<ResponseField name="code" type="string">
+  Returned with some errors, so you can handle them in code:
+
+  - `OUTSIDE_CALLING_HOURS` (409): the call flow is outside its calling hours and you sent `reject_outside_hours: true`.
+  - `NO_ACTIVE_CALL_FLOW` (422): the agent has no live call flow. Use an agent whose call flow is live.
+  - `CALL_FLOW_INBOUND_ONLY` (422): the agent's call flow only takes inbound calls.
+
+  With these codes, no call is queued and nothing is added to Call History.
+</ResponseField>
+
+<ResponseField name="next_available_at" type="string">
+  Returned with `OUTSIDE_CALLING_HOURS`. When the call flow's next calling window opens, as an ISO 8601 time in UTC. It is `null` when there is no calling window in the next 30 days.
+</ResponseField>
+
+<ResponseField name="timezone" type="string">
+  Returned with `OUTSIDE_CALLING_HOURS`. The time zone of the call flow's calling hours, such as `America/New_York`, or `null` if the call flow has no time zone set.
+</ResponseField>
+
 <RequestExample>
 ```json Personalized greeting and voicemail
 {
@@ -102,7 +141,7 @@ description: "Send an AI-driven phone call to a given number."
 </RequestExample>
 
 <ResponseExample>
-```json
+```json 200 Success
 {
   "status": "success",
   "message": "Outbound call job scheduled for agent a1b2c3d4e5f6a7b8c9d0e1f2 to number +1234567890",
@@ -110,6 +149,46 @@ description: "Send an AI-driven phone call to a given number."
   "callId": "f9e8d7c6b5a4f3e2d1c0b9a8",
   "roomName": "a1b2c3d4e5f6a7b8c9d0e1f2-x7k2m9p4q1",
   "jobId": "123"
+}
+```
+
+```json 409 Outside calling hours
+{
+  "status": "error",
+  "message": "Failed to initiate call",
+  "error": "This call flow is outside its calling hours. Next window opens at 2026-10-20T13:00:00Z (America/New_York).",
+  "code": "OUTSIDE_CALLING_HOURS",
+  "next_available_at": "2026-10-20T13:00:00Z",
+  "timezone": "America/New_York"
+}
+```
+
+```json 409 No calling window
+{
+  "status": "error",
+  "message": "Failed to initiate call",
+  "error": "This call flow is outside its calling hours. No calling window in the next 30 days.",
+  "code": "OUTSIDE_CALLING_HOURS",
+  "next_available_at": null,
+  "timezone": "America/New_York"
+}
+```
+
+```json 422 No live call flow
+{
+  "status": "error",
+  "message": "Failed to initiate call",
+  "error": "This agent has no live call flow, so the call can't run. Use an agent whose call flow is live, or create one in the portal.",
+  "code": "NO_ACTIVE_CALL_FLOW"
+}
+```
+
+```json 422 Inbound-only call flow
+{
+  "status": "error",
+  "message": "Failed to initiate call",
+  "error": "This agent's call flow is inbound-only.",
+  "code": "CALL_FLOW_INBOUND_ONLY"
 }
 ```
 </ResponseExample>
