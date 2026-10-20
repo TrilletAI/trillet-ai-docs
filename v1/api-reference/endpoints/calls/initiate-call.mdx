@@ -47,7 +47,7 @@ description: "Send an AI-driven phone call to a given number."
 
   Spell each key exactly as you send it, including upper and lower case, and put no spaces inside the braces. A `first_name` key fills in `{{first_name}}`, but not `{{firstName}}`, `{{First_Name}}` or `{{ first_name }}`.
 
-  Send every variable your greeting and voicemail use: a missing one is spoken as written.
+  Send every variable your call flow uses. An unfilled placeholder is spoken as written, except in the AI greeting prompt, where it is left out.
 
   The request example on this page suits a call flow whose Outbound greeting is the custom message `{{greeting_text}}`, whose voicemail message is `{{voicemail_message}}`, and whose prompt refers to the person as `{{first_name}}`. Because the text is sent per call, each call can have its greeting and voicemail in a different language.
 </ParamField>
