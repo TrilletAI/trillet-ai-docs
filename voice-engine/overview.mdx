@@ -1,0 +1,67 @@
+---
+title: "Voice Engine API"
+sidebarTitle: "Overview"
+description: "Run Trillet voice agents inside your own product, for every one of your customers, from your own backend."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This section describes the planned design so you can plan your integration; details may change before release. To join early access, contact your Trillet account manager or [talk to us](https://form.typeform.com/to/qRRENIBp).
+</Warning>
+
+The Voice Engine API is for software companies that want to offer AI voice agents to their own customers, under their own brand, without building the voice stack themselves. Your product stays the experience your users know. Trillet runs the telephony, the real-time voice pipeline, the agents and the call data underneath it.
+
+It suits platforms such as practice management and EHR systems, CRMs, field-service and booking software, contact-centre platforms and learning platforms.
+
+## How it works
+
+You hold one **partner account**. Each of your customers gets a **tenant**: an isolated workspace with its own agents, numbers, call history and usage. Your backend manages tenants with a partner key, and your users never need a Trillet login.
+
+<Columns cols={2}>
+  <Card title="Tenants" icon="building" href="/voice-engine/tenants">
+    Create, suspend and delete a workspace per customer, keyed by your own customer ID.
+  </Card>
+  <Card title="Templates and rollouts" icon="layer-group" href="/voice-engine/templates">
+    Design an agent once, install it for every tenant, and roll out new versions in stages.
+  </Card>
+  <Card title="Events" icon="bolt" href="/voice-engine/events">
+    Signed webhooks for calls, bookings, SMS, workflows, numbers and tenants.
+  </Card>
+  <Card title="Usage and billing" icon="receipt" href="/voice-engine/usage-and-billing">
+    Usage per tenant, so you can bill your customers and reconcile your invoice.
+  </Card>
+  <Card title="Phone numbers" icon="phone" href="/voice-engine/phone-numbers">
+    Buy numbers per tenant, or bring your own carrier over SIP.
+  </Card>
+  <Card title="Embedding" icon="window-maximize" href="/voice-engine/embedding">
+    Show call history or the flow editor inside your app, signed in as your user.
+  </Card>
+</Columns>
+
+## Voice Engine API or the standard API?
+
+| You want to | Use |
+|---|---|
+| Run agents for your own business | The [standard API](/v1/api-reference/introduction) with your workspace API key |
+| Manage a handful of client workspaces by hand | The Trillet dashboard (Agency plan) |
+| Provision and run agents for many customers from your own product | The Voice Engine API |
+
+The Voice Engine API does not replace the standard API. A partner key can call the standard endpoints (agents, call flows, knowledge bases, calls, call history, workflows) on behalf of any of its tenants. The Voice Engine API adds what a platform needs on top: tenant lifecycle, fleet configuration, partner-level events, usage and embedding.
+
+## Environments and regions
+
+- **Live and sandbox.** Sandbox keys work only on sandbox tenants: no real numbers, no charges, and every event is marked `livemode: false`. Use sandbox in your CI.
+- **Data residency.** Each tenant is created in a region (`us` or `au`). Its calls, transcripts and recordings stay in that region.
+
+## Next steps
+
+<Steps>
+  <Step title="Read the concepts">
+    [Authentication](/voice-engine/authentication) and [API conventions](/voice-engine/conventions) cover keys, scopes, idempotency, errors and pagination.
+  </Step>
+  <Step title="Plan your tenant model">
+    Decide which of your customer IDs becomes each tenant's `externalId`. See [Tenants](/voice-engine/tenants).
+  </Step>
+  <Step title="Plan your event handling">
+    Most integrations start from `call.ended` and `call.analyzed`. See [Events](/voice-engine/events).
+  </Step>
+</Steps>

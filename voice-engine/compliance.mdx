@@ -1,0 +1,36 @@
+---
+title: "Compliance and data"
+sidebarTitle: "Compliance and data"
+description: "HIPAA, data residency, what data events carry, and retention for Voice Engine partners."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+</Warning>
+
+## HIPAA
+
+Trillet supports HIPAA workloads. A Business Associate Agreement is available on Agency and Enterprise accounts, including Voice Engine partners, at no extra fee. Execute the BAA before any tenant processes protected health information. See our [Terms of Use](https://trillet.ai/terms-of-use).
+
+## Data residency
+
+Each tenant is created in a region, `us` or `au`. Its call records, transcripts and recordings are stored in that region. Webhook payloads are built from the tenant's regional data when they are delivered.
+
+## Data in events
+
+Events include transcripts, summaries and extracted call data by default. For each webhook endpoint you can:
+
+- turn conversation data off (`includeConversationData: false`), or
+- keep it and mask personal data (`redactPII: true`).
+
+Recordings are never included in payloads, only as signed URLs that expire.
+
+## Isolation
+
+- Each tenant is a separate workspace. A partner key can reach only its own tenants, and an embed session only one tenant.
+- Requests naming another partner's tenant return `404`.
+- Partner keys and webhook signing secrets are stored hashed or encrypted, and every change made with a partner key is written to the tenant's audit log with the key that made it.
+
+## Branding
+
+Tenants inherit your branding. Emails, SMS sender names, embedded screens and webhook headers your customers might see do not mention Trillet.

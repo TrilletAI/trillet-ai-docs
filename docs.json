@@ -299,6 +299,40 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Voice Engine API (Coming soon)",
+        "icon": "tower-broadcast",
+        "groups": [
+          {
+            "group": "Voice Engine API",
+            "icon": "tower-broadcast",
+            "pages": [
+              "voice-engine/overview",
+              "voice-engine/authentication",
+              "voice-engine/conventions"
+            ]
+          },
+          {
+            "group": "Build",
+            "icon": "hammer",
+            "pages": [
+              "voice-engine/tenants",
+              "voice-engine/phone-numbers",
+              "voice-engine/templates"
+            ]
+          },
+          {
+            "group": "Operate",
+            "icon": "chart-line",
+            "pages": [
+              "voice-engine/events",
+              "voice-engine/usage-and-billing",
+              "voice-engine/embedding",
+              "voice-engine/compliance"
+            ]
+          }
+        ]
       }
     ]
   },

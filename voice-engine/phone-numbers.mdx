@@ -1,0 +1,48 @@
+---
+title: "Phone numbers"
+sidebarTitle: "Phone numbers"
+description: "Give each tenant phone numbers from Trillet, or bring your own carrier over SIP."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+</Warning>
+
+Each tenant needs at least one number for inbound or outbound calls. You have two options, and you can mix them across tenants.
+
+## Numbers from Trillet
+
+Search with the standard [phone number endpoints](/v1/api-reference/introduction) on behalf of the tenant, then buy through the Voice Engine API so the number is billed on your partner invoice instead of a card:
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/tenants/ten_6a9622d2/numbers \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Idempotency-Key: number-cust_8842-1" \
+  -H "Content-Type: application/json" \
+  -d '{ "e164": "+15125550142", "bindTo": { "callFlowId": "cf_123" } }'
+```
+
+| Method | Path | Scope |
+|---|---|---|
+| `POST` | `/partner/v1/tenants/{id}/numbers` | `numbers:write` |
+| `DELETE` | `/partner/v1/tenants/{id}/numbers/{numberId}` | `numbers:write` |
+
+Numbers renew monthly and appear in [usage](/voice-engine/usage-and-billing) as `phone_number` charges. Releasing a number emits `number.released`.
+
+## Bring your own carrier
+
+If you or your customer already have numbers with a carrier, connect them over SIP:
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/tenants/ten_6a9622d2/numbers/external \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Idempotency-Key: byo-cust_8842-1" \
+  -H "Content-Type: application/json" \
+  -d '{ "e164": "+15125550199", "provider": "sip", "credentials": { "sipUri": "sip:pbx.example.com" } }'
+```
+
+You can also set up one **partner trunk** shared by all your tenants, so each new tenant only needs its numbers assigned rather than its own SIP configuration.
+
+## Binding numbers to agents
+
+Bind a number to a call flow or agent with the standard phone number configuration endpoints, sending the tenant ID in `x-workspace-id`. Template installs can bind numbers for you; see [Templates](/voice-engine/templates).

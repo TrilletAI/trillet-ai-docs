@@ -1,0 +1,61 @@
+---
+title: "Embedding"
+sidebarTitle: "Embedding"
+description: "Show Trillet screens inside your app, signed in as your user, with no Trillet login."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+</Warning>
+
+You can build your whole experience on the API. If you would rather not rebuild screens such as call history or the flow editor, you can embed them in your app instead.
+
+## How it works
+
+<Steps>
+  <Step title="Your backend creates a session">
+    When your user opens the screen, your server creates an embed session for that tenant and user with a partner key.
+  </Step>
+  <Step title="Your frontend loads the URL">
+    Put the returned one-time URL in an iframe. It signs the user in for that tenant only.
+  </Step>
+  <Step title="The session expires">
+    Sessions last up to one hour. Create a new one when the user returns.
+  </Step>
+</Steps>
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/sessions \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenantId": "ten_6a9622d2",
+    "user": { "externalId": "usr_551", "name": "Dana Lee", "role": "editor" },
+    "screens": ["call-history", "call-flow-editor"],
+    "ttlSeconds": 3600
+  }'
+```
+
+```json
+{ "url": "https://app.trillet.ai/embed/s/2Zk9...", "expiresAt": "2026-11-02T16:04:11Z" }
+```
+
+```html
+<iframe src="EMBED_URL" style="width:100%;height:100%;border:0" allow="microphone"></iframe>
+```
+
+## Roles and screens
+
+| Role | Can |
+|---|---|
+| `viewer` | See the allowed screens |
+| `editor` | Also change agents, flows and settings on those screens |
+| `admin` | Also manage numbers and integrations on those screens |
+
+`screens` limits what the session can open, and the limit is enforced on the server, not just hidden in the interface. An embed session can never reach billing, team members, keys, or any other tenant.
+
+## Setup
+
+- Add the origins that will host the iframe (for example `https://app.example.com`) in your partner settings. Other sites cannot frame the screens.
+- Embedded screens use your branding and show no Trillet account menus.
+- Your users are identified by your `externalId`. They do not receive Trillet emails and do not count as Trillet seats.
