@@ -1,0 +1,94 @@
+---
+title: "Prompts, resources, and confirmations"
+sidebarTitle: "Prompts and resources"
+description: "Ready-made Trillet workflows, readable guides and records, confirmation forms, progress updates, and structured results in the Trillet MCP server."
+---
+
+Besides its 85 [tools](/mcp/tools/index), the Trillet MCP server offers the other parts of the Model Context Protocol: prompts, resources, confirmation forms, progress updates, and structured results. Clients that support them get a smoother experience. Clients that don't keep working exactly as before.
+
+<Note>
+  These features are live on the hosted server at `https://mcp.trillet.ai/mcp` from version 0.10.0. The `@trillet-ai/mcp` npm package gets them in its next release.
+</Note>
+
+## Prompts
+
+Prompts are ready-made tasks. In clients that show them, they appear as slash commands or in a prompt menu, and they ask for the details they need.
+
+| Prompt | You provide | What it does |
+|---|---|---|
+| `build-agent` | Business description (required), voice, workspace | Builds a production agent end to end, following Trillet's prompt guide, then tests it with a text call. |
+| `build-demo` | Prospect (required), the moment that should impress, workspace | Builds a demo agent for a fictional version of the prospect's business, plus a short demo script. |
+| `test-agent` | Call flow (required), scenarios, workspace | Runs scripted text test calls, reports PASS or FAIL per scenario, and suggests the smallest prompt fix for each failure. |
+| `debug-call` | What went wrong (required), call id, call flow, workspace | Reads the transcript and configuration, finds the cause, and proposes a fix before changing anything. |
+| `weekly-call-review` | Call flow, number of days, workspace | Summarises the last N days: call metrics, the top three problems with the calls that show them, and suggested fixes. |
+| `launch-checklist` | Call flow (required), workspace | Checks a flow is ready for real callers: model, speech settings, transfers, voicemail, office hours, knowledge base, tests, phone number, and wallet balance. |
+
+Call flow and workspace fields suggest values from your account as you type.
+
+In Claude Code, run them as `/mcp__trillet__build-agent` and so on. You can also just ask in plain language, for example "Test the Reception flow with three new-patient scenarios"; the assistant does the same work with tools.
+
+## Resources
+
+Resources are documents the assistant (or you) can attach to a conversation without calling a tool.
+
+**Guides**
+
+| Resource | Content |
+|---|---|
+| `trillet://docs/platform-rules` | Platform rules and known failure signatures |
+| `trillet://docs/agent-prompt-guide` | How to structure an agent prompt, with production defaults |
+| `trillet://docs/node-flows` | Node flow reference |
+| `trillet://docs/workflows` | Workflow reference |
+| `trillet://docs/voices` | Voices, languages, pronunciation, and speech settings |
+
+**Your account**
+
+| Resource | Content |
+|---|---|
+| `trillet://workspaces` | The workspaces you can use, with the current one marked |
+| `trillet://agents/{agentId}` | An agent's configuration |
+| `trillet://call-flows/{flowId}` | A call flow, including its prompt |
+| `trillet://calls/{callId}/transcript` | A call transcript with time, direction, duration, status, and summary |
+| `trillet://workflows/{workflowId}` | A workflow definition |
+
+These read the current workspace. To read from another workspace, prefix the path with the workspace id or URL-encoded name, for example `trillet://workspaces/Bondi%20Dental/agents/<id>`.
+
+In Claude Code, attach one with `@`, for example `@trillet:trillet://docs/agent-prompt-guide`.
+
+## Confirmation forms
+
+Twelve actions spend money or can't be undone. Before they run, clients that support MCP forms (elicitation) show a confirmation that names exactly what will happen, for example:
+
+> Permanently delete agent "Sarah" from workspace "Acme Agency"?
+
+If you decline, nothing happens. The actions are:
+
+- Buy a phone number, release a number from an agent, register an external number
+- Start an outbound call
+- Run a workflow for real
+- Publish a call flow draft or a node graph
+- Delete an agent, call flow, knowledge base, workflow, or secret
+
+In clients without forms, the assistant asks you in the chat instead, and your client's own approval prompt still applies. Claude Code may show both its permission prompt and the form for these actions.
+
+## Progress updates
+
+Longer actions report progress while they run: text test calls (connecting, waiting for the agent), knowledge base file uploads, call reviews, and usage summaries. Clients that show progress display it; others simply wait for the result.
+
+## Structured results
+
+41 tools, including every list and get tool, text calls, and the main edit tools, return typed data alongside the usual text. Assistants read these results more reliably, for example when comparing calls or totalling usage. The text result is unchanged, so nothing depends on structured support.
+
+## Client support
+
+What each client supports, based on its published documentation as of October 2026.
+
+| Client | Tools | Resources | Prompts | Confirmation forms | Progress | Structured results |
+|---|---|---|---|---|---|---|
+| Claude Code | Yes | Yes | Yes | Yes | Yes | Not documented |
+| Cursor | Yes | Yes | Yes | Yes | Not documented | Not documented |
+| VS Code | Yes | Yes | Yes | Not documented | Not documented | Not documented |
+| ChatGPT | Yes | Not documented | Not documented | Not documented | Not documented | Yes |
+| Claude.ai and Claude Desktop | Yes | Not documented | Not documented | Not documented | Not documented | Not documented |
+
+"Not documented" means the feature falls back gracefully: everything still works through tools and chat.

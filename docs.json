@@ -86,6 +86,25 @@
               "mcp/claude",
               "mcp/claude-code-and-other-clients",
               "mcp/example-prompts",
+              "mcp/prompts-and-resources",
+              {
+                "group": "Tool reference",
+                "pages": [
+                  "mcp/tools/index",
+                  "mcp/tools/agents",
+                  "mcp/tools/call-flows",
+                  "mcp/tools/flow-settings",
+                  "mcp/tools/node-flows",
+                  "mcp/tools/phone-numbers",
+                  "mcp/tools/knowledge-bases",
+                  "mcp/tools/workflows",
+                  "mcp/tools/secrets",
+                  "mcp/tools/calls",
+                  "mcp/tools/text-calls",
+                  "mcp/tools/branding",
+                  "mcp/tools/account"
+                ]
+              },
               "mcp/security",
               "mcp/troubleshooting"
             ]
