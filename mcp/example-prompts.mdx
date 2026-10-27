@@ -1,0 +1,149 @@
+---
+title: "What you can ask"
+sidebarTitle: "What you can ask"
+description: "Example prompts for building, testing, and reviewing Trillet agents from ChatGPT, Claude, and other AI assistants."
+---
+
+Talk to the assistant the way you would brief a colleague. Say which agent or workspace you mean, what you want changed, and what a good result looks like. The assistant reads your current setup before it changes anything.
+
+These prompts work in ChatGPT, Claude, Claude Code, and any other client connected to Trillet.
+
+## Build an agent
+
+```
+Build an inbound receptionist for Harbour Dental. It should answer questions about
+opening hours (Mon to Fri 8am to 6pm, Sat 9am to 1pm), take booking requests, and
+transfer urgent calls to +61 2 9000 1234. Use a warm Australian female voice.
+```
+
+```
+Change the welcome message on my Reception agent to "Thanks for calling Harbour Dental,
+this is Mia. How can I help?" and make it slightly more patient with interruptions.
+```
+
+```
+Create a knowledge base called "Harbour Dental FAQ" from https://harbourdental.example/faq
+and attach it to the Reception agent.
+```
+
+## Test it with a text call
+
+```
+Run a text test call with my Reception agent. Play a caller who wants to move their
+Thursday appointment to next week and is in a hurry. Tell me where the agent struggled.
+```
+
+```
+Test the after-hours flow as a caller with a dental emergency. Check that the agent
+offers the transfer and doesn't try to book an appointment.
+```
+
+<Note>
+  A text test call is a real call to your agent over text. It costs a few cents in model usage, and anything the agent does during the call happens for real, such as creating a booking or sending a webhook. Point test calls at test calendars and endpoints where you can.
+</Note>
+
+## Review real calls
+
+```
+Review the last 20 calls to my Reception agent and list the problems you see,
+with the transcript lines that show each one.
+```
+
+```
+Why did yesterday's 3:42pm call end without a transfer? Show me what the caller asked for.
+```
+
+```
+How many calls did we take last week, and what was the average call length?
+```
+
+## Work across workspaces
+
+```
+List my workspaces.
+```
+
+```
+Switch to Bayview Physiotherapy and show me its agents and phone numbers.
+```
+
+## Phone numbers
+
+```
+Find a local Sydney number and assign it to the Reception agent. Tell me the
+monthly cost before you buy it.
+```
+
+```
+Which of my numbers aren't assigned to an agent?
+```
+
+## Workflows
+
+```
+Create a workflow that sends me an SMS summary after every missed after-hours call.
+Run a test first and show me the result before you turn it on.
+```
+
+```
+Why did the "New lead follow-up" workflow fail this morning?
+```
+
+## Usage and billing
+
+```
+How much have we spent on calls this month, and what is my wallet balance?
+```
+
+## Tips for good results
+
+- **Name things.** "The Reception agent in Harbour Dental" is faster and safer than "my agent".
+- **Ask it to look first.** "Show me the current prompt, then suggest changes" lets you review before anything changes.
+- **Test after every change.** End a build request with "then run a text test call as a new patient".
+- **Keep real-world actions explicit.** The assistant asks before it calls a phone, buys a number, runs a workflow, or deletes something. Read the details before you confirm.
+
+## Full tool list
+
+The hosted server at `https://mcp.trillet.ai/mcp` offers 85 tools. You don't need to name them; the assistant picks the right one. They are listed here for reference.
+
+<AccordionGroup>
+  <Accordion title="Workspaces (2 tools)">
+    `trillet_list_workspaces`, `trillet_switch_workspace`
+  </Accordion>
+  <Accordion title="Agents and voices (6 tools)">
+    `trillet_list_agents`, `trillet_get_agent`, `trillet_create_agent`, `trillet_update_agent`, `trillet_delete_agent`, `trillet_search_voices`
+  </Accordion>
+  <Accordion title="Call flows (13 tools)">
+    `trillet_list_call_flows`, `trillet_get_call_flow`, `trillet_create_call_flow`, `trillet_update_call_flow`, `trillet_update_prompt`, `trillet_set_incall_api_tools`, `trillet_set_post_call_analysis`, `trillet_list_drafts`, `trillet_deactivate_drafts`, `trillet_publish_draft`, `trillet_duplicate_call_flow`, `trillet_archive_call_flow`, `trillet_delete_call_flow`
+  </Accordion>
+  <Accordion title="Flow settings (8 tools)">
+    `trillet_set_transfers`, `trillet_set_office_hours`, `trillet_set_call_settings`, `trillet_set_speech_settings`, `trillet_set_welcome_message`, `trillet_set_code_actions`, `trillet_set_background_audio`, `trillet_set_security_settings`
+  </Accordion>
+  <Accordion title="Node flows (10 tools)">
+    `trillet_node_flow_reference`, `trillet_list_node_flows`, `trillet_get_node_flow`, `trillet_create_node_flow`, `trillet_list_node_flow_templates`, `trillet_update_node_graph`, `trillet_validate_node_graph`, `trillet_publish_node_graph`, `trillet_simulate_node_graph`, `trillet_list_node_flow_runs`
+  </Accordion>
+  <Accordion title="Phone numbers (8 tools)">
+    `trillet_list_phone_numbers`, `trillet_search_available_numbers`, `trillet_purchase_phone_number`, `trillet_bind_phone_number`, `trillet_release_phone_number`, `trillet_get_phone_number_config`, `trillet_update_phone_number_config`, `trillet_register_external_number`
+  </Accordion>
+  <Accordion title="Knowledge bases (7 tools)">
+    `trillet_list_knowledge_bases`, `trillet_get_knowledge_base`, `trillet_create_knowledge_base`, `trillet_add_kb_text`, `trillet_upload_kb_file`, `trillet_attach_knowledge_bases`, `trillet_delete_knowledge_base`
+  </Accordion>
+  <Accordion title="Workflows (12 tools)">
+    `trillet_workflow_reference`, `trillet_list_workflows`, `trillet_get_workflow`, `trillet_create_workflow`, `trillet_update_workflow`, `trillet_activate_workflow`, `trillet_pause_workflow`, `trillet_delete_workflow`, `trillet_test_workflow`, `trillet_run_workflow`, `trillet_list_workflow_runs`, `trillet_get_workflow_run`
+  </Accordion>
+  <Accordion title="Calls (5 tools)">
+    `trillet_list_calls`, `trillet_get_call_metrics`, `trillet_get_call`, `trillet_review_calls`, `trillet_start_outbound_call`
+  </Accordion>
+  <Accordion title="Text test calls (3 tools)">
+    `trillet_start_text_call`, `trillet_say`, `trillet_end_text_call`
+  </Accordion>
+  <Accordion title="Website widget and demo pages (6 tools)">
+    `trillet_get_website_widget`, `trillet_set_website_widget`, `trillet_list_demo_links`, `trillet_create_demo_link`, `trillet_set_demo_page_design`, `trillet_upload_demo_page_logo`
+  </Accordion>
+  <Accordion title="Secrets (3 tools)">
+    `trillet_list_secrets` (values are always masked), `trillet_set_secret`, `trillet_delete_secret`
+  </Accordion>
+  <Accordion title="Usage and billing (2 tools)">
+    `trillet_get_usage`, `trillet_list_transactions`
+  </Accordion>
+</AccordionGroup>

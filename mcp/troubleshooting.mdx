@@ -1,0 +1,101 @@
+---
+title: "Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Fixes for common problems connecting ChatGPT, Claude, and other MCP clients to Trillet."
+---
+
+## Connecting
+
+<AccordionGroup>
+  <Accordion title="ChatGPT doesn't show an option to add a custom MCP server">
+    OpenAI controls which plans and workspaces can add custom MCP connectors.
+
+    - Check that you are using ChatGPT on the web at [chatgpt.com](https://chatgpt.com).
+    - Check that your plan supports custom MCP connectors in [OpenAI's guide](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
+    - If you are on a Business, Enterprise, or Edu workspace, ask your ChatGPT admin to allow custom MCP connectors for you, or to add Trillet for the workspace. See [For ChatGPT workspace admins](/mcp/chatgpt#for-chatgpt-workspace-admins).
+    - In some accounts you need to turn on **Developer mode** first, under **Settings > Apps > Advanced settings**.
+  </Accordion>
+  <Accordion title="Claude doesn't let me add a custom connector">
+    - On the Free plan you can add one custom connector. Remove an unused one first.
+    - On Team and Enterprise plans, only owners (and Enterprise roles with **Manage access to Libraries**) can add connectors. Ask an owner to add Trillet in **Organization settings > Connectors**, then connect it yourself in **Customize > Connectors**.
+  </Accordion>
+  <Accordion title="The sign-in or consent page shows an error or says the request expired">
+    The sign-in link is valid for a short time. Close the Trillet tab, go back to ChatGPT or Claude, and start the connection again.
+  </Accordion>
+  <Accordion title="The consent screen shows the wrong Trillet account">
+    Select **Switch account** at the top of the consent screen and log in with the account you want to connect.
+  </Accordion>
+</AccordionGroup>
+
+## Using Trillet in a chat
+
+<AccordionGroup>
+  <Accordion title="Every Trillet tool fails with Unauthorized">
+    The connection has lost access. This happens after you disconnect the app in Trillet, or when its sign-in has expired.
+
+    - **ChatGPT or Claude:** reconnect the Trillet connector in ChatGPT's plugin or app settings, or in Claude's **Customize > Connectors**. Log in and select **Allow access** again.
+    - **API key clients:** check the key is still listed in **Settings > Developer > API Keys**, and that its user is a member of the workspace id you set. The connection can look healthy while the key is wrong, so ask the assistant to "list my agents" to confirm.
+  </Accordion>
+  <Accordion title="The assistant doesn't use Trillet">
+    - **ChatGPT:** type `@` and select **Trillet** in the message box, or name Trillet in your request.
+    - **Claude:** select **+** in the message box, then **Connectors**, and make sure **Trillet** is on for this conversation.
+  </Accordion>
+  <Accordion title="Workspace not found, or the assistant is working in the wrong workspace">
+    Ask the assistant to "list my workspaces". It shows every workspace you belong to and marks the current one. Then ask it to switch, for example "switch to Acme Clinic Northside".
+
+    If a workspace is missing from the list, your Trillet account is not a member of it. Ask the workspace owner to invite you.
+  </Accordion>
+  <Accordion title="My changes don't show up on test calls">
+    The call flow probably has an active draft from the dashboard editor. A draft overrides the live version for test calls. Ask the assistant to "check whether this call flow has an active draft", then either publish the draft or deactivate it.
+  </Accordion>
+  <Accordion title="A new Trillet tool isn't available in ChatGPT">
+    ChatGPT keeps a snapshot of a connector's tools. Refresh the Trillet connector from its details page in ChatGPT's app settings. On Business, Enterprise, and Edu workspaces, an admin needs to refresh and publish the update.
+  </Accordion>
+  <Accordion title="Uploading a file to a knowledge base fails">
+    The hosted server can't read files from your computer. Give the assistant a public link to the file (for example `https://harbourdental.example/price-list.pdf`), or paste the text into the chat and ask it to add the text to the knowledge base.
+  </Accordion>
+</AccordionGroup>
+
+## Text test calls
+
+<AccordionGroup>
+  <Accordion title="Text call stops after the greeting">
+    If the agent greets you and then every reply fails with `Required` at `session_id`, you are using an older Trillet extension in Claude Desktop. Versions before 0.8.3 are affected.
+
+    Fix it in one of two ways:
+
+    - **Use the Claude connector instead.** See [Connect Claude](/mcp/claude). It is always up to date.
+    - **Reinstall the extension.** Get the latest `trillet.mcpb` from Trillet support and install it again. Claude Desktop never updates extensions on its own. Check your version in **Settings > Extensions**.
+  </Accordion>
+  <Accordion title="A text call won't start because too many are running">
+    You can run two text test calls at the same time. Ask the assistant to end the calls you have finished with, then start a new one.
+  </Accordion>
+  <Accordion title="A text call created a booking or sent a webhook">
+    Text test calls are real calls. Anything the agent does during the call, such as booking an appointment or calling a webhook, happens for real. Use test calendars and endpoints while you build, and cancel any test bookings afterwards.
+  </Accordion>
+</AccordionGroup>
+
+## API key and local setups
+
+<AccordionGroup>
+  <Accordion title="Missing Trillet API key">
+    The `Authorization` header is missing or malformed. It must be `Authorization: Bearer YOUR_API_KEY`: the word `Bearer`, one space, then the key.
+  </Accordion>
+  <Accordion title="Missing Trillet workspace">
+    The `X-Trillet-Workspace-Id` header is missing. Add it, or add `?workspace=YOUR_WORKSPACE_ID` to the server URL if your client can set only one header.
+  </Accordion>
+  <Accordion title="npx can't find or start the package">
+    You need Node.js 18 or later. Run `node --version` to check, then run `npx -y @trillet-ai/mcp@latest` in a terminal to see the full error.
+  </Accordion>
+</AccordionGroup>
+
+## Still stuck?
+
+<Columns cols={2}>
+  <Card title="Community" icon="people-line" href="https://www.skool.com/trillet-ai">
+    Ask in the Trillet community.
+  </Card>
+  <Card title="Security and permissions" icon="shield" href="/mcp/security">
+    What the connection can do and how to disconnect it.
+  </Card>
+</Columns>

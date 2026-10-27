@@ -1,0 +1,164 @@
+---
+title: "Claude Code and other MCP clients"
+sidebarTitle: "Claude Code and other clients"
+description: "Connect Claude Code, Cursor, and other MCP clients to Trillet with an API key, over the hosted server or the local npm package."
+---
+
+ChatGPT and Claude.ai sign in to Trillet with your login. Developer tools such as Claude Code and Cursor usually connect with an **API key** instead. This page covers those setups.
+
+| | Hosted server | Local package |
+|---|---|---|
+| **How** | Your client connects to `https://mcp.trillet.ai/mcp` | Your client runs `npx -y @trillet-ai/mcp@latest` on your computer |
+| **Needs** | A client that supports remote MCP servers and custom headers | Node.js 18 or later |
+| **Good for** | Claude Code, and any client that speaks Streamable HTTP | Cursor, Windsurf, and any client that runs local (stdio) servers |
+| **Updates** | Always current | Fetched each time the client starts |
+
+Both routes act on the same Trillet account and offer the same tools. Workspace switching by name (`trillet_list_workspaces`, `trillet_switch_workspace`) is available on the hosted server.
+
+## Before you start
+
+You need two values from the [Trillet dashboard](https://app.trillet.ai).
+
+<Columns cols={2}>
+  <Card title="API key" icon="key" href="https://app.trillet.ai/settings?section=api-keys">
+    **Settings > Developer > API Keys.** Create a key and copy it. It is shown only once.
+  </Card>
+  <Card title="Workspace ID" icon="briefcase" href="https://app.trillet.ai/settings?section=workspace-details">
+    **Settings > Workspace > Workspace Details.** A 24-character id with a copy button. You can also use **Copy workspace ID** in the workspace switcher.
+  </Card>
+</Columns>
+
+<Note>
+  Don't see **API Keys** under **Developer**? API keys are not available on SMB plans, and on other plans you need the `api_keys:view` permission. Ask a workspace owner to create a key for you or to grant the permission.
+</Note>
+
+<Warning>
+  An API key gives full access to its workspace. Keep it out of shared chats, screenshots, and source control. You can revoke a key and create a new one at any time on the same settings page.
+</Warning>
+
+## Claude Code
+
+Add the hosted server with your API key and workspace id:
+
+```bash
+claude mcp add --transport http trillet https://mcp.trillet.ai/mcp \
+  --header "Authorization: Bearer YOUR_API_KEY" \
+  --header "X-Trillet-Workspace-Id: YOUR_WORKSPACE_ID"
+```
+
+Check that it is connected:
+
+```bash
+claude mcp list
+```
+
+Then ask Claude Code to "list my Trillet agents" to confirm your key works.
+
+<Tip>
+  To run the server locally instead, use `claude mcp add trillet -e TRILLET_API_KEY=YOUR_API_KEY -e TRILLET_WORKSPACE_ID=YOUR_WORKSPACE_ID -- npx -y @trillet-ai/mcp@latest`.
+</Tip>
+
+## Cursor and other local clients
+
+The server is published on npm as [`@trillet-ai/mcp`](https://www.npmjs.com/package/@trillet-ai/mcp). It reads your credentials from environment variables.
+
+<Tabs>
+  <Tab title="Cursor">
+    Add this to `~/.cursor/mcp.json` (all projects) or `.cursor/mcp.json` (one project):
+
+    ```json
+    {
+      "mcpServers": {
+        "trillet": {
+          "command": "npx",
+          "args": ["-y", "@trillet-ai/mcp@latest"],
+          "env": {
+            "TRILLET_API_KEY": "YOUR_API_KEY",
+            "TRILLET_WORKSPACE_ID": "YOUR_WORKSPACE_ID"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Other clients">
+    Any MCP client that runs local servers can start Trillet with:
+
+    ```bash
+    TRILLET_API_KEY=YOUR_API_KEY \
+    TRILLET_WORKSPACE_ID=YOUR_WORKSPACE_ID \
+    npx -y @trillet-ai/mcp@latest
+    ```
+
+    Optional: set `TRILLET_API_URL` to change the API base URL. The default is `https://api.trillet.ai`.
+  </Tab>
+</Tabs>
+
+## Claude Desktop extension
+
+Most Claude Desktop users should use the [Claude connector](/mcp/claude) instead. It signs in with your Trillet login and stays up to date on its own.
+
+If you use the Trillet Desktop extension (`trillet.mcpb`):
+
+- It stores your API key in your operating system's keychain.
+- **Claude Desktop never updates extensions automatically.** To get a new version, get the latest `trillet.mcpb` from Trillet support and install it again.
+- To see which version you have, open **Settings > Extensions** in Claude Desktop and select Trillet.
+- Versions before 0.8.3 can't finish text test calls. See [Troubleshooting](/mcp/troubleshooting#text-test-calls).
+
+To install or update, open `trillet.mcpb` (double-click it or drag it into Claude Desktop), then enter your API key and workspace id when asked.
+
+## Hosted server reference
+
+Use this section to connect a client that is not listed above.
+
+```
+POST https://mcp.trillet.ai/mcp
+```
+
+The server uses Streamable HTTP. Clients that support OAuth can sign in with a Trillet login, as ChatGPT and Claude do. Clients that send headers can use an API key:
+
+<ParamField header="Authorization" type="string" required>
+  `Bearer <your Trillet API key>`
+</ParamField>
+
+<ParamField header="X-Trillet-Workspace-Id" type="string" required>
+  The 24-character id of the workspace to work in.
+</ParamField>
+
+<Note>
+  The REST API uses an `x-api-key` header. The MCP server uses `Authorization: Bearer` because that is the header MCP clients send.
+</Note>
+
+If your client can set only one header, pass the workspace id in the URL instead:
+
+```
+https://mcp.trillet.ai/mcp?workspace=YOUR_WORKSPACE_ID
+```
+
+The workspace id is not a secret, so it is safe in a URL. The API key is accepted only in the `Authorization` header, never in the URL, so it stays out of browser history and server logs.
+
+To check connectivity from a terminal:
+
+```bash
+curl -X POST https://mcp.trillet.ai/mcp \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "X-Trillet-Workspace-Id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2025-06-18",
+      "capabilities": {},
+      "clientInfo": { "name": "my-client", "version": "1.0.0" }
+    }
+  }'
+```
+
+A successful response includes an `Mcp-Session-Id` header. Send it with every later request in the session.
+
+## Work in other workspaces
+
+Every tool accepts an optional `workspace_id`, so one connection can work across several workspaces as long as your API key's user is a member of each. Ask "list the agents in workspace `6650f1c2a9b3e4d5f6a7b8c9`" and the assistant passes the id through. On the hosted server you can also use the workspace name.
