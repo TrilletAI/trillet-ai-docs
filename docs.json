@@ -74,8 +74,20 @@
               "documentation/best-practices",
               "documentation/on-premise",
               "documentation/platform-integrations",
-              "mcp",
               "documentation/inbound-call-webhook"
+            ]
+          },
+          {
+            "group": "AI Assistants (MCP)",
+            "icon": "sparkles",
+            "pages": [
+              "mcp",
+              "mcp/chatgpt",
+              "mcp/claude",
+              "mcp/claude-code-and-other-clients",
+              "mcp/example-prompts",
+              "mcp/security",
+              "mcp/troubleshooting"
             ]
           },
           {
