@@ -1,0 +1,109 @@
+---
+title: "Tenants"
+sidebarTitle: "Tenants"
+description: "Create, configure, suspend, delete and restore a workspace for each of your customers."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+</Warning>
+
+A tenant is one of your customers. It is a fully isolated workspace with its own agents, phone numbers, call history, knowledge bases, workflows and usage. Tenants inherit your branding.
+
+## The tenant object
+
+```json
+{
+  "id": "ten_6a9622d2",
+  "externalId": "cust_8842",
+  "name": "Harbour Dental",
+  "status": "active",
+  "region": "us",
+  "metadata": { "plan": "pro", "crmAccountId": "0015g00000X" },
+  "limits": { "maxConcurrentCalls": 5, "monthlySpendCap": 500 },
+  "templateInstalls": [ { "templateId": "tpl_reception", "version": 4, "pinned": false } ],
+  "phoneNumbers": [ { "id": "num_1", "e164": "+15125550142" } ],
+  "createdAt": "2026-11-02T10:14:00Z"
+}
+```
+
+| Field | Notes |
+|---|---|
+| `externalId` | Your ID for this customer. Unique across your tenants. Look tenants up by it. |
+| `status` | `active`, `suspended`, `deleted` or `provisioning_failed` |
+| `region` | `us` or `au`. Set at creation; decides where call data is stored. |
+| `metadata` | Up to 4 KB of your own key-value data. Returned on events. |
+| `limits` | Optional caps for this tenant. See [Usage and billing](/voice-engine/usage-and-billing). |
+
+## Endpoints
+
+| Method | Path | Scope |
+|---|---|---|
+| `POST` | `/partner/v1/tenants` | `tenants:write` |
+| `GET` | `/partner/v1/tenants` | `tenants:read` |
+| `GET` | `/partner/v1/tenants/{id}` | `tenants:read` |
+| `GET` | `/partner/v1/tenants/by-external-id/{externalId}` | `tenants:read` |
+| `PATCH` | `/partner/v1/tenants/{id}` | `tenants:write` |
+| `POST` | `/partner/v1/tenants/{id}/suspend` | `tenants:write` |
+| `POST` | `/partner/v1/tenants/{id}/resume` | `tenants:write` |
+| `DELETE` | `/partner/v1/tenants/{id}` | `tenants:write` |
+| `POST` | `/partner/v1/tenants/{id}/restore` | `tenants:write` |
+
+## Create a tenant
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/tenants \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Idempotency-Key: create-tenant-cust_8842" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "externalId": "cust_8842",
+    "name": "Harbour Dental",
+    "region": "us",
+    "timezone": "America/Chicago",
+    "metadata": { "plan": "pro" },
+    "template": {
+      "templateId": "tpl_reception",
+      "variables": { "practice_name": "Harbour Dental", "transfer_number": "+15125550100" }
+    }
+  }'
+```
+
+<ParamField body="externalId" type="string" required>
+  Your ID for this customer.
+</ParamField>
+<ParamField body="name" type="string" required>
+  Display name.
+</ParamField>
+<ParamField body="region" type="string">
+  `us` (default) or `au`.
+</ParamField>
+<ParamField body="template" type="object">
+  Install a [template](/voice-engine/templates) as part of creation, with this tenant's variable values.
+</ParamField>
+<ParamField body="limits" type="object">
+  `maxConcurrentCalls`, `maxOutboundPerMinute`, `monthlySpendCap`.
+</ParamField>
+
+`Idempotency-Key` is required. If the template install fails, the tenant is still created, its status is `provisioning_failed`, and a `tenant.provisioning_failed` event explains why. Fix the cause and install the template again.
+
+## Suspend and resume
+
+Suspending a tenant stops its traffic but keeps everything else. Use it for unpaid accounts, offboarding or abuse.
+
+While a tenant is suspended:
+
+- Outbound calls, web calls and SMS are refused with `403` `workspace_suspended`.
+- New workflow runs are recorded as skipped.
+- Inbound calls are answered and ended straight away, with no speech and no charge, and recorded in call history as blocked.
+- Numbers, agents, configuration and history are kept. You can still read and change them.
+
+`POST /resume` restores traffic immediately.
+
+## Delete and restore
+
+`DELETE` releases the tenant's numbers and soft-deletes the tenant. You can restore it within 30 days. While a deleted tenant can still be restored, creating a new tenant with the same `externalId` returns `409` `tenant_deleted_restorable` with the existing tenant's ID.
+
+## Events
+
+Every change emits an event: `tenant.created`, `tenant.suspended`, `tenant.resumed`, `tenant.deleted`, `tenant.provisioning_failed`. See [Events](/voice-engine/events).

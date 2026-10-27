@@ -1,0 +1,77 @@
+---
+title: "Templates and rollouts"
+sidebarTitle: "Templates and rollouts"
+description: "Design an agent once, install it for every tenant, and roll out new versions safely."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+</Warning>
+
+A template is a versioned bundle of call flows, node flows, agents, knowledge bases and settings. You build it in a staging tenant, capture it as a version, and install that version in as many tenants as you like. When you improve it, you roll the new version out to your fleet in stages.
+
+## Recommended workflow
+
+<Steps>
+  <Step title="Build in a staging tenant">
+    Create a tenant for yourself (sandbox works well) and build the agent in the dashboard or through the API. Test it with text calls and real calls.
+  </Step>
+  <Step title="Capture a version">
+    Capture the staging tenant as a template, or add a new version to an existing template. Versions never change once captured.
+  </Step>
+  <Step title="Install">
+    Install the template when you create a tenant, or later. Each tenant supplies its own variable values.
+  </Step>
+  <Step title="Roll out updates">
+    Start a rollout to move tenants to a new version in batches. It pauses automatically if too many tenants fail.
+  </Step>
+</Steps>
+
+## Variables
+
+Anything that differs between tenants (practice name, transfer number, office hours, booking calendar) should be a **template variable** rather than a hard-coded value. Variables use the same `{{variable}}` syntax as dynamic variables in prompts.
+
+Variable values belong to the tenant and survive upgrades. Everything else in a template-managed object is replaced on upgrade, so tenant-specific edits made outside variables will be overwritten.
+
+```bash
+curl -X PATCH https://api.trillet.ai/partner/v1/tenants/ten_6a9622d2/templates/tpl_reception \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "variables": { "transfer_number": "+15125550111" } }'
+```
+
+## Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/partner/v1/templates` | Create a template from a source tenant |
+| `POST` | `/partner/v1/templates/{id}/versions` | Capture a new version |
+| `GET` | `/partner/v1/templates` | List templates |
+| `GET` | `/partner/v1/templates/{id}/versions` | List versions |
+| `POST` | `/partner/v1/tenants/{id}/templates/{templateId}/install` | Install a version in a tenant |
+| `PATCH` | `/partner/v1/tenants/{id}/templates/{templateId}` | Set variables or pin a version |
+| `POST` | `/partner/v1/templates/{id}/rollouts` | Start a rollout |
+| `GET` | `/partner/v1/rollouts/{id}` | Rollout progress and per-tenant results |
+| `POST` | `/partner/v1/rollouts/{id}/pause` | Pause, or `resume`, or `cancel` |
+
+## Rollouts
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/templates/tpl_reception/rollouts \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Idempotency-Key: rollout-reception-v5" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "version": 5,
+    "target": { "metadata": { "plan": "pro" } },
+    "batchSize": 50,
+    "pauseOnErrorRate": 0.05,
+    "skipPinned": true
+  }'
+```
+
+- **Target** all tenants, a list of tenant IDs, or tenants whose `metadata` matches.
+- **Pinned** tenants stay on their version until you unpin them. Use pinning for customers who need change control.
+- **Rollback** is a rollout to the previous version.
+- Upgrades keep the tenant's numbers, IDs and demo links.
+- `rollout.completed` and `rollout.paused` events tell you when to look.

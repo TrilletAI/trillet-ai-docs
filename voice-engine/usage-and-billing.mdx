@@ -1,0 +1,66 @@
+---
+title: "Usage and billing"
+sidebarTitle: "Usage and billing"
+description: "Usage per tenant, wholesale and retail amounts, spend caps, and reconciling your monthly invoice."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+</Warning>
+
+## How you are billed
+
+Partners are invoiced monthly for their tenants' usage at the wholesale rates in your agreement. Your tenants do not need cards or prepaid balances on Trillet, and their service does not stop because a balance reaches zero. Spend caps (below) are how you control exposure instead.
+
+You decide what your own customers pay. Each usage record carries two amounts:
+
+- **`wholesale`**: what Trillet charges you.
+- **`retail`**: the tenant's price, if you set retail rates on Trillet. Ignore it if you bill entirely in your own system.
+
+## Usage endpoints
+
+| Method | Path | Returns |
+|---|---|---|
+| `GET` | `/partner/v1/usage` | Totals by day or month, per tenant or per type |
+| `GET` | `/partner/v1/usage/calls` | One row per call |
+| `GET` | `/partner/v1/invoices` | Your Trillet invoices |
+
+```bash
+curl "https://api.trillet.ai/partner/v1/usage?from=2026-11-01&to=2026-11-30&granularity=month&groupBy=tenant" \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+```json
+{
+  "data": [
+    {
+      "tenant": { "id": "ten_6a9622d2", "externalId": "cust_8842" },
+      "period": "2026-11",
+      "calls": { "count": 412, "inbound": 371, "outbound": 41, "billedSeconds": 61840 },
+      "sms": { "segments": 233 },
+      "workflowRuns": 518,
+      "phoneNumbers": 2,
+      "wholesale": 241.17,
+      "retail": 389.4,
+      "currency": "USD"
+    }
+  ],
+  "hasMore": false
+}
+```
+
+Usage for the current day updates every 15 minutes and is final shortly after midnight UTC. Per-call rows are available for the full history.
+
+## Reconciling your invoice
+
+The sum of `wholesale` across all tenants for a month equals your invoice total for that month. If a number does not match, `GET /usage/calls` for the tenant gives the per-call breakdown to compare against.
+
+## Spend caps and limits
+
+Set caps per tenant (on the [tenant](/voice-engine/tenants)) and a ceiling for your whole account.
+
+| Limit | Effect |
+|---|---|
+| `monthlySpendCap` | At 80% a `usage.threshold_reached` event is sent. At 100%, outbound calls, SMS and workflows stop for the rest of the month. Inbound calls keep working unless you choose a hard stop. |
+| `maxConcurrentCalls` | Calls over the limit are refused (outbound) or answered with a short busy message and ended (inbound). |
+| `maxOutboundPerMinute` | Outbound dialling pace for the tenant. |

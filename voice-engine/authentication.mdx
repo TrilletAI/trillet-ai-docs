@@ -1,0 +1,73 @@
+---
+title: "Authentication"
+sidebarTitle: "Authentication"
+description: "Partner keys, scopes, tenant restrictions, and calling standard endpoints on behalf of a tenant."
+---
+
+<Warning>
+  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+</Warning>
+
+## Partner keys
+
+Every Voice Engine request is authenticated with a **partner key**, sent as a bearer token:
+
+```bash
+curl https://api.trillet.ai/partner/v1/tenants \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Content-Type: application/json"
+```
+
+- Live keys start with `tpk_live_`, sandbox keys with `tpk_sandbox_`.
+- A key is shown **once**, when you create it. Trillet stores only a hash, so a lost key cannot be recovered; create a new one and revoke the old one.
+- Keys are created and revoked in your partner settings. Each key shows its prefix, scopes and when it was last used.
+- A key acts as your partner account, not as a person, so it keeps working when staff leave.
+
+<Warning>
+  Treat partner keys like passwords. Keep them on your server, never in a browser or mobile app. For anything that runs on a user's device, use an [embed session](/voice-engine/embedding).
+</Warning>
+
+## Scopes
+
+Give each key only the scopes it needs.
+
+| Scope | Allows |
+|---|---|
+| `tenants:read` | List and read tenants |
+| `tenants:write` | Create, update, suspend, resume, delete and restore tenants |
+| `resources:read` | Read agents, call flows, knowledge bases, numbers, call history and workflows in tenants |
+| `resources:write` | Create and change those resources |
+| `calls:write` | Start outbound calls and web calls |
+| `numbers:write` | Buy, release and register phone numbers (these cost money) |
+| `templates:read` / `templates:write` | Read, capture and roll out templates |
+| `events:read` | Read the event log and redeliver events |
+| `webhooks:write` | Manage webhook endpoints and signing secrets |
+| `usage:read` | Read usage and invoices |
+| `sessions:write` | Create embed sessions |
+
+A key can also be **restricted to a list of tenants**, for example a key used by one regional team.
+
+## Calling standard endpoints for a tenant
+
+A partner key can call the standard API on behalf of any tenant it can reach. Send the tenant ID in `x-workspace-id`:
+
+```bash
+curl https://api.trillet.ai/v1/api/agents \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: TENANT_ID"
+```
+
+Available to partner keys: agents, call flows (including drafts and publishing), node flows, knowledge bases, phone number search and configuration, outbound and batch calls, call history and recordings, workflows, and workspace secrets.
+
+Not available to partner keys: account, billing, wallet, team members and roles, domains, API key management, and copying resources between workspaces (use [templates](/voice-engine/templates) instead). These return `403`.
+
+A tenant that belongs to another partner always returns `404`, so a key can never confirm another partner's tenant IDs.
+
+## Errors
+
+| Status | Meaning |
+|---|---|
+| `401` | Missing, malformed, revoked or expired key |
+| `403` | The key lacks the scope, or the endpoint is not available to partner keys |
+| `404` | The tenant does not exist or is not yours |
+| `429` | Rate limit reached; retry after the `Retry-After` header |
