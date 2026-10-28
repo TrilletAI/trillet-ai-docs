@@ -57,7 +57,7 @@ curl -X POST https://api.trillet.ai/partner/v1/webhook-endpoints \
   Mask emails, phone numbers and card-like numbers in conversation data. Default `false`.
 </ParamField>
 
-The response is the endpoint plus its signing `secret` (`whsec_...`). The secret is returned only here and on rotation, so store it.
+The response is `201` with the endpoint plus its signing `secret` (`whsec_...`). The secret is returned only here and on rotation, so store it.
 
 ```json
 {
@@ -76,11 +76,11 @@ The response is the endpoint plus its signing `secret` (`whsec_...`). The secret
 }
 ```
 
-An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid URL returns `400` `invalid_url`, and an unknown event type `400` `invalid_events`.
+An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid URL returns `400` `invalid_url`, and an unknown event type `400` `invalid_events`. An endpoint ID that is not yours returns `404` `endpoint_not_found`. `DELETE` returns `{ "object": "webhook_endpoint", "id": "...", "deleted": true }`.
 
 `PATCH` accepts the same fields plus `status` (`enabled` or `disabled`). Setting `status: "enabled"` re-enables an endpoint that was disabled after failing.
 
-`POST /webhook-endpoints/{id}/test` sends an `endpoint.test` event to that endpoint only and returns `202` with the event ID. The endpoint must be enabled and subscribed to `endpoint.test` or `*`.
+`POST /webhook-endpoints/{id}/test` sends an `endpoint.test` event to that endpoint only and returns `202` with the event ID. The endpoint must be enabled (`409` `endpoint_disabled` otherwise) and subscribed to `endpoint.test` or `*` (`409` `endpoint_not_subscribed` otherwise).
 
 ## Event shape
 
@@ -133,7 +133,7 @@ An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid 
 | `tenant` | The tenant's `id` and `externalId`. `null` for account-level events. |
 | `data` | Depends on the type. Call events carry `data.call`. |
 
-Call payloads are built when each delivery is sent, from the tenant's region, so a redelivery shows the call record as it is at that time. Values in `data.call` can be `null` when the call did not record them. `direction` is `inbound`, `outbound` or `web`; `channel` is `phone`, `whatsapp` or `web`; `status` is `completed`, `pending`, `failed` or `blocked`. `endReason` and `endedBy` are descriptive text, not a fixed list. `cost` is the call charge in USD. The conversation fields (`summary`, `extractedData`, `variables`, `booking`, `transcript`) are omitted when conversation data is off for the endpoint.
+Call payloads are built when each delivery is sent, from the tenant's region, so a redelivery shows the call record as it is at that time. `data.call.id` is the call history ID: use it with `GET /v2/api/call-history/{callHistoryId}`, `GET /v2/api/recordings/{callHistoryId}` and to match `callHistoryId` in [per-call usage](/voice-engine/usage-and-billing#per-call). Values in `data.call` can be `null` when the call did not record them. `direction` is `inbound`, `outbound` or `web`; `channel` is `phone`, `whatsapp` or `web`; `status` is `completed`, `pending`, `failed` or `blocked`. `endReason` and `endedBy` are descriptive text, not a fixed list. `cost` is the call charge in USD. The conversation fields (`summary`, `extractedData`, `variables`, `booking`, `transcript`) are omitted when conversation data is off for the endpoint.
 
 ## Event types
 
@@ -167,7 +167,7 @@ Other events:
 |---|---|---|
 | `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only) |
 | `number.provisioned` | A number was bought or registered | `phoneNumber`, `provider` |
-| `number.released` | A number was released, either directly or because its tenant was deleted | `phoneNumber`, and `reason: "tenant_deleted"` when released by a tenant delete |
+| `number.released` | A number was released, either directly or because its tenant was deleted | `phoneNumber`. A direct release also has `provider` (currently `null`); a tenant delete has `reason: "tenant_deleted"` instead. |
 | `number.renewal_failed` | A monthly number charge failed | `phoneNumber`, `amount` |
 | `tenant.created` | A tenant was created | `externalId` |
 | `tenant.updated` | A tenant's name, metadata or spend cap changed | none |
@@ -352,7 +352,7 @@ curl "https://api.trillet.ai/partner/v1/events?type=call.ended&tenantId=6a9622d2
 }
 ```
 
-In the log, `data` holds only the facts stored with the event. The call details are rendered when the event is delivered.
+In the list, `data` holds only the facts stored with the event. `GET /events/{eventId}` returns one event and, for call events, renders `data.call` as a delivery would, using your account's conversation data setting. It does not apply an endpoint's `redactPII`. An unknown event ID returns `404` `event_not_found`.
 
 To send an event again:
 

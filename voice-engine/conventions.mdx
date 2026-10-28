@@ -10,18 +10,19 @@ description: "Idempotency, errors, pagination and versioning for Trillet OEM."
 
 - **Base URL:** `https://api.trillet.ai/partner/v1`
 - **Format:** JSON request and response bodies, UTF-8. Timestamps are ISO 8601 UTC, except `created` on events, which is Unix seconds.
-- **IDs:** Tenant, number, endpoint and key IDs are 24-character hexadecimal strings. Event IDs start with `evt_`. Store all IDs as strings.
-- **Objects:** Every response object has an `object` field, for example `tenant`, `phone_number`, `event` or `list`.
+- **IDs:** Tenant, number, call flow, endpoint and key IDs are 24-character hexadecimal strings. Event IDs start with `evt_`. Store all IDs as strings.
+- **Objects:** Every response object has an `object` field, for example `tenant`, `phone_number`, `call_flow_settings`, `event` or `list`.
 
 ## Idempotency
 
-Networks fail. Endpoints that create something billable or hard to undo require an `Idempotency-Key` header, so a retry never creates it twice:
+Networks fail. Endpoints that create something billable or hard to undo require an `Idempotency-Key` header, so a retry never creates it twice. On the call flow settings endpoint the header is optional. Other `/partner/v1` endpoints ignore it.
 
 | Endpoint | `Idempotency-Key` |
 |---|---|
 | `POST /partner/v1/tenants` | Required |
 | `POST /partner/v1/tenants/{tenantId}/numbers` | Required |
 | `POST /partner/v1/tenants/{tenantId}/numbers/external` | Required |
+| `PATCH /partner/v1/tenants/{tenantId}/call-flows/{callFlowId}/settings` | Optional |
 
 ```bash
 curl -X POST https://api.trillet.ai/partner/v1/tenants \
@@ -61,7 +62,7 @@ Every other error has the same shape:
 }
 ```
 
-`param` is included when a request body field failed validation. Handle errors by `code`, not by `message`. Include `requestId` when you contact support.
+`param` is included when the error is about one request field, for example a body field that failed validation. Handle errors by `code`, not by `message`. Include `requestId` when you contact support.
 
 | Status | `type` | Meaning |
 |---|---|---|

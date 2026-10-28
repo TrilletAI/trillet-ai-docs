@@ -12,6 +12,8 @@ description: "HIPAA, data residency, what data events carry, and retention for T
 
 Trillet supports HIPAA workloads. A Business Associate Agreement is available on Agency and Enterprise accounts, including Trillet OEM partners, at no extra fee. Execute the BAA before any tenant processes protected health information. See our [Terms of Use](https://trillet.ai/terms-of-use).
 
+A call flow in HIPAA mode keeps call recording off. [Call flow settings](/voice-engine/call-flow-settings) refuses `recording.enabled: true` on such a flow with `409` `hipaa_recording_conflict`.
+
 ## Data residency
 
 Each tenant is created in a region, `us` or `au`. Its call records, transcripts and recordings are stored in that region. Events are stored in the tenant's region too, and hold references rather than transcripts: webhook payloads are built from the tenant's regional data when they are delivered.

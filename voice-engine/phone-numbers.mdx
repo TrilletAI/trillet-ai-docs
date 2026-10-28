@@ -43,7 +43,9 @@ Each tenant needs at least one number for phone calls. You can buy numbers throu
 }
 ```
 
-`billing` is present for numbers bought through Trillet OEM and `null` for your own numbers. `billing.status` is `active` or `past_due`.
+`billing` is present for numbers bought through Trillet OEM and `null` for your own numbers. `billing.monthlyPrice` is the monthly price in USD, `billing.nextChargeAt` is when the next month is charged, and `billing.status` is `active` or `past_due`.
+
+`GET /numbers/{numberId}` for a number that is not in the tenant returns `404` `number_not_found`.
 
 ## Buy a number
 
@@ -75,8 +77,9 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/
 
 Returns `201` with the number. `Idempotency-Key` is required.
 
-- The first month is charged when you buy. After that the number renews monthly and is charged to your account.
-- If a renewal cannot be charged, the number keeps working, `billing.status` becomes `past_due`, the charge is retried daily, and a `number.renewal_failed` event is sent. Releasing the number is your decision.
+- Number pricing is set in your agreement. By default it is the standard monthly number price for the country and type. A price change applies to new purchases and from each number's next renewal.
+- The first month is charged to your account when you buy. After that each number renews monthly on the date it was bought. Renewals are processed daily.
+- If a charge cannot be taken, the number keeps working, `billing.status` becomes `past_due`, and the charge is retried daily. A failed renewal also sends a `number.renewal_failed` event. Releasing the number is your decision.
 - Number charges appear in [usage](/voice-engine/usage-and-billing) as `phone_number_charge`.
 
 | Status | Code | When |
@@ -148,6 +151,8 @@ curl -X DELETE https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f
 
 A bought number goes back to the carrier and stops renewing. Your own number is detached from Trillet. Returns `{ "object": "phone_number", "id": "...", "released": true }`.
 
+[Deleting a tenant](/voice-engine/tenants#delete-and-restore) releases all of its numbers the same way.
+
 ## Assign a number to an agent
 
 Use the standard [assign phone number to agent](/v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber) endpoint, sending the tenant ID in `x-workspace-id`. It needs `resources:write`. The agent's call flow must be live, so [publish its node flow](/voice-engine/authentication#building-an-agent) first.
@@ -166,8 +171,8 @@ To change a number's settings later without rebinding it, such as recording, off
 
 ## Events
 
-Buying or registering a number sends `number.provisioned`. Releasing one sends `number.released`, and so does deleting its tenant, with `reason: "tenant_deleted"` in `data`. A failed renewal sends `number.renewal_failed`. See [Events](/voice-engine/events).
+Buying or registering a number sends `number.provisioned`, with `phoneNumber` and `provider` in `data`. Releasing one sends `number.released`, and so does deleting its tenant, with `reason: "tenant_deleted"` in `data`. A failed renewal sends `number.renewal_failed`. See [Events](/voice-engine/events).
 
 <Note>
-  A shared partner SIP trunk for all of your tenants, and partner wholesale number rates, are planned. Numbers are currently charged at the standard monthly number price.
+  A shared partner SIP trunk for all of your tenants is planned.
 </Note>

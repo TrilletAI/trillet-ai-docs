@@ -95,7 +95,7 @@ Each tenant has a wallet linked to your account and starts with no agents, flows
 | `409` | `tenant_exists` | A live tenant already has this `externalId` |
 | `409` | `tenant_deleted_restorable` | A deleted tenant with this `externalId` can still be restored |
 | `409` | `tenant_limit_reached` | Your account is at its tenant limit (`maxTenants` on [`GET /key`](/voice-engine/authentication#check-a-key)) |
-| `400` | `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_region`, `invalid_limits` | A field is invalid |
+| `400` | `invalid_request`, `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_limits` | A field is invalid. `error.param` names it when the request failed schema validation. |
 
 ## List and look up tenants
 
@@ -107,7 +107,7 @@ curl https://api.trillet.ai/partner/v1/tenants/by-external-id/cust_8842 \
   -H "Authorization: Bearer tpk_live_..."
 ```
 
-`GET /tenants` accepts `status` (`active`, `suspended` or `provisioning_failed`), `externalId`, `limit` and `starting_after`. Deleted tenants are not listed or returned by `GET`; keep the ID if you may restore it. See [Pagination](/voice-engine/conventions#pagination).
+`GET /tenants` accepts `status` (`active`, `suspended` or `provisioning_failed`), `externalId`, `limit` and `starting_after`. Deleted tenants are not listed or returned by `GET`; keep the ID if you may restore it. A `starting_after` that is not a tenant ID returns `400` `invalid_cursor`. See [Pagination](/voice-engine/conventions#pagination).
 
 ## Update a tenant
 
@@ -147,7 +147,7 @@ While a tenant is suspended:
 - You cannot buy numbers for it (`409` `tenant_suspended`).
 - Numbers, agents, configuration and history are kept. You can still read and change them.
 
-`POST /resume` restores traffic immediately. `reason` is optional, up to 500 characters, and is returned as `suspendedReason`.
+`POST /resume` restores traffic immediately. `reason` is optional, up to 500 characters (`400` `invalid_request` otherwise), and is returned as `suspendedReason`.
 
 ## Delete and restore
 

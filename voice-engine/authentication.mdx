@@ -19,10 +19,10 @@ curl https://api.trillet.ai/partner/v1/key \
 
 - Keys start with `tpk_live_`. Keys can also be created with the `tpk_sandbox_` prefix, but sandbox tenants are not available yet, so use live keys.
 - A key is shown **once**, when you create it. Trillet stores only a hash, so a lost key cannot be recovered. Create a new one and revoke the old one.
-- Keys are created and revoked in the Partner Keys section of your account settings, by an owner or admin of your partner account. Each key shows its name, prefix, scopes, allowed tenants and when it was last used.
+- Keys are created and revoked in the **OEM API** section of your account settings, by an owner or admin of your partner account. Each key shows its name, prefix, scopes, allowed tenants and when it was last used.
 - A key acts as your partner account, not as a person, so it keeps working when staff leave. Keys do not expire. Revoking a key takes effect immediately.
 - An account can hold up to 50 active keys.
-- Send a partner key only in `Authorization`. Sending it in `x-api-key` is refused, and sending both a partner key and an `x-api-key` returns `400` `conflicting_credentials`.
+- Send a partner key only in `Authorization`. Sending it in `x-api-key` is refused with `401`, and sending both a partner key and an `x-api-key` returns `400` `conflicting_credentials`.
 
 <Warning>
   Treat partner keys like passwords. Keep them on your server, never in a browser or mobile app.
@@ -94,12 +94,13 @@ Access is deny by default. Only the endpoints below are available to partner key
 
 Today a partner builds a tenant's agent through node flows:
 
-1. `POST /v2/api/node-graphs` creates the node flow together with its agent and call flow. The flow starts as a draft.
+1. `POST /v2/api/node-graphs` creates the node flow together with its agent and call flow. The flow starts as a draft. With a partner key, the new agent uses the model `platform-llm` unless the body names another allowed model in `llmModel` (an unknown model returns `400` `LLM_MODEL_INVALID`), and the call flow starts with speech responsiveness 10 and interruption sensitivity 5.5.
 2. Edit it with `PUT /v2/api/node-graphs/{id}` or `PATCH /v2/api/node-graphs/{id}/draft`, and check it with `POST /v2/api/node-graphs/{id}/validate`.
 3. `POST /v2/api/node-graphs/{id}/publish` makes it live. A flow must be published before it can take calls.
 4. `GET /v2/api/node-graphs/{id}` returns the flow with `pathway`, which holds the call flow ID (`pathway._id`) and the agent ID (`pathway.agent`).
-5. `PUT /v1/api/agents/{agentId}` sets the agent's model (`llmModel`), voice and other settings.
-6. `POST /v1/api/agents/{agentId}/bind/{phoneNumberId}` assigns a number. See [Phone numbers](/voice-engine/phone-numbers#assign-a-number-to-an-agent).
+5. `PUT /v1/api/agents/{agentId}` sets the agent's voice, language, model and other agent settings.
+6. `PATCH /partner/v1/tenants/{tenantId}/call-flows/{callFlowId}/settings` sets the greeting, speech timing, recording and call handling timers. See [Call flow settings](/voice-engine/call-flow-settings).
+7. `POST /v1/api/agents/{agentId}/bind/{phoneNumberId}` assigns a number. See [Phone numbers](/voice-engine/phone-numbers#assign-a-number-to-an-agent).
 
 Creating and updating simple prompt call flows (`POST` and `PUT /v1/api/call-flows`) is not available to partner keys yet.
 
@@ -247,7 +248,7 @@ Use `POST /v1/api/call` for outbound calls. See [Start an outbound call](#start-
 | `POST` | `/v2/api/call-history/export-csv` | `resources:read` |
 | `GET` | `/v2/api/recordings/{callHistoryId}` | `resources:read` |
 
-`GET /v2/api/recordings/{callHistoryId}` returns the audio file for a call in the tenant. The [recording download](/voice-engine/events#recordings) on Trillet OEM returns the same file.
+`GET /v2/api/recordings/{callHistoryId}` returns the audio file for a call in the tenant, or `404` when the call has no recording. `callHistoryId` is the `data.call.id` in [call events](/voice-engine/events#event-shape) and the `callHistoryId` in [per-call usage](/voice-engine/usage-and-billing#per-call). The [recording download](/voice-engine/events#recordings) on Trillet OEM returns the same file.
 
 **Workflows**
 
@@ -287,7 +288,7 @@ Use `POST /v1/api/call` for outbound calls. See [Start an outbound call](#start-
 
 These return `403` `route_not_available` to a partner key:
 
-- Creating and updating simple prompt call flows (`POST /v1/api/call-flows`, `PUT /v1/api/call-flows/{id}`). Build agents with node flows instead.
+- Creating and updating simple prompt call flows (`POST /v1/api/call-flows`, `PUT /v1/api/call-flows/{id}`). Build agents with node flows instead, and change basic settings with [Call flow settings](/voice-engine/call-flow-settings).
 - Call-flow draft writes other than those listed above: creating a draft, autosave and publishing a draft (`.../drafts`, `.../drafts/autosave`, `.../drafts/{draftId}/publish`), and every other call-flow route not in the table.
 - The `/v1/api/calls/recordings/*` routes. Use `GET /v2/api/recordings/{callHistoryId}` or the [recording download](/voice-engine/events#recordings).
 - Routes that take a target workspace in the body, such as duplicating or moving a flow to another workspace, and sharing.

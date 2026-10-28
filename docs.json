@@ -320,6 +320,7 @@
             "pages": [
               "voice-engine/tenants",
               "voice-engine/phone-numbers",
+              "voice-engine/call-flow-settings",
               "voice-engine/templates"
             ]
           },

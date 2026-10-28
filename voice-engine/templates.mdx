@@ -34,7 +34,7 @@ Anything that differs between tenants (practice name, transfer number, office ho
 Variable values belong to the tenant and survive upgrades. Everything else in a template-managed object is replaced on upgrade, so tenant-specific edits made outside variables will be overwritten.
 
 ```bash
-curl -X PATCH https://api.trillet.ai/partner/v1/tenants/ten_6a9622d2/templates/tpl_reception \
+curl -X PATCH https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/templates/tpl_reception \
   -H "Authorization: Bearer tpk_live_..." \
   -H "Content-Type: application/json" \
   -d '{ "variables": { "transfer_number": "+15125550111" } }'

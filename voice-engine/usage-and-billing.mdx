@@ -92,7 +92,8 @@ curl "https://api.trillet.ai/partner/v1/usage/calls?tenantId=6a9622d2c1e8f3a4b5d
     {
       "id": "6b3a1d0e9f8a7b6c5d4e3f2a",
       "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
-      "callId": "6b3a1c0f9e8d7c6b5a4f3e2d",
+      "callId": "SCL_q4Zt8vXbN2kP",
+      "callHistoryId": "6b3a1c0f9e8d7c6b5a4f3e2d",
       "at": "2026-11-02T15:04:12.000Z",
       "billedSeconds": 151,
       "ratePerMinute": 0.09,
@@ -104,6 +105,15 @@ curl "https://api.trillet.ai/partner/v1/usage/calls?tenantId=6a9622d2c1e8f3a4b5d
 ```
 
 Rows are newest first. Page with `limit` (1 to 200, default 50) and `starting_after` set to the last row's `id`.
+
+| Field | Notes |
+|---|---|
+| `id` | The charge ID. Use it as `starting_after`. |
+| `callHistoryId` | The call history ID. It matches `data.call.id` in [call events](/voice-engine/events#event-shape) and works with `GET /v2/api/call-history/{callHistoryId}` and `GET /v2/api/recordings/{callHistoryId}`. `null` when the call record cannot be matched. |
+| `callId` | Trillet's internal call identifier, kept for reference. Use `callHistoryId` to join with events and call history. |
+| `billedSeconds` | The call time charged |
+| `ratePerMinute` | The per-minute rate applied. Telephony and other surcharges are in `amount`, not in the rate. |
+| `amount` | The charge in USD |
 
 ## Spend caps
 
