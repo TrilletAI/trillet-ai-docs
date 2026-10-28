@@ -63,7 +63,8 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
     "externalId": "cust_8842",
     "name": "Harbour Dental",
     "region": "us",
-    "metadata": { "plan": "pro" }
+    "metadata": { "plan": "pro" },
+    "limits": { "monthlySpendCap": 500 }
   }'
 ```
 
@@ -79,6 +80,9 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
 <ParamField body="metadata" type="object">
   Your own data, up to 8 KB.
 </ParamField>
+<ParamField body="limits.monthlySpendCap" type="number | null">
+  Monthly spend cap in USD, 0 or more. `null` or leaving it out creates the tenant with no cap. See [Spend caps](/voice-engine/usage-and-billing#spend-caps).
+</ParamField>
 
 Returns `201` with the tenant. `Idempotency-Key` is required.
 
@@ -91,7 +95,7 @@ Each tenant has a wallet linked to your account and starts with no agents, flows
 | `409` | `tenant_exists` | A live tenant already has this `externalId` |
 | `409` | `tenant_deleted_restorable` | A deleted tenant with this `externalId` can still be restored |
 | `409` | `tenant_limit_reached` | Your account is at its tenant limit (`maxTenants` on [`GET /key`](/voice-engine/authentication#check-a-key)) |
-| `400` | `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_region` | A field is invalid |
+| `400` | `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_region`, `invalid_limits` | A field is invalid |
 
 ## List and look up tenants
 
@@ -147,7 +151,7 @@ While a tenant is suspended:
 
 ## Delete and restore
 
-`DELETE` releases the tenant's numbers, soft-deletes its flows, agents and knowledge bases, and soft-deletes the tenant. It returns the tenant with status `deleted`.
+`DELETE` releases the tenant's numbers (each one sends `number.released` with `reason: "tenant_deleted"`), soft-deletes its flows, agents and knowledge bases, and soft-deletes the tenant. It returns the tenant with status `deleted`.
 
 `POST /restore` brings a deleted tenant back within 30 days. After that it returns `410` `restore_window_expired`. Other restore errors: `409` `tenant_not_deleted`, and `409` `tenant_exists` if a live tenant has taken its `externalId` since.
 

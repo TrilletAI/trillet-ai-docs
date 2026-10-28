@@ -139,18 +139,35 @@ Call payloads are built when each delivery is sent, from the tenant's region, so
 
 ### Sent today
 
+Events sent during a call, as it happens:
+
+| Type | When | `data` |
+|---|---|---|
+| `call.started` | A call is connected to an agent and its call record is active | `call`, `direction`, `callType` |
+| `call.transferred` | A transfer to a person or another number connected | `call`, `team`, `target`, `mode` |
+| `call.transfer_failed` | A transfer attempt failed. Sent once per attempt. | `call`, `team`, `target`, `mode`, `reason` |
+| `tool.failed` | A custom tool or API call during a call failed or returned an HTTP error. At most 5 per call. | `call`, `tool`, `kind`, `status` (HTTP status, when there is one), `error` |
+| `call.blocked` | A call was refused before reaching the agent: the tenant is suspended, an inbound calling rule matched, or there is not enough balance | `call`, `reason`, `rule`, `direction` |
+
+Events sent after a call's post-call processing finishes, not at the moment it ends:
+
 | Type | When | `data` |
 |---|---|---|
 | `call.ended` | A call ended normally | `call` |
 | `call.no_answer` | An outbound call was not answered, was busy, or reached voicemail | `call` |
 | `call.failed` | A call failed | `call` |
-| `call.blocked` | A call was refused, for example an inbound call to a suspended tenant | `call` |
+| `call.blocked` | A call record finished with status `blocked` | `call` |
 | `call.analyzed` | The call has a summary or extracted data | `call` |
 | `booking.created`, `booking.rescheduled`, `booking.cancelled` | The call created, moved or cancelled an appointment | `call` |
 | `recording.available` | The call has a recording | `call` |
+
+Other events:
+
+| Type | When | `data` |
+|---|---|---|
 | `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only) |
-| `number.provisioned` | A number was bought or registered | `phoneNumber`, and `provider` for registered numbers |
-| `number.released` | A number was released | `phoneNumber` |
+| `number.provisioned` | A number was bought or registered | `phoneNumber`, `provider` |
+| `number.released` | A number was released, either directly or because its tenant was deleted | `phoneNumber`, and `reason: "tenant_deleted"` when released by a tenant delete |
 | `number.renewal_failed` | A monthly number charge failed | `phoneNumber`, `amount` |
 | `tenant.created` | A tenant was created | `externalId` |
 | `tenant.updated` | A tenant's name, metadata or spend cap changed | none |
@@ -159,7 +176,13 @@ Call payloads are built when each delivery is sent, from the tenant's region, so
 | `usage.threshold_reached` | A spend cap reached 80% or 100% this month. See [Spend caps](/voice-engine/usage-and-billing#spend-caps). | `scope`, `percent`, `cap`, `monthToDate`, `month` |
 | `endpoint.test` | You sent a test event | `message` |
 
-The events for a call are sent after the call's post-call processing finishes, not at the moment it ends.
+Notes on the in-call events:
+
+- `data.call` is the call record at delivery time. It can be `null`, for example for a call refused for insufficient balance, which has no call record.
+- `target` is masked: only the last 4 digits of a phone number or SIP user are shown.
+- `tool.failed` never includes the third-party response body. `kind` is `custom_tool` or `api` when known.
+- `reason` on `call.blocked` is a short code such as `workspace_suspended`, `insufficient_balance` or `inbound_rule`. `rule` is the name of the matched inbound rule, when there is one.
+- `call.blocked` is listed in both tables: one is sent at the moment of refusal, the other when a blocked call record finishes post-call processing. The same call can produce both, so de-duplicate on `data.call.id` as well as the event `id`.
 
 ### Coming soon
 
@@ -167,9 +190,6 @@ These types are accepted in `enabledEvents` but are not sent yet:
 
 | Type | When |
 |---|---|
-| `call.started` | A call is connected to an agent |
-| `call.transferred`, `call.transfer_failed` | A transfer to a person happened or failed |
-| `tool.failed` | A custom tool or API call during a call returned an error |
 | `sms.received`, `sms.sent`, `sms.failed` | Text messages |
 
 Template rollout events are planned with [templates](/voice-engine/templates). New event types may be added at any time. Ignore types you do not handle.
