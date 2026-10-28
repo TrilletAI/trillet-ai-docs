@@ -5,7 +5,7 @@ description: "Design an agent once, install it for every tenant, and roll out ne
 ---
 
 <Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
+  **Coming soon.** This part of the Voice Engine API is planned and not built yet. This page describes the planned design; details may change before release. The rest of the Voice Engine API is in early access.
 </Warning>
 
 A template is a versioned bundle of call flows, node flows, agents, knowledge bases and settings. You build it in a staging tenant, capture it as a version, and install that version in as many tenants as you like. When you improve it, you roll the new version out to your fleet in stages.
@@ -14,7 +14,7 @@ A template is a versioned bundle of call flows, node flows, agents, knowledge ba
 
 <Steps>
   <Step title="Build in a staging tenant">
-    Create a tenant for yourself (sandbox works well) and build the agent in the dashboard or through the API. Test it with text calls and real calls.
+    Create a tenant for yourself and build the agent in the dashboard or through the API. Test it with text calls and real calls.
   </Step>
   <Step title="Capture a version">
     Capture the staging tenant as a template, or add a new version to an existing template. Versions never change once captured.

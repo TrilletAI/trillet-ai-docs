@@ -1,66 +1,160 @@
 ---
-title: "Usage and billing"
+title: "Usage and spend caps"
 sidebarTitle: "Usage and billing"
-description: "Usage per tenant, wholesale and retail amounts, spend caps, and reconciling your monthly invoice."
+description: "Usage per tenant and per call, how tenants are billed, and monthly spend caps."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
-</Warning>
+<Note>
+  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
 
 ## How you are billed
 
-Partners are invoiced monthly for their tenants' usage at the wholesale rates in your agreement. Your tenants do not need cards or prepaid balances on Trillet, and their service does not stop because a balance reaches zero. Spend caps (below) are how you control exposure instead.
+Tenants are billed to your partner account, at the rates in your agreement. Each tenant's wallet is linked to your account, so your tenants do not need cards or balances on Trillet. Depending on your agreement, charges are drawn from your account balance or recorded and invoiced to you.
 
-You decide what your own customers pay. Each usage record carries two amounts:
+Usage amounts in this API are **wholesale**: what Trillet charges you. What you charge your own customers is up to you and is not stored on Trillet.
 
-- **`wholesale`**: what Trillet charges you.
-- **`retail`**: the tenant's price, if you set retail rates on Trillet. Ignore it if you bill entirely in your own system.
+## Endpoints
 
-## Usage endpoints
+| Method | Path | Scope | Returns |
+|---|---|---|---|
+| `GET` | `/partner/v1/usage` | `usage:read` | Totals by day or month, per tenant or per charge type |
+| `GET` | `/partner/v1/usage/calls` | `usage:read` | One row per call charge |
 
-| Method | Path | Returns |
-|---|---|---|
-| `GET` | `/partner/v1/usage` | Totals by day or month, per tenant or per type |
-| `GET` | `/partner/v1/usage/calls` | One row per call |
-| `GET` | `/partner/v1/invoices` | Your Trillet invoices |
+Both accept:
+
+| Parameter | Notes |
+|---|---|
+| `from` | Start, ISO 8601 date-time, inclusive. Default: the start of the current month (UTC). |
+| `to` | End, ISO 8601 date-time, exclusive. Default: now. |
+| `tenantId` | Only this tenant |
+
+A range can cover up to 92 days. A bad range returns `400` `invalid_range`. Usage includes deleted tenants, so past months stay complete. A key [restricted to some tenants](/voice-engine/authentication#restricting-a-key-to-some-tenants) sees only those tenants.
+
+### Totals
 
 ```bash
-curl "https://api.trillet.ai/partner/v1/usage?from=2026-11-01&to=2026-11-30&granularity=month&groupBy=tenant" \
+curl "https://api.trillet.ai/partner/v1/usage?from=2026-11-01T00:00:00Z&to=2026-12-01T00:00:00Z&granularity=month&groupBy=tenant" \
   -H "Authorization: Bearer tpk_live_..."
 ```
 
 ```json
 {
+  "object": "usage",
+  "from": "2026-11-01T00:00:00.000Z",
+  "to": "2026-12-01T00:00:00.000Z",
+  "currency": "usd",
+  "groupBy": "tenant",
+  "granularity": "month",
+  "total": 241.17,
   "data": [
     {
-      "tenant": { "id": "ten_6a9622d2", "externalId": "cust_8842" },
       "period": "2026-11",
-      "calls": { "count": 412, "inbound": 371, "outbound": 41, "billedSeconds": 61840 },
-      "sms": { "segments": 233 },
-      "workflowRuns": 518,
-      "phoneNumbers": 2,
-      "wholesale": 241.17,
-      "retail": 389.4,
-      "currency": "USD"
+      "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
+      "amount": 241.17,
+      "count": 655,
+      "billedMinutes": 1030.67
     }
-  ],
-  "hasMore": false
+  ]
 }
 ```
 
-Usage for the current day updates every 15 minutes and is final shortly after midnight UTC. Per-call rows are available for the full history.
-
-## Reconciling your invoice
-
-The sum of `wholesale` across all tenants for a month equals your invoice total for that month. If a number does not match, `GET /usage/calls` for the tenant gives the per-call breakdown to compare against.
-
-## Spend caps and limits
-
-Set caps per tenant (on the [tenant](/voice-engine/tenants)) and a ceiling for your whole account.
-
-| Limit | Effect |
+| Parameter | Values |
 |---|---|
-| `monthlySpendCap` | At 80% a `usage.threshold_reached` event is sent. At 100%, outbound calls, SMS and workflows stop for the rest of the month. Inbound calls keep working unless you choose a hard stop. |
-| `maxConcurrentCalls` | Calls over the limit are refused (outbound) or answered with a short busy message and ended (inbound). |
-| `maxOutboundPerMinute` | Outbound dialling pace for the tenant. |
+| `groupBy` | `tenant` (default) or `type`. With `type`, each row has `type` instead of `tenantId`. |
+| `granularity` | `day` (default, `period` is `YYYY-MM-DD`) or `month` (`period` is `YYYY-MM`). Periods are UTC. |
+
+Each row has `amount` (USD), `count` (number of charges) and, when the charges include call time, `billedMinutes`. The charge types counted as usage are:
+
+| `type` | What |
+|---|---|
+| `call_charge` | Voice calls |
+| `message_charge` | Chat and messaging |
+| `sms_charge` | SMS |
+| `voice_generation_charge` | Voice generation |
+| `antibot_detection_charge` | Bot detection |
+| `workflow_charge` | Workflow runs |
+| `phone_number_charge`, `phone_number_purchase` | Phone numbers |
+
+Account-level fees, such as plan and white-label fees, are not tenant usage and are not included.
+
+### Per call
+
+```bash
+curl "https://api.trillet.ai/partner/v1/usage/calls?tenantId=6a9622d2c1e8f3a4b5d6e7f8&limit=100" \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "6b3a1d0e9f8a7b6c5d4e3f2a",
+      "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
+      "callId": "6b3a1c0f9e8d7c6b5a4f3e2d",
+      "at": "2026-11-02T15:04:12.000Z",
+      "billedSeconds": 151,
+      "ratePerMinute": 0.09,
+      "amount": 0.2265
+    }
+  ],
+  "hasMore": true
+}
+```
+
+Rows are newest first. Page with `limit` (1 to 200, default 50) and `starting_after` set to the last row's `id`.
+
+## Spend caps
+
+A spend cap limits a month's wholesale usage, from the first of the month (UTC). There are two:
+
+| Cap | Set by | Applies to |
+|---|---|---|
+| Tenant cap | You, with `limits.monthlySpendCap` on [`PATCH /tenants/{tenantId}`](/voice-engine/tenants#update-a-tenant) | One tenant |
+| Account cap | Trillet, on request through your account manager | The total across all of your tenants |
+
+```bash
+curl -X PATCH https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "limits": { "monthlySpendCap": 500 } }'
+```
+
+Set `monthlySpendCap` to `null` to remove a tenant cap. A cap of `0` blocks all paid work for the tenant.
+
+### Alerts
+
+When month-to-date usage reaches 80% of a cap, and again at 100%, a `usage.threshold_reached` [event](/voice-engine/events) is sent, once per cap per month:
+
+```json
+{
+  "id": "evt_6b3a2e1f0a9b8c7d6e5f4a3b",
+  "type": "usage.threshold_reached",
+  "created": 1762095851,
+  "livemode": true,
+  "tenant": { "id": "6a9622d2c1e8f3a4b5d6e7f8", "externalId": "cust_8842" },
+  "data": { "scope": "tenant", "percent": 80, "cap": 500, "monthToDate": 401.25, "month": "2026-11" }
+}
+```
+
+`scope` is `tenant` or `partner`. For the account cap, `tenant` is `null`.
+
+### At 100%
+
+Once a tenant reaches its cap, or your account reaches the account cap, these are refused for the rest of the month, as if the account had no funds:
+
+- outbound calls and web calls
+- SMS, including chat and SMS replies
+- WhatsApp calls
+- workflow runs
+- batch calls
+- buying phone numbers (`402` `insufficient_funds`)
+
+Inbound phone calls continue, so a business's line keeps working. Raise or remove the cap to restore service straight away.
+
+Usage totals for caps are refreshed about once a minute, so a burst of activity can go slightly past a cap before it is enforced.
+
+<Note>
+  A partner invoices endpoint, partner wholesale rate cards in the API, and concurrency and outbound pacing limits per tenant are planned.
+</Note>

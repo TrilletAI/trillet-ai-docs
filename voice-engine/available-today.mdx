@@ -1,10 +1,10 @@
 ---
 title: "Building on Trillet today"
 sidebarTitle: "Available today"
-description: "How software partners can run Trillet voice agents for their customers now, before the Voice Engine API is released, and what the Voice Engine API will add."
+description: "How software partners run Trillet voice agents for their customers with white-label and the standard API, what the Voice Engine API adds, and the status of each part."
 ---
 
-The Voice Engine API is in development. You do not need to wait for it to start: partners already run Trillet for their customers with white-label and the standard API. This page explains that setup and what changes when the Voice Engine API is released.
+The Voice Engine API is in early access with design partners. You do not need it to start: partners already run Trillet for their customers with white-label and the standard API. This page explains that setup, what the Voice Engine API adds, and what is built today.
 
 ## The setup that works today
 
@@ -39,20 +39,29 @@ curl https://api.trillet.ai/v1/api/agents \
 | Today | With the Voice Engine API |
 |---|---|
 | API keys belong to a person and reach every workspace that person can access | [Partner keys](/voice-engine/authentication) belong to your account, with scopes and optional tenant restrictions |
-| Client workspaces are created in the dashboard | [Tenants](/voice-engine/tenants) are created, suspended and deleted by API, keyed by your own customer ID, with safe retries |
-| Each customer's agent is configured separately | [Templates](/voice-engine/templates) are installed in every tenant and upgraded in staged rollouts |
-| Webhooks are set on each call flow | One set of [signed events](/voice-engine/events) for all tenants, with retries, replay and an event log |
-| Usage is viewed per workspace in the dashboard | A [usage API](/voice-engine/usage-and-billing) per tenant, with wholesale and retail amounts and spend caps |
-| Your users sign in to the Trillet portal (under your brand) | [Embedded screens](/voice-engine/embedding) inside your own app, with no separate login |
+| Client workspaces are created in the dashboard | [Tenants](/voice-engine/tenants) are created, suspended, deleted and restored by API, keyed by your own customer ID, with safe retries |
+| Numbers are bought per workspace | [Phone numbers](/voice-engine/phone-numbers) are bought per tenant and billed to your account, or brought over SIP or Twilio |
+| Webhooks are set on each call flow | One set of [signed events](/voice-engine/events) for all tenants, with retries, an event log and redelivery |
+| Usage is viewed per workspace in the dashboard | A [usage API](/voice-engine/usage-and-billing) per tenant and per call, with monthly spend caps |
+| Each customer's agent is configured separately | [Templates](/voice-engine/templates) installed in every tenant and upgraded in staged rollouts (planned) |
+| Your users sign in to the Trillet portal (under your brand) | [Embedded screens](/voice-engine/embedding) inside your own app, with no separate login (planned) |
 
 ## Release status
 
 | Area | Status |
 |---|---|
-| Platform groundwork: tenant isolation, suspension that stops traffic, usage recorded per tenant, safe retries, hashed API keys | Built, in testing |
-| Partner keys, tenants, phone numbers, signed events, usage and spend caps | In development |
+| Platform groundwork: tenant isolation, suspension that stops traffic, usage recorded per tenant, safe retries, hashed API keys | Built, in early access |
+| [Partner keys](/voice-engine/authentication), scopes and tenant restrictions | Built, in early access |
+| [Tenants](/voice-engine/tenants): create, update, suspend, resume, delete and restore | Built, in early access |
+| [Phone numbers](/voice-engine/phone-numbers): partner-billed purchase, release, and bring your own (SIP or Twilio) | Built, in early access |
+| [Signed events](/voice-engine/events), event log and redelivery | Built, in early access |
+| [Usage and spend caps](/voice-engine/usage-and-billing) | Built, in early access |
+| `call.started`, transfer, `tool.failed` and `sms.*` events | Planned |
 | Templates and rollouts | Planned |
 | Embedding | Planned |
 | Sandbox environment | Planned |
+| Partner invoices endpoint | Planned |
+| Adopting existing client workspaces as tenants | Planned |
+| Version pinning with a `Trillet-Version` request header | Planned |
 
-Pages in this section marked **Coming soon** describe the planned design and may change before release. To join early access, contact your Trillet account manager or [talk to us](https://form.typeform.com/to/qRRENIBp).
+Pages in this section marked **Early access** describe what is built. Details may still change while it is tested with design partners. Pages marked **Coming soon** describe planned designs. To join early access, contact your Trillet account manager or [talk to us](https://form.typeform.com/to/qRRENIBp).
