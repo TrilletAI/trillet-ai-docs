@@ -1,10 +1,14 @@
 ---
-title: "Introduction"
-description: "Trillet AI provides a powerful REST API to create human-like voice and messaging experiences at scale."
+title: "Trillet voice AI API and platform overview"
+sidebarTitle: "Introduction"
+description: "Trillet is a voice AI API and platform for AI phone agents, phone numbers, outbound calls and workflows, with MCP for AI assistants, white-label and OEM."
 ---
 
-![Trillet Logo](/logo/Trillet-logo-light.svg =200x)
+Trillet is a voice AI API and platform for building AI phone agents that answer and place calls, chat on your website and hand off to people when needed. You can build agents in the dashboard, with the REST API, or from an AI assistant over MCP, then connect phone numbers, run batch outbound calls and automate follow-up with workflows. Calls start from $0.12 per minute and phone numbers from $4.99 per month.
 
+<Note>
+**For AI agents and LLMs.** A full index of these docs is at [/llms.txt](https://docs.trillet.ai/llms.txt) and the complete text is at [/llms-full.txt](https://docs.trillet.ai/llms-full.txt). Add `.md` to any page URL to get its Markdown source. The Trillet OEM OpenAPI spec is at [/openapi/trillet-oem.yaml](https://docs.trillet.ai/openapi/trillet-oem.yaml).
+</Note>
 
 <video
   autoPlay
@@ -18,9 +22,7 @@ description: "Trillet AI provides a powerful REST API to create human-like voice
   src="https://www.trillet.ai/videos/promo.mp4"
 ></video>
 
-## Transform Customer Interactions with AI
-
-Trillet AI provides a powerful REST API to create human-like voice and messaging experiences at scale. Our platform combines state-of-the-art language models with advanced voice synthesis to enable natural conversations across multiple channels.
+## Start building
 
 <Columns cols={2}>
   <Card
@@ -36,6 +38,25 @@ Trillet AI provides a powerful REST API to create human-like voice and messaging
     href="/v1/api-reference/introduction"
   >
     Explore our comprehensive API documentation
+  </Card>
+</Columns>
+
+## Other ways to build
+
+<Columns cols={2}>
+  <Card
+    title="AI assistants (MCP)"
+    icon="sparkles"
+    href="/mcp"
+  >
+    Build and test agents from Claude, ChatGPT, Cursor and other MCP clients
+  </Card>
+  <Card
+    title="Trillet OEM (early access)"
+    icon="tower-broadcast"
+    href="/voice-engine/overview"
+  >
+    Run Trillet voice agents inside your own product for each of your customers
   </Card>
 </Columns>
 
@@ -68,7 +89,7 @@ Trillet AI provides a powerful REST API to create human-like voice and messaging
     icon="message-code"
     href="/v1/api-reference/endpoints/flows/message-flows/create"
   >
-    Design and control call & conversation flows programmatically
+    Create SMS and chat flows and switch autopilot on or off
   </Card>
   <Card
     title="Voice Calls API"

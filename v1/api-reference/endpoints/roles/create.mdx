@@ -20,7 +20,7 @@ Description of the role and its intended use.
 </ParamField>
 
 <ParamField body="permissions" type="array of strings" required>
-Array of permission ID strings to assign to this role. **Always required — pass an empty array `[]` if no permissions are needed.** Each item must be a plain string (e.g., `"agent_view"`), not an object. Use the [List Permissions](/v1/api-reference/endpoints/roles/list-permissions) endpoint to retrieve available permission IDs.
+Array of permission ID strings to assign to this role. **Always required. Pass an empty array `[]` if no permissions are needed.** Each item must be a plain string (e.g., `"agent_view"`), not an object. Use the [List Permissions](/v1/api-reference/endpoints/roles/list-permissions) endpoint to retrieve available permission IDs.
 </ParamField>
 
 <ParamField body="userIds" type="array">
