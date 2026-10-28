@@ -20,7 +20,10 @@
         "method": "key",
         "name": "x-api-key"
       }
-    }
+    },
+    "openapi": [
+      "/public/openapi/trillet-oem.yaml"
+    ]
   },
   "appearance": {
     "default": "light",
@@ -308,10 +311,12 @@
             "group": "Trillet OEM",
             "icon": "tower-broadcast",
             "pages": [
+              "voice-engine/quickstart",
               "voice-engine/overview",
               "voice-engine/available-today",
               "voice-engine/authentication",
-              "voice-engine/conventions"
+              "voice-engine/conventions",
+              "voice-engine/changelog"
             ]
           },
           {
@@ -332,6 +337,72 @@
               "voice-engine/usage-and-billing",
               "voice-engine/embedding",
               "voice-engine/compliance"
+            ]
+          },
+          {
+            "group": "API reference",
+            "icon": "code",
+            "pages": [
+              "voice-engine/api-reference/get-the-current-key",
+              {
+                "group": "Tenants",
+                "pages": [
+                  "voice-engine/api-reference/create-a-tenant",
+                  "voice-engine/api-reference/list-tenants",
+                  "voice-engine/api-reference/get-a-tenant",
+                  "voice-engine/api-reference/get-a-tenant-by-external-id",
+                  "voice-engine/api-reference/update-a-tenant",
+                  "voice-engine/api-reference/suspend-a-tenant",
+                  "voice-engine/api-reference/resume-a-tenant",
+                  "voice-engine/api-reference/delete-a-tenant",
+                  "voice-engine/api-reference/restore-a-deleted-tenant"
+                ]
+              },
+              {
+                "group": "Phone numbers",
+                "pages": [
+                  "voice-engine/api-reference/buy-a-number",
+                  "voice-engine/api-reference/register-your-own-number",
+                  "voice-engine/api-reference/list-tenant-numbers",
+                  "voice-engine/api-reference/get-a-number",
+                  "voice-engine/api-reference/release-a-number"
+                ]
+              },
+              {
+                "group": "Call flow settings",
+                "pages": [
+                  "voice-engine/api-reference/get-call-flow-settings",
+                  "voice-engine/api-reference/change-call-flow-settings"
+                ]
+              },
+              {
+                "group": "Webhook endpoints",
+                "pages": [
+                  "voice-engine/api-reference/add-a-webhook-endpoint",
+                  "voice-engine/api-reference/list-webhook-endpoints",
+                  "voice-engine/api-reference/get-a-webhook-endpoint",
+                  "voice-engine/api-reference/update-a-webhook-endpoint",
+                  "voice-engine/api-reference/delete-a-webhook-endpoint",
+                  "voice-engine/api-reference/rotate-the-signing-secret",
+                  "voice-engine/api-reference/send-a-test-event"
+                ]
+              },
+              {
+                "group": "Events",
+                "pages": [
+                  "voice-engine/api-reference/list-events",
+                  "voice-engine/api-reference/get-an-event",
+                  "voice-engine/api-reference/redeliver-an-event",
+                  "voice-engine/api-reference/download-a-call-recording"
+                ]
+              },
+              {
+                "group": "Usage",
+                "pages": [
+                  "voice-engine/api-reference/get-usage-totals",
+                  "voice-engine/api-reference/list-call-charges"
+                ]
+              }
             ]
           }
         ]

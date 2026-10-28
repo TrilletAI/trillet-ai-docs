@@ -1,0 +1,1499 @@
+openapi: 3.1.0
+info:
+  title: Trillet OEM API
+  version: "2026-10-28"
+  summary: White-label voice AI API for software platforms.
+  description: |
+    The Trillet OEM API (also called the Partner API) lets a software platform run Trillet voice
+    agents for each of its own customers, under its own brand.
+
+    Each of your customers is a **tenant**: an isolated workspace with its own agents, phone
+    numbers, call history and usage. This specification covers the `/partner/v1` endpoints:
+    partner key, tenants, phone numbers, call flow settings, webhook endpoints, events,
+    recordings and usage.
+
+    Agents, node flows, calls and other resources inside a tenant are managed with the standard
+    Trillet API, using the same partner key and the tenant ID in `x-workspace-id`. See
+    [Authentication](https://docs.trillet.ai/voice-engine/authentication#calling-standard-endpoints-for-a-tenant).
+
+    Trillet OEM is in early access. Details may change before general release. Within `/partner/v1`
+    changes are additive: ignore fields and event types you do not recognise.
+  contact:
+    name: Trillet
+    url: https://docs.trillet.ai/voice-engine/overview
+servers:
+  - url: https://api.trillet.ai
+    description: Production
+security:
+  - partnerKey: []
+tags:
+  - name: Partner key
+    description: Check the key in use.
+  - name: Tenants
+    description: One tenant per customer. Create, update, suspend, resume, delete and restore.
+  - name: Phone numbers
+    description: Buy numbers per tenant, billed to your partner account, or register your own.
+  - name: Call flow settings
+    description: Greeting, speech, recording and call handling for a tenant's call flow.
+  - name: Webhook endpoints
+    description: Where signed events are delivered.
+  - name: Events
+    description: The event log, redelivery and call recordings.
+  - name: Usage
+    description: Usage totals and per-call charges.
+
+paths:
+  /partner/v1/key:
+    get:
+      tags: [Partner key]
+      operationId: getPartnerKey
+      summary: Get the current key
+      description: Returns the key's mode, scopes, tenant restriction and partner account. Needs no scope.
+      responses:
+        "200":
+          description: The key.
+          headers:
+            Trillet-Version: { $ref: "#/components/headers/TrilletVersion" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PartnerKey" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /partner/v1/tenants:
+    post:
+      tags: [Tenants]
+      operationId: createTenant
+      summary: Create a tenant
+      description: |
+        Creates a tenant for one of your customers. Needs `tenants:write`. `Idempotency-Key` is required.
+
+        If the workspace is created but its setup does not complete, the tenant is returned with
+        status `provisioning_failed`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantCreate" }
+            example:
+              externalId: cust_8842
+              name: Harbour Dental
+              region: us
+              metadata: { plan: pro }
+              limits: { monthlySpendCap: 500 }
+      responses:
+        "201":
+          description: The new tenant.
+          headers:
+            Trillet-Version: { $ref: "#/components/headers/TrilletVersion" }
+            Idempotent-Replayed: { $ref: "#/components/headers/IdempotentReplayed" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "`tenant_exists`, `tenant_deleted_restorable`, `tenant_limit_reached`, or an idempotency conflict (`idempotency_key_in_use`)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/IdempotencyKeyReused" }
+    get:
+      tags: [Tenants]
+      operationId: listTenants
+      summary: List tenants
+      description: Lists tenants, newest first. Deleted tenants are not listed. Needs `tenants:read`.
+      parameters:
+        - $ref: "#/components/parameters/Limit100"
+        - name: starting_after
+          in: query
+          description: The `id` of the last tenant on the previous page. A value that is not a tenant ID returns `400` `invalid_cursor`.
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, suspended, provisioning_failed] }
+        - name: externalId
+          in: query
+          schema: { type: string, maxLength: 128 }
+      responses:
+        "200":
+          description: A page of tenants.
+          headers:
+            Trillet-Version: { $ref: "#/components/headers/TrilletVersion" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /partner/v1/tenants/by-external-id/{externalId}:
+    get:
+      tags: [Tenants]
+      operationId: getTenantByExternalId
+      summary: Get a tenant by external ID
+      description: Looks up a live tenant by your own customer ID. Needs `tenants:read`.
+      parameters:
+        - name: externalId
+          in: path
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        "200":
+          description: The tenant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/tenants/{tenantId}:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    get:
+      tags: [Tenants]
+      operationId: getTenant
+      summary: Get a tenant
+      description: Needs `tenants:read`. A deleted tenant, or one that is not yours, returns `404` `tenant_not_found`.
+      responses:
+        "200":
+          description: The tenant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Tenants]
+      operationId: updateTenant
+      summary: Update a tenant
+      description: Changes the name, metadata or monthly spend cap. Needs `tenants:write`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantUpdate" }
+            example:
+              name: Harbour Dental Group
+              limits: { monthlySpendCap: 750 }
+      responses:
+        "200":
+          description: The updated tenant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Tenants]
+      operationId: deleteTenant
+      summary: Delete a tenant
+      description: |
+        Releases the tenant's numbers, soft-deletes its flows, agents and knowledge bases, and
+        soft-deletes the tenant. It can be restored for 30 days. Needs `tenants:write`.
+      responses:
+        "200":
+          description: The tenant, with status `deleted`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /partner/v1/tenants/{tenantId}/suspend:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    post:
+      tags: [Tenants]
+      operationId: suspendTenant
+      summary: Suspend a tenant
+      description: |
+        Stops the tenant's traffic and keeps everything else. Outbound calls, web calls and SMS are
+        refused, new workflow runs are skipped, and inbound calls are answered and ended at once.
+        Needs `tenants:write`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Returned as `suspendedReason`.
+            example: { reason: Invoice overdue }
+      responses:
+        "200":
+          description: The tenant, with status `suspended`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/tenants/{tenantId}/resume:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    post:
+      tags: [Tenants]
+      operationId: resumeTenant
+      summary: Resume a tenant
+      description: Restores a suspended tenant's traffic immediately. Needs `tenants:write`.
+      responses:
+        "200":
+          description: The tenant, with status `active`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/tenants/{tenantId}/restore:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    post:
+      tags: [Tenants]
+      operationId: restoreTenant
+      summary: Restore a deleted tenant
+      description: Brings a deleted tenant back within 30 days of deletion. Needs `tenants:write`.
+      responses:
+        "200":
+          description: The restored tenant.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Tenant" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "`tenant_not_deleted`, or `tenant_exists` when a live tenant has taken its `externalId`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "410":
+          description: "`restore_window_expired`: the tenant was deleted more than 30 days ago."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /partner/v1/tenants/{tenantId}/numbers:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    get:
+      tags: [Phone numbers]
+      operationId: listTenantNumbers
+      summary: List a tenant's numbers
+      description: Returns every number in the tenant in one page. Needs `resources:read`.
+      responses:
+        "200":
+          description: The tenant's numbers.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhoneNumberList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      tags: [Phone numbers]
+      operationId: buyTenantNumber
+      summary: Buy a number
+      description: |
+        Buys a number for the tenant, billed to your partner account at the standard Trillet number
+        price. The first month is charged when you buy, then the number renews monthly.
+        Find numbers first with `GET /v1/api/twilio/available-numbers` and the tenant ID in
+        `x-workspace-id`. Needs `numbers:write`. `Idempotency-Key` is required.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NumberPurchase" }
+            example: { phoneNumber: "+15125550142", country: US, type: local }
+      responses:
+        "201":
+          description: The number.
+          headers:
+            Idempotent-Replayed: { $ref: "#/components/headers/IdempotentReplayed" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhoneNumber" }
+        "400":
+          description: "`invalid_request`, or `number_purchase_failed` when the carrier refused the purchase."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "402":
+          description: "`insufficient_funds`: your account cannot pay for the first month, or a spend cap has been reached."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "`tenant_suspended`, or an idempotency conflict."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/IdempotencyKeyReused" }
+
+  /partner/v1/tenants/{tenantId}/numbers/external:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    post:
+      tags: [Phone numbers]
+      operationId: registerExternalNumber
+      summary: Register your own number
+      description: |
+        Registers a number you or your customer already own, over a SIP trunk or a Twilio account.
+        Trillet does not bill these numbers. Needs `numbers:write`. `Idempotency-Key` is required.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExternalNumberRegistration" }
+            examples:
+              sip:
+                summary: SIP trunk
+                value:
+                  phoneNumber: "+15125550199"
+                  provider: sip
+                  credentials:
+                    sipUri: sip:pbx.example.com
+                    username: trillet
+                    password: YOUR_SIP_PASSWORD
+                    ipAddresses: ["203.0.113.10"]
+              twilio:
+                summary: Twilio account
+                value:
+                  phoneNumber: "+15125550188"
+                  provider: twilio
+                  credentials: { accountSid: AC..., authToken: "..." }
+      responses:
+        "201":
+          description: The number.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhoneNumber" }
+        "400":
+          description: "`invalid_request`, or `number_registration_failed` with the reason."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/IdempotencyKeyReused" }
+
+  /partner/v1/tenants/{tenantId}/numbers/{numberId}:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+      - name: numberId
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/ObjectId" }
+    get:
+      tags: [Phone numbers]
+      operationId: getTenantNumber
+      summary: Get a number
+      description: Needs `resources:read`. A number that is not in the tenant returns `404` `number_not_found`.
+      responses:
+        "200":
+          description: The number.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PhoneNumber" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Phone numbers]
+      operationId: releaseTenantNumber
+      summary: Release a number
+      description: |
+        A bought number goes back to the carrier and stops renewing. Your own number is detached
+        from Trillet. Needs `numbers:write`.
+      responses:
+        "200":
+          description: The number was released.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, id, released]
+                properties:
+                  object: { type: string, const: phone_number }
+                  id: { $ref: "#/components/schemas/ObjectId" }
+                  released: { type: boolean, const: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/tenants/{tenantId}/call-flows/{callFlowId}/settings:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+      - name: callFlowId
+        in: path
+        required: true
+        description: A call flow in the tenant. For a node flow, `pathway._id` from `GET /v2/api/node-graphs/{id}`.
+        schema: { $ref: "#/components/schemas/ObjectId" }
+    get:
+      tags: [Call flow settings]
+      operationId: getCallFlowSettings
+      summary: Get call flow settings
+      description: Needs `resources:read`. A setting the call flow has never stored is returned as `null`.
+      responses:
+        "200":
+          description: The settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CallFlowSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Call flow settings]
+      operationId: updateCallFlowSettings
+      summary: Change call flow settings
+      description: |
+        Send only the settings to change, nested as in the settings object. Values are not
+        converted, and a field this endpoint does not manage is refused with `400`
+        `unknown_setting`. If the flow has an active draft, the same settings are copied onto it.
+        Needs `resources:write`. `Idempotency-Key` is optional.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CallFlowSettingsUpdate" }
+            example:
+              greeting:
+                inbound:
+                  mode: customMessage
+                  text: Thanks for calling Harbour Dental. How can I help?
+              recording: { enabled: true }
+              callHandling: { maxCallDurationSeconds: 900 }
+      responses:
+        "200":
+          description: The full settings after the change.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/CallFlowSettings"
+                  - type: object
+                    properties:
+                      activeDraftUpdated:
+                        type: boolean
+                        description: "`true` when an active draft was updated too."
+        "400":
+          description: "`unknown_setting` or `invalid_request`. `error.param` names the field."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: "`tenant_not_found` or `call_flow_not_found`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: "`call_flow_archived`, `hipaa_recording_conflict`, or an idempotency conflict."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /partner/v1/webhook-endpoints:
+    post:
+      tags: [Webhook endpoints]
+      operationId: createWebhookEndpoint
+      summary: Add a webhook endpoint
+      description: |
+        Registers a URL to receive signed events from all of your tenants. The signing `secret` is
+        returned only here and on rotation. Up to 10 endpoints per account. Needs `webhooks:write`
+        and a key that is not restricted to some tenants.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/WebhookEndpointInput"
+                - type: object
+                  required: [url]
+            example:
+              url: https://api.example.com/trillet/events
+              description: Production
+              enabledEvents: [call.started, call.ended, call.analyzed]
+      responses:
+        "201":
+          description: The endpoint, with its signing secret.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpointWithSecret" }
+        "400":
+          description: "`invalid_request`, `invalid_url` or `invalid_events`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409":
+          description: "`too_many_endpoints`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+    get:
+      tags: [Webhook endpoints]
+      operationId: listWebhookEndpoints
+      summary: List webhook endpoints
+      description: Returns every endpoint in one page. Needs `events:read` and a key that is not restricted to some tenants.
+      responses:
+        "200":
+          description: The endpoints.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data, hasMore]
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/WebhookEndpoint" }
+                  hasMore: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /partner/v1/webhook-endpoints/{id}:
+    parameters:
+      - $ref: "#/components/parameters/EndpointId"
+    get:
+      tags: [Webhook endpoints]
+      operationId: getWebhookEndpoint
+      summary: Get a webhook endpoint
+      description: Needs `events:read` and a key that is not restricted to some tenants.
+      responses:
+        "200":
+          description: The endpoint.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Webhook endpoints]
+      operationId: updateWebhookEndpoint
+      summary: Update a webhook endpoint
+      description: |
+        Accepts the same fields as create plus `status`. Setting `status: "enabled"` re-enables an
+        endpoint that was disabled after failing. Needs `webhooks:write` and a key that is not
+        restricted to some tenants.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/WebhookEndpointInput"
+                - type: object
+                  properties:
+                    status: { type: string, enum: [enabled, disabled] }
+      responses:
+        "200":
+          description: The updated endpoint.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WebhookEndpoint" }
+        "400":
+          description: "`invalid_request`, `invalid_url` or `invalid_events`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Webhook endpoints]
+      operationId: deleteWebhookEndpoint
+      summary: Delete a webhook endpoint
+      description: Needs `webhooks:write` and a key that is not restricted to some tenants.
+      responses:
+        "200":
+          description: The endpoint was deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, id, deleted]
+                properties:
+                  object: { type: string, const: webhook_endpoint }
+                  id: { $ref: "#/components/schemas/ObjectId" }
+                  deleted: { type: boolean, const: true }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/webhook-endpoints/{id}/rotate-secret:
+    parameters:
+      - $ref: "#/components/parameters/EndpointId"
+    post:
+      tags: [Webhook endpoints]
+      operationId: rotateWebhookSecret
+      summary: Rotate the signing secret
+      description: |
+        Returns a new `secret`. The previous secret keeps signing alongside the new one for 24 hours.
+        Needs `webhooks:write` and a key that is not restricted to some tenants.
+      responses:
+        "200":
+          description: The endpoint with its new secret.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/WebhookEndpointWithSecret"
+                  - type: object
+                    properties:
+                      previousSecretExpiresAt:
+                        type: [string, "null"]
+                        format: date-time
+                        description: When the previous secret stops signing, or `null` when there was none.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/webhook-endpoints/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/EndpointId"
+    post:
+      tags: [Webhook endpoints]
+      operationId: testWebhookEndpoint
+      summary: Send a test event
+      description: |
+        Sends an `endpoint.test` event to this endpoint only. The endpoint must be enabled and
+        subscribed to `endpoint.test` or `*`. Needs `webhooks:write` and a key that is not restricted
+        to some tenants.
+      responses:
+        "202":
+          description: The test event was queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, id, type]
+                properties:
+                  object: { type: string, const: event }
+                  id: { $ref: "#/components/schemas/EventId" }
+                  type: { type: string, const: endpoint.test }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "`endpoint_disabled` or `endpoint_not_subscribed`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /partner/v1/events:
+    get:
+      tags: [Events]
+      operationId: listEvents
+      summary: List events
+      description: |
+        The event log, newest first. Events are kept for 30 days, and an event is recorded when at
+        least one of your endpoints subscribes to its type. In the list, `data` holds only the facts
+        stored with the event. Needs `events:read`.
+      parameters:
+        - name: type
+          in: query
+          schema: { type: string, maxLength: 64 }
+        - name: tenantId
+          in: query
+          schema: { $ref: "#/components/schemas/ObjectId" }
+        - name: since
+          in: query
+          description: Only events created at or after this time, in Unix seconds.
+          schema: { type: integer, minimum: 0 }
+        - $ref: "#/components/parameters/Limit100"
+        - name: starting_after
+          in: query
+          description: The `id` of the last event on the previous page.
+          schema: { type: string, pattern: "^(evt_)?[a-fA-F0-9]{24}$" }
+      responses:
+        "200":
+          description: A page of events.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data, hasMore]
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/EventLogEntry" }
+                  hasMore: { type: boolean }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: "`event_not_found` when `starting_after` is not one of your events."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /partner/v1/events/{eventId}:
+    parameters:
+      - $ref: "#/components/parameters/EventIdParam"
+    get:
+      tags: [Events]
+      operationId: getEvent
+      summary: Get an event
+      description: |
+        Returns one event with its delivery status. For call events, `data.call` is rendered as a
+        delivery would be, using your account's conversation data setting. Needs `events:read`.
+      responses:
+        "200":
+          description: The event.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EventLogEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/events/{eventId}/redeliver:
+    parameters:
+      - $ref: "#/components/parameters/EventIdParam"
+    post:
+      tags: [Events]
+      operationId: redeliverEvent
+      summary: Redeliver an event
+      description: |
+        Sends an event again. Without `endpointId`, it goes to every enabled endpoint subscribed to
+        its type. Needs `webhooks:write`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                endpointId: { $ref: "#/components/schemas/ObjectId" }
+      responses:
+        "202":
+          description: The event is being redelivered.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, id, redelivering]
+                properties:
+                  object: { type: string, const: event }
+                  id: { $ref: "#/components/schemas/EventId" }
+                  redelivering:
+                    type: integer
+                    description: The number of endpoints it is being sent to.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "`no_enabled_endpoint`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /partner/v1/tenants/{tenantId}/calls/{callId}/recording:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+      - name: callId
+        in: path
+        required: true
+        description: The call history ID (`data.call.id` in call events).
+        schema: { $ref: "#/components/schemas/ObjectId" }
+    get:
+      tags: [Events]
+      operationId: getCallRecording
+      summary: Download a call recording
+      description: The URL in `data.call.recording.url` on call events. Returns the audio file. Needs `resources:read`.
+      responses:
+        "200":
+          description: The recording.
+          content:
+            audio/mpeg:
+              schema: { type: string, format: binary }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404":
+          description: "`tenant_not_found` or `recording_not_found`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /partner/v1/usage:
+    get:
+      tags: [Usage]
+      operationId: getUsage
+      summary: Get usage totals
+      description: |
+        Usage totals by day or month, per tenant or per charge type, in USD. A range can cover up to
+        92 days. Usage includes deleted tenants. Needs `usage:read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/UsageTenantId"
+        - name: groupBy
+          in: query
+          schema: { type: string, enum: [tenant, type], default: tenant }
+        - name: granularity
+          in: query
+          schema: { type: string, enum: [day, month], default: day }
+      responses:
+        "200":
+          description: Usage totals.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Usage" }
+        "400":
+          description: "`invalid_request` or `invalid_range`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/usage/calls:
+    get:
+      tags: [Usage]
+      operationId: listCallUsage
+      summary: List call charges
+      description: One row per call charge, newest first. Needs `usage:read`.
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+        - $ref: "#/components/parameters/UsageTenantId"
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+        - name: starting_after
+          in: query
+          description: The `id` of the last row on the previous page.
+          schema: { $ref: "#/components/schemas/ObjectId" }
+      responses:
+        "200":
+          description: A page of call charges.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [object, data, hasMore]
+                properties:
+                  object: { type: string, const: list }
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/CallCharge" }
+                  hasMore: { type: boolean }
+        "400":
+          description: "`invalid_request` or `invalid_range`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    partnerKey:
+      type: http
+      scheme: bearer
+      bearerFormat: tpk_live_...
+      description: |
+        A partner key, created in the **OEM API** section of your account settings. Send it as
+        `Authorization: Bearer tpk_live_...`. Sending a partner key in `x-api-key` is refused.
+
+  headers:
+    TrilletVersion:
+      description: The date of the API release that served the response, for example `2026-10-28`. Informational.
+      schema: { type: string, example: "2026-10-28" }
+    IdempotentReplayed:
+      description: "`true` when the response is a stored response replayed for a retried `Idempotency-Key`."
+      schema: { type: string, enum: ["true"] }
+
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      description: The tenant ID.
+      schema: { $ref: "#/components/schemas/ObjectId" }
+    EndpointId:
+      name: id
+      in: path
+      required: true
+      description: The webhook endpoint ID.
+      schema: { $ref: "#/components/schemas/ObjectId" }
+    EventIdParam:
+      name: eventId
+      in: path
+      required: true
+      description: The event ID, with or without the `evt_` prefix.
+      schema: { type: string, pattern: "^(evt_)?[a-fA-F0-9]{24}$" }
+    IdempotencyKeyRequired:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        1 to 255 printable ASCII characters, no spaces. A retry with the same key and request
+        returns the stored response for 24 hours instead of running again.
+      schema: { type: string, minLength: 1, maxLength: 255 }
+    IdempotencyKeyOptional:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Optional. Works as on the endpoints that require it.
+      schema: { type: string, minLength: 1, maxLength: 255 }
+    Limit100:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    From:
+      name: from
+      in: query
+      description: Start, inclusive. Default is the start of the current month (UTC).
+      schema: { type: string, format: date-time }
+    To:
+      name: to
+      in: query
+      description: End, exclusive. Default is now.
+      schema: { type: string, format: date-time }
+    UsageTenantId:
+      name: tenantId
+      in: query
+      description: Only this tenant.
+      schema: { $ref: "#/components/schemas/ObjectId" }
+
+  responses:
+    BadRequest:
+      description: "The request is malformed or a field is invalid. `error.param` names the field when there is one."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: "The partner key is missing, malformed, unknown or revoked (`partner_key_required`, `invalid_api_key`, `partner_not_enabled`)."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Forbidden:
+      description: "`missing_scope`, or `key_restricted` on webhook endpoint routes."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not found, or not yours. For example `tenant_not_found`.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Conflict:
+      description: Conflict with the current state of the resource.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    IdempotencyKeyReused:
+      description: "`idempotency_key_reused`: the same `Idempotency-Key` was sent with a different request."
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    ObjectId:
+      type: string
+      pattern: "^[a-fA-F0-9]{24}$"
+      example: 6a9622d2c1e8f3a4b5d6e7f8
+    EventId:
+      type: string
+      pattern: "^evt_[a-fA-F0-9]{24}$"
+      example: evt_6b3a1c2d4e5f6a7b8c9d0e1f
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [type, code, message]
+          properties:
+            type:
+              type: string
+              enum:
+                - invalid_request_error
+                - authentication_error
+                - permission_error
+                - conflict_error
+                - rate_limit_error
+                - api_error
+                - idempotency_error
+            code:
+              type: string
+              description: A stable code. Handle errors by `code`, not by `message`.
+            message: { type: string }
+            param:
+              type: string
+              description: The request field the error is about, when there is one.
+            requestId:
+              type: [string, "null"]
+              description: Include it when you contact support. Not present on idempotency errors.
+      example:
+        error:
+          type: conflict_error
+          code: tenant_exists
+          message: A tenant with this externalId already exists.
+          requestId: req-1a2b
+
+    PartnerKey:
+      type: object
+      required: [object, id, mode, scopes, tenantIds, partner]
+      properties:
+        object: { type: string, const: partner_key }
+        id: { $ref: "#/components/schemas/ObjectId" }
+        mode: { type: string, enum: [live, sandbox] }
+        scopes:
+          type: array
+          items: { $ref: "#/components/schemas/Scope" }
+        tenantIds:
+          type: array
+          description: Empty when the key is not restricted to some tenants.
+          items: { $ref: "#/components/schemas/ObjectId" }
+        partner:
+          type: object
+          properties:
+            id: { $ref: "#/components/schemas/ObjectId" }
+            name: { type: [string, "null"] }
+            maxTenants: { type: [integer, "null"] }
+            tenantCount: { type: integer }
+    Scope:
+      type: string
+      enum:
+        - tenants:read
+        - tenants:write
+        - resources:read
+        - resources:write
+        - calls:write
+        - numbers:write
+        - templates:read
+        - templates:write
+        - events:read
+        - webhooks:write
+        - usage:read
+        - sessions:write
+
+    Tenant:
+      type: object
+      required: [object, id, externalId, name, status, region, metadata, limits, createdAt]
+      properties:
+        object: { type: string, const: tenant }
+        id:
+          $ref: "#/components/schemas/ObjectId"
+          description: Use it in paths and as `x-workspace-id` on standard endpoints.
+        externalId: { type: string, description: "Your ID for this customer." }
+        name: { type: string }
+        status: { type: string, enum: [active, suspended, deleted, provisioning_failed] }
+        region: { type: string, enum: [us, au] }
+        metadata:
+          type: object
+          additionalProperties: true
+        limits: { $ref: "#/components/schemas/TenantLimits" }
+        suspendedAt: { type: [string, "null"], format: date-time }
+        suspendedReason: { type: [string, "null"] }
+        deletedAt: { type: [string, "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+      example:
+        object: tenant
+        id: 6a9622d2c1e8f3a4b5d6e7f8
+        externalId: cust_8842
+        name: Harbour Dental
+        status: active
+        region: us
+        metadata: { plan: pro }
+        limits: { monthlySpendCap: 500 }
+        suspendedAt: null
+        suspendedReason: null
+        deletedAt: null
+        createdAt: "2026-11-02T10:14:00.000Z"
+    TenantLimits:
+      type: object
+      additionalProperties: false
+      properties:
+        monthlySpendCap:
+          type: [number, "null"]
+          minimum: 0
+          description: Monthly spend cap in USD. `null` means no cap. `0` blocks all paid work.
+    TenantCreate:
+      type: object
+      required: [externalId, name]
+      additionalProperties: false
+      properties:
+        externalId:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Your ID for this customer. No leading or trailing spaces. Unique among your live tenants.
+        name: { type: string, minLength: 1, maxLength: 100 }
+        region:
+          type: string
+          enum: [us, au]
+          description: Defaults to your partner account's region. Decides where call data is stored.
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Up to 8 KB of your own JSON data.
+        limits: { $ref: "#/components/schemas/TenantLimits" }
+    TenantUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Replaces the whole metadata object.
+        limits: { $ref: "#/components/schemas/TenantLimits" }
+    TenantList:
+      type: object
+      required: [object, data, hasMore]
+      properties:
+        object: { type: string, const: list }
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Tenant" }
+        hasMore: { type: boolean }
+
+    PhoneNumber:
+      type: object
+      required: [object, id, tenantId, phoneNumber, external]
+      properties:
+        object: { type: string, const: phone_number }
+        id:
+          $ref: "#/components/schemas/ObjectId"
+          description: Use it as `phoneNumberId` when binding the number to an agent.
+        tenantId: { $ref: "#/components/schemas/ObjectId" }
+        phoneNumber: { type: string, description: "E.164 format." }
+        provider: { type: [string, "null"] }
+        type: { type: [string, "null"] }
+        external: { type: boolean, description: "`true` for numbers you registered yourself." }
+        status: { type: [string, "null"] }
+        agentId: { type: [string, "null"] }
+        callFlowId: { type: [string, "null"] }
+        billing:
+          description: Present for numbers bought through Trillet OEM, `null` for your own numbers.
+          oneOf:
+            - type: "null"
+            - type: object
+              properties:
+                monthlyPrice: { type: [number, "null"], description: "Monthly price in USD." }
+                nextChargeAt: { type: [string, "null"], format: date-time }
+                status: { type: string, enum: [active, past_due] }
+        createdAt: { type: [string, "null"], format: date-time }
+      example:
+        object: phone_number
+        id: 6b0c4e1a9d2f3e4a5b6c7d8e
+        tenantId: 6a9622d2c1e8f3a4b5d6e7f8
+        phoneNumber: "+15125550142"
+        provider: telnyx
+        type: local
+        external: false
+        status: active
+        agentId: null
+        callFlowId: null
+        billing:
+          monthlyPrice: 4.99
+          nextChargeAt: "2026-12-02T10:20:00.000Z"
+          status: active
+        createdAt: "2026-11-02T10:20:00.000Z"
+    PhoneNumberList:
+      type: object
+      required: [object, data, hasMore]
+      properties:
+        object: { type: string, const: list }
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/PhoneNumber" }
+        hasMore: { type: boolean }
+    NumberPurchase:
+      type: object
+      required: [phoneNumber, country]
+      additionalProperties: false
+      properties:
+        phoneNumber: { type: string, pattern: "^\\+[1-9]\\d{6,14}$", description: "E.164 format." }
+        country: { type: string, minLength: 2, maxLength: 2, description: "Two-letter country code." }
+        type: { type: string, enum: [local, mobile], default: local }
+        addressSid: { type: string, maxLength: 64, description: "Regulatory address, for countries that need one." }
+        bundleSid: { type: string, maxLength: 64, description: "Regulatory bundle, for countries that need one." }
+    ExternalNumberRegistration:
+      type: object
+      required: [phoneNumber, provider, credentials]
+      additionalProperties: false
+      properties:
+        phoneNumber: { type: string, pattern: "^\\+[1-9]\\d{6,14}$", description: "E.164 format. A number can be registered only once across Trillet." }
+        provider: { type: string, enum: [sip, twilio] }
+        credentials:
+          type: object
+          additionalProperties: true
+          description: |
+            For `sip`: `sipUri` (where Trillet sends outbound calls), optional `username` and
+            `password`, and optional `ipAddresses` your carrier sends calls from.
+            For `twilio`: `accountSid` and `authToken`.
+
+    GreetingDirection:
+      type: object
+      properties:
+        mode:
+          type: [string, "null"]
+          enum: [aiFirst, customMessage, userFirst, null]
+          description: "`aiFirst`: the agent speaks first with a greeting it writes. `customMessage`: the agent speaks `text`. `userFirst`: the agent waits for the caller."
+        text: { type: [string, "null"], maxLength: 2000, description: "The greeting in `customMessage` mode." }
+        instructions: { type: [string, "null"], maxLength: 2000, description: "Instructions for the greeting in `aiFirst` mode." }
+    CallFlowSettings:
+      type: object
+      required: [object, callFlowId, tenantId]
+      properties:
+        object: { type: string, const: call_flow_settings }
+        callFlowId: { $ref: "#/components/schemas/ObjectId" }
+        tenantId: { $ref: "#/components/schemas/ObjectId" }
+        greeting:
+          type: object
+          properties:
+            inbound: { $ref: "#/components/schemas/GreetingDirection" }
+            outbound: { $ref: "#/components/schemas/GreetingDirection" }
+            delaySeconds: { type: [number, "null"], minimum: 0, maximum: 5 }
+        speech:
+          type: object
+          properties:
+            responsiveness: { type: [number, "null"], minimum: 1, maximum: 10 }
+            interruptionSensitivity: { type: [number, "null"], minimum: 1, maximum: 10 }
+        recording:
+          type: object
+          properties:
+            enabled: { type: [boolean, "null"] }
+        callHandling:
+          type: object
+          properties:
+            maxCallDurationSeconds: { type: [integer, "null"], minimum: 10, maximum: 1800 }
+            checkInAfterSeconds: { type: [integer, "null"], enum: [10, 20, 30, null] }
+            checkInAttempts: { type: [integer, "null"], enum: [0, 1, 2, 3, null] }
+            hangUpAfterCheckInSeconds: { type: [integer, "null"], enum: [10, 20, 30, null] }
+        updatedAt: { type: [string, "null"], format: date-time }
+    CallFlowSettingsUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        greeting:
+          type: object
+          additionalProperties: false
+          properties:
+            inbound: { $ref: "#/components/schemas/GreetingDirectionUpdate" }
+            outbound: { $ref: "#/components/schemas/GreetingDirectionUpdate" }
+            delaySeconds: { type: number, minimum: 0, maximum: 5 }
+        speech:
+          type: object
+          additionalProperties: false
+          properties:
+            responsiveness: { type: number, minimum: 1, maximum: 10 }
+            interruptionSensitivity: { type: number, minimum: 1, maximum: 10 }
+        recording:
+          type: object
+          additionalProperties: false
+          properties:
+            enabled: { type: boolean }
+        callHandling:
+          type: object
+          additionalProperties: false
+          properties:
+            maxCallDurationSeconds: { type: integer, minimum: 10, maximum: 1800 }
+            checkInAfterSeconds: { type: integer, enum: [10, 20, 30] }
+            checkInAttempts: { type: integer, enum: [0, 1, 2, 3] }
+            hangUpAfterCheckInSeconds: { type: integer, enum: [10, 20, 30] }
+    GreetingDirectionUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        mode: { type: string, enum: [aiFirst, customMessage, userFirst] }
+        text: { type: string, maxLength: 2000 }
+        instructions: { type: string, maxLength: 2000 }
+
+    EventType:
+      type: string
+      description: An event type, or `*` for all.
+      enum:
+        - "*"
+        - call.started
+        - call.ended
+        - call.analyzed
+        - call.no_answer
+        - call.failed
+        - call.blocked
+        - call.transferred
+        - call.transfer_failed
+        - tool.failed
+        - booking.created
+        - booking.cancelled
+        - booking.rescheduled
+        - recording.available
+        - sms.received
+        - sms.sent
+        - sms.failed
+        - workflow_run.completed
+        - workflow_run.failed
+        - number.provisioned
+        - number.released
+        - number.renewal_failed
+        - tenant.created
+        - tenant.updated
+        - tenant.suspended
+        - tenant.resumed
+        - tenant.deleted
+        - tenant.restored
+        - usage.threshold_reached
+        - endpoint.test
+    WebhookEndpointInput:
+      type: object
+      additionalProperties: false
+      properties:
+        url:
+          type: string
+          maxLength: 2048
+          description: A public `https` URL on port 443, with no credentials or fragment.
+        description: { type: string, maxLength: 200 }
+        enabledEvents:
+          type: array
+          minItems: 1
+          maxItems: 50
+          default: ["*"]
+          items: { $ref: "#/components/schemas/EventType" }
+        includeConversationData:
+          type: [boolean, "null"]
+          description: Include summary, extracted data, variables, booking and transcript in call payloads. `null` uses your account setting.
+        redactPII:
+          type: boolean
+          default: false
+          description: Mask emails, phone numbers and card-like numbers in conversation data.
+    WebhookEndpoint:
+      type: object
+      required: [object, id, url, enabledEvents, status]
+      properties:
+        object: { type: string, const: webhook_endpoint }
+        id: { $ref: "#/components/schemas/ObjectId" }
+        url: { type: string }
+        description: { type: [string, "null"] }
+        enabledEvents:
+          type: array
+          items: { $ref: "#/components/schemas/EventType" }
+        status: { type: string, enum: [enabled, disabled] }
+        disabledReason: { type: [string, "null"] }
+        failingSince: { type: [string, "null"], format: date-time }
+        includeConversationData: { type: [boolean, "null"] }
+        redactPII: { type: boolean }
+        createdAt: { type: [string, "null"], format: date-time }
+    WebhookEndpointWithSecret:
+      allOf:
+        - $ref: "#/components/schemas/WebhookEndpoint"
+        - type: object
+          required: [secret]
+          properties:
+            secret:
+              type: string
+              description: The signing secret (`whsec_...`). Returned only on create and rotation.
+
+    EventLogEntry:
+      type: object
+      required: [object, id, type, data, created, deliveries]
+      properties:
+        object: { type: string, const: event }
+        id: { $ref: "#/components/schemas/EventId" }
+        type: { type: string }
+        tenantId: { type: [string, "null"] }
+        data:
+          type: object
+          additionalProperties: true
+        created: { type: integer, description: "Unix seconds." }
+        deliveries:
+          type: array
+          items:
+            type: object
+            properties:
+              endpointId: { $ref: "#/components/schemas/ObjectId" }
+              status: { type: string }
+              attempts: { type: integer }
+              lastAttemptAt: { type: [string, "null"], format: date-time }
+              lastStatusCode: { type: [integer, "null"] }
+              lastError: { type: [string, "null"] }
+
+    Usage:
+      type: object
+      required: [object, from, to, currency, groupBy, granularity, total, data]
+      properties:
+        object: { type: string, const: usage }
+        from: { type: string, format: date-time }
+        to: { type: string, format: date-time }
+        currency: { type: string, const: usd }
+        groupBy: { type: string, enum: [tenant, type] }
+        granularity: { type: string, enum: [day, month] }
+        total: { type: number }
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              period: { type: string, description: "`YYYY-MM-DD` or `YYYY-MM`, UTC." }
+              tenantId: { type: string, description: "Present when `groupBy` is `tenant`." }
+              type:
+                type: string
+                description: Present when `groupBy` is `type`.
+                enum:
+                  - call_charge
+                  - message_charge
+                  - sms_charge
+                  - voice_generation_charge
+                  - antibot_detection_charge
+                  - workflow_charge
+                  - phone_number_charge
+                  - phone_number_purchase
+              amount: { type: number, description: "USD." }
+              count: { type: integer }
+              billedMinutes: { type: number }
+    CallCharge:
+      type: object
+      properties:
+        id: { $ref: "#/components/schemas/ObjectId" }
+        tenantId: { $ref: "#/components/schemas/ObjectId" }
+        callId: { type: [string, "null"], description: "Trillet's internal call identifier." }
+        callHistoryId:
+          type: [string, "null"]
+          description: The call history ID. Matches `data.call.id` in call events.
+        at: { type: string, format: date-time }
+        billedSeconds: { type: number }
+        ratePerMinute: { type: number }
+        amount: { type: number, description: "USD." }

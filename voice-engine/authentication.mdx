@@ -97,7 +97,7 @@ Today a partner builds a tenant's agent through node flows:
 1. `POST /v2/api/node-graphs` creates the node flow together with its agent and call flow. The flow starts as a draft. With a partner key, the new agent uses the model `platform-llm` unless the body names another allowed model in `llmModel` (an unknown model returns `400` `LLM_MODEL_INVALID`), and the call flow starts with speech responsiveness 10 and interruption sensitivity 5.5.
 2. Edit it with `PUT /v2/api/node-graphs/{id}` or `PATCH /v2/api/node-graphs/{id}/draft`, and check it with `POST /v2/api/node-graphs/{id}/validate`.
 3. `POST /v2/api/node-graphs/{id}/publish` makes it live. A flow must be published before it can take calls.
-4. `GET /v2/api/node-graphs/{id}` returns the flow with `pathway`, which holds the call flow ID (`pathway._id`) and the agent ID (`pathway.agent`).
+4. `GET /v2/api/node-graphs/{id}` returns the flow with `pathway`, which holds the call flow ID (`pathway._id`) and the agent (`pathway.agent`, whose `_id` is the agent ID).
 5. `PUT /v1/api/agents/{agentId}` sets the agent's voice, language, model and other agent settings.
 6. `PATCH /partner/v1/tenants/{tenantId}/call-flows/{callFlowId}/settings` sets the greeting, speech timing, recording and call handling timers. See [Call flow settings](/voice-engine/call-flow-settings).
 7. `POST /v1/api/agents/{agentId}/bind/{phoneNumberId}` assigns a number. See [Phone numbers](/voice-engine/phone-numbers#assign-a-number-to-an-agent).

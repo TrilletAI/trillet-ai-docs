@@ -1,0 +1,524 @@
+---
+title: "Trillet OEM quickstart: first customer, agent and phone call"
+sidebarTitle: "Quickstart"
+description: "Create a tenant for your first customer, give it a voice agent and a phone number, and place a call with the Trillet OEM white-label voice AI API. Examples in curl, Node.js and Python."
+---
+
+This guide takes you from a partner key to a real phone call in five steps. You will create a tenant for one customer, build a voice agent in it, give it a phone number and place an outbound call. Each step shows the request in curl, Node.js (built-in `fetch`, no SDK) and Python (`requests`), and the response fields the next step uses.
+
+You need Trillet OEM enabled on your account and a phone you can answer for the test call.
+
+## 1. Get a partner key
+
+Create a key in the **OEM API** section of your account settings. An owner or admin of your partner account can do this. Give it every scope for this guide. The key is shown once, so store it in your secrets manager.
+
+Every request sends the key as a bearer token: `Authorization: Bearer tpk_live_...`. Check it works:
+
+<CodeGroup>
+```bash cURL
+export TRILLET_PARTNER_KEY="tpk_live_..."
+
+curl https://api.trillet.ai/partner/v1/key \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY"
+```
+
+```js Node.js
+// Node.js 18 or later, run as an ES module (for example quickstart.mjs)
+const BASE = 'https://api.trillet.ai';
+const KEY = process.env.TRILLET_PARTNER_KEY; // tpk_live_...
+
+// A small helper used in every step of this guide.
+async function api(method, path, { body, tenantId, idempotencyKey } = {}) {
+  const headers = { Authorization: `Bearer ${KEY}` };
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (tenantId) headers['x-workspace-id'] = tenantId;
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey;
+  const res = await fetch(BASE + path, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(`${res.status} ${JSON.stringify(data)}`);
+  return data;
+}
+
+const key = await api('GET', '/partner/v1/key');
+console.log(key.mode, key.scopes);
+```
+
+```python Python
+# pip install requests
+import os
+import requests
+
+BASE = "https://api.trillet.ai"
+KEY = os.environ["TRILLET_PARTNER_KEY"]  # tpk_live_...
+
+# A small helper used in every step of this guide.
+def api(method, path, body=None, tenant_id=None, idempotency_key=None):
+    headers = {"Authorization": f"Bearer {KEY}"}
+    if tenant_id:
+        headers["x-workspace-id"] = tenant_id
+    if idempotency_key:
+        headers["Idempotency-Key"] = idempotency_key
+    r = requests.request(method, BASE + path, json=body, headers=headers, timeout=30)
+    if not r.ok:
+        raise RuntimeError(f"{r.status_code} {r.text}")
+    return r.json()
+
+key = api("GET", "/partner/v1/key")
+print(key["mode"], key["scopes"])
+```
+</CodeGroup>
+
+```json Response
+{
+  "object": "partner_key",
+  "id": "6720c1f4a9b3e2d1c0f5a7b8",
+  "mode": "live",
+  "scopes": ["tenants:read", "tenants:write", "resources:read", "resources:write", "calls:write", "numbers:write", "events:read", "webhooks:write", "usage:read"],
+  "tenantIds": [],
+  "partner": { "id": "671f0e2a8c4d3b1a2e5f6c7d", "name": "Example Health", "maxTenants": 100, "tenantCount": 0 }
+}
+```
+
+The Node.js and Python steps below reuse the `api` helper.
+
+## 2. Create a tenant for your customer
+
+A tenant is one of your customers: an isolated workspace with its own agents, numbers, call history and usage. Key it by your own customer ID in `externalId`. `Idempotency-Key` is required, so a retried request never creates two tenants. A monthly spend cap is optional.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.trillet.ai/partner/v1/tenants \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "Idempotency-Key: create-tenant-cust_8842" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "externalId": "cust_8842",
+    "name": "Harbour Dental",
+    "limits": { "monthlySpendCap": 100 }
+  }'
+```
+
+```js Node.js
+const tenant = await api('POST', '/partner/v1/tenants', {
+  idempotencyKey: 'create-tenant-cust_8842',
+  body: {
+    externalId: 'cust_8842',
+    name: 'Harbour Dental',
+    limits: { monthlySpendCap: 100 },
+  },
+});
+const tenantId = tenant.id;
+```
+
+```python Python
+tenant = api(
+    "POST",
+    "/partner/v1/tenants",
+    idempotency_key="create-tenant-cust_8842",
+    body={
+        "externalId": "cust_8842",
+        "name": "Harbour Dental",
+        "limits": {"monthlySpendCap": 100},
+    },
+)
+tenant_id = tenant["id"]
+```
+</CodeGroup>
+
+```json Response (201)
+{
+  "object": "tenant",
+  "id": "6a9622d2c1e8f3a4b5d6e7f8",
+  "externalId": "cust_8842",
+  "name": "Harbour Dental",
+  "status": "active",
+  "region": "us",
+  "metadata": {},
+  "limits": { "monthlySpendCap": 100 },
+  "suspendedAt": null,
+  "suspendedReason": null,
+  "deletedAt": null,
+  "createdAt": "2026-11-02T10:14:00.000Z"
+}
+```
+
+**Keep `id`.** It is the tenant ID. From here on, requests to standard endpoints send it in the `x-workspace-id` header to act inside this tenant. In curl, set it once: `export TENANT_ID="6a9622d2c1e8f3a4b5d6e7f8"`.
+
+## 3. Build and publish an agent
+
+Create a node flow in the tenant. This creates the flow together with its agent and call flow. The smallest working flow has two nodes: a conversation node where the agent talks with the caller, and an end node that closes the call, joined by one edge.
+
+With a partner key, the new agent starts on the model `platform-llm` with recommended speech settings, so no extra configuration is needed for a first call.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.trillet.ai/v2/api/node-graphs \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "x-workspace-id: $TENANT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Front desk",
+    "startNodeId": "greet",
+    "nodes": [
+      {
+        "nodeId": "greet",
+        "type": "conversation",
+        "name": "Greeting",
+        "config": {
+          "objective": "Say you are the assistant for Harbour Dental, ask how you can help, and answer questions about opening hours: Monday to Friday, 8am to 5pm.",
+          "prompt": "",
+          "requiredFields": []
+        }
+      },
+      {
+        "nodeId": "done",
+        "type": "end",
+        "name": "End call",
+        "config": {
+          "message": "Thank the caller and end the call politely.",
+          "disposition": "completed"
+        }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "source": "greet", "target": "done", "kind": "auto" }
+    ]
+  }'
+```
+
+```js Node.js
+const graph = await api('POST', '/v2/api/node-graphs', {
+  tenantId,
+  body: {
+    name: 'Front desk',
+    startNodeId: 'greet',
+    nodes: [
+      {
+        nodeId: 'greet',
+        type: 'conversation',
+        name: 'Greeting',
+        config: {
+          objective:
+            'Say you are the assistant for Harbour Dental, ask how you can help, and answer questions about opening hours: Monday to Friday, 8am to 5pm.',
+          prompt: '',
+          requiredFields: [],
+        },
+      },
+      {
+        nodeId: 'done',
+        type: 'end',
+        name: 'End call',
+        config: { message: 'Thank the caller and end the call politely.', disposition: 'completed' },
+      },
+    ],
+    edges: [{ id: 'e1', source: 'greet', target: 'done', kind: 'auto' }],
+  },
+});
+const graphId = graph._id;
+```
+
+```python Python
+graph = api(
+    "POST",
+    "/v2/api/node-graphs",
+    tenant_id=tenant_id,
+    body={
+        "name": "Front desk",
+        "startNodeId": "greet",
+        "nodes": [
+            {
+                "nodeId": "greet",
+                "type": "conversation",
+                "name": "Greeting",
+                "config": {
+                    "objective": "Say you are the assistant for Harbour Dental, ask how you can help, "
+                    "and answer questions about opening hours: Monday to Friday, 8am to 5pm.",
+                    "prompt": "",
+                    "requiredFields": [],
+                },
+            },
+            {
+                "nodeId": "done",
+                "type": "end",
+                "name": "End call",
+                "config": {
+                    "message": "Thank the caller and end the call politely.",
+                    "disposition": "completed",
+                },
+            },
+        ],
+        "edges": [{"id": "e1", "source": "greet", "target": "done", "kind": "auto"}],
+    },
+)
+graph_id = graph["_id"]
+```
+</CodeGroup>
+
+The response is `201` with the node flow. **Keep `_id`**, the node flow ID. The flow starts as a draft and cannot take calls until it is published.
+
+Publish it, then read it back to get the agent ID and the call flow ID:
+
+<CodeGroup>
+```bash cURL
+export GRAPH_ID="6a9624cc1b2c3d4e5f6a7b8c"
+
+curl -X POST https://api.trillet.ai/v2/api/node-graphs/$GRAPH_ID/publish \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "x-workspace-id: $TENANT_ID"
+
+curl https://api.trillet.ai/v2/api/node-graphs/$GRAPH_ID \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "x-workspace-id: $TENANT_ID"
+```
+
+```js Node.js
+await api('POST', `/v2/api/node-graphs/${graphId}/publish`, { tenantId });
+
+const flow = await api('GET', `/v2/api/node-graphs/${graphId}`, { tenantId });
+const agentId = flow.pathway.agent._id;
+const callFlowId = flow.pathway._id;
+```
+
+```python Python
+api("POST", f"/v2/api/node-graphs/{graph_id}/publish", tenant_id=tenant_id)
+
+flow = api("GET", f"/v2/api/node-graphs/{graph_id}", tenant_id=tenant_id)
+agent_id = flow["pathway"]["agent"]["_id"]
+call_flow_id = flow["pathway"]["_id"]
+```
+</CodeGroup>
+
+```json Response (GET, trimmed)
+{
+  "graph": { "_id": "6a9624cc1b2c3d4e5f6a7b8c", "name": "Front desk", "publishedVersion": 1 },
+  "pathway": {
+    "_id": "6a9623bb1b2c3d4e5f6a7b8c",
+    "name": "Front desk",
+    "promptType": "nodes",
+    "agent": { "_id": "6a9623aa1b2c3d4e5f6a7b8c" }
+  }
+}
+```
+
+**Keep `pathway.agent._id`** (the agent ID) and `pathway._id` (the call flow ID, used for [call flow settings](/voice-engine/call-flow-settings) such as the greeting). If the flow has a problem, publish returns `400` with `code: "NODE_GRAPH_INVALID"` and a `problems` list.
+
+## 4. Give the agent a phone number
+
+Search for an available number in the tenant, buy it through Trillet OEM so it is billed to your partner account, then bind it to the agent.
+
+<CodeGroup>
+```bash cURL
+# Search (standard endpoint, inside the tenant)
+curl "https://api.trillet.ai/v1/api/twilio/available-numbers?country=US&type=local&areaCode=512" \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "x-workspace-id: $TENANT_ID"
+
+# Buy (Trillet OEM endpoint)
+curl -X POST https://api.trillet.ai/partner/v1/tenants/$TENANT_ID/numbers \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "Idempotency-Key: number-cust_8842-1" \
+  -H "Content-Type: application/json" \
+  -d '{ "phoneNumber": "+15125550142", "country": "US", "type": "local" }'
+
+# Bind to the agent (standard endpoint, inside the tenant)
+export AGENT_ID="6a9623aa1b2c3d4e5f6a7b8c"
+export NUMBER_ID="6b0c4e1a9d2f3e4a5b6c7d8e"
+
+curl -X POST https://api.trillet.ai/v1/api/agents/$AGENT_ID/bind/$NUMBER_ID \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "x-workspace-id: $TENANT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```js Node.js
+const search = await api(
+  'GET',
+  '/v1/api/twilio/available-numbers?country=US&type=local&areaCode=512',
+  { tenantId },
+);
+const phoneNumber = search.numbers[0].phoneNumber;
+
+const number = await api('POST', `/partner/v1/tenants/${tenantId}/numbers`, {
+  idempotencyKey: `number-cust_8842-${phoneNumber}`,
+  body: { phoneNumber, country: 'US', type: 'local' },
+});
+const numberId = number.id;
+
+await api('POST', `/v1/api/agents/${agentId}/bind/${numberId}`, { tenantId, body: {} });
+```
+
+```python Python
+search = api(
+    "GET",
+    "/v1/api/twilio/available-numbers?country=US&type=local&areaCode=512",
+    tenant_id=tenant_id,
+)
+phone_number = search["numbers"][0]["phoneNumber"]
+
+number = api(
+    "POST",
+    f"/partner/v1/tenants/{tenant_id}/numbers",
+    idempotency_key=f"number-cust_8842-{phone_number}",
+    body={"phoneNumber": phone_number, "country": "US", "type": "local"},
+)
+number_id = number["id"]
+
+api("POST", f"/v1/api/agents/{agent_id}/bind/{number_id}", tenant_id=tenant_id, body={})
+```
+</CodeGroup>
+
+```json Response (buy, 201)
+{
+  "object": "phone_number",
+  "id": "6b0c4e1a9d2f3e4a5b6c7d8e",
+  "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
+  "phoneNumber": "+15125550142",
+  "provider": "telnyx",
+  "type": "local",
+  "external": false,
+  "status": "active",
+  "agentId": null,
+  "callFlowId": null,
+  "billing": { "monthlyPrice": 4.99, "nextChargeAt": "2026-12-02T10:20:00.000Z", "status": "active" },
+  "createdAt": "2026-11-02T10:20:00.000Z"
+}
+```
+
+**Keep `id`**, the phone number ID, for binding. Buying charges the first month to your partner account at the standard Trillet number price (from $4.99 per month). The bind call returns the agent. Once bound, the number answers inbound calls with this agent: call it now to hear the agent.
+
+To use a number you already own instead, register it over SIP or Twilio. See [Bring your own numbers](/voice-engine/phone-numbers#bring-your-own-numbers).
+
+### Optional: watch the call events
+
+Add a webhook endpoint before the next step to receive signed `call.started` and `call.ended` events for every tenant. The URL must be a public `https` URL you control. The response includes the signing `secret` (`whsec_...`) once, so store it. See [Verifying signatures](/voice-engine/events#verifying-signatures).
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.trillet.ai/partner/v1/webhook-endpoints \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://api.example.com/trillet/events",
+    "enabledEvents": ["call.started", "call.ended"]
+  }'
+```
+
+```js Node.js
+const endpoint = await api('POST', '/partner/v1/webhook-endpoints', {
+  body: {
+    url: 'https://api.example.com/trillet/events',
+    enabledEvents: ['call.started', 'call.ended'],
+  },
+});
+console.log(endpoint.secret); // whsec_..., shown only now
+```
+
+```python Python
+endpoint = api(
+    "POST",
+    "/partner/v1/webhook-endpoints",
+    body={
+        "url": "https://api.example.com/trillet/events",
+        "enabledEvents": ["call.started", "call.ended"],
+    },
+)
+print(endpoint["secret"])  # whsec_..., shown only now
+```
+</CodeGroup>
+
+`call.started` arrives when the call connects to the agent. `call.ended` arrives after the call's post-call processing finishes, with the duration, cost and (by default) the transcript and summary in `data.call`.
+
+## 5. Place an outbound call
+
+Call your own phone from the tenant's agent. Use E.164 format for `to`. The agent's number is used as the caller ID.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.trillet.ai/v1/api/call \
+  -H "Authorization: Bearer $TRILLET_PARTNER_KEY" \
+  -H "x-workspace-id: $TENANT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "+15125550177",
+    "call_agent_id": "'"$AGENT_ID"'",
+    "from_phone_number_id": "'"$NUMBER_ID"'"
+  }'
+```
+
+```js Node.js
+const call = await api('POST', '/v1/api/call', {
+  tenantId,
+  body: {
+    to: '+15125550177', // your phone
+    call_agent_id: agentId,
+    from_phone_number_id: numberId,
+  },
+});
+console.log(call.callId);
+```
+
+```python Python
+call = api(
+    "POST",
+    "/v1/api/call",
+    tenant_id=tenant_id,
+    body={
+        "to": "+15125550177",  # your phone
+        "call_agent_id": agent_id,
+        "from_phone_number_id": number_id,
+    },
+)
+print(call["callId"])
+```
+</CodeGroup>
+
+```json Response
+{
+  "status": "success",
+  "call_agent_id": "6a9623aa1b2c3d4e5f6a7b8c",
+  "callId": "6b3a1c0f9e8d7c6b5a4f3e2d",
+  "roomName": "...",
+  "jobId": "..."
+}
+```
+
+Your phone rings within a few seconds. `callId` is the call history ID: it matches `data.call.id` in call events and `callHistoryId` in [per-call usage](/voice-engine/usage-and-billing#per-call). Calls are charged to your partner account at the standard Trillet rates, from $0.12 per minute. See [Start an outbound call](/voice-engine/authentication#start-an-outbound-call) for every field.
+
+## What you just built
+
+- A **tenant** for one customer, keyed by your customer ID, with a monthly spend cap.
+- A **voice agent** in that tenant, built from a published node flow.
+- A **phone number** bought for the tenant and billed to your partner account, answering with the agent.
+- An **outbound call** placed by the agent, and optionally **signed events** for it.
+
+Repeat steps 2 to 4 for each customer your platform onboards. The same partner key works for all of them.
+
+## Next steps
+
+<Columns cols={2}>
+  <Card title="Set the greeting and call handling" icon="sliders" href="/voice-engine/call-flow-settings">
+    Change the greeting, speech timing, recording and timers on the call flow.
+  </Card>
+  <Card title="Handle events" icon="bolt" href="/voice-engine/events">
+    Verify signatures, retries, the event log and redelivery.
+  </Card>
+  <Card title="Manage tenants" icon="building" href="/voice-engine/tenants">
+    Suspend, resume, delete and restore customers.
+  </Card>
+  <Card title="Usage and spend caps" icon="receipt" href="/voice-engine/usage-and-billing">
+    Usage per tenant and per call, and monthly caps.
+  </Card>
+  <Card title="API reference" icon="code" href="/voice-engine/api-reference/create-a-tenant">
+    Every Trillet OEM endpoint, generated from the OpenAPI specification.
+  </Card>
+  <Card title="OpenAPI specification" icon="file-code" href="https://docs.trillet.ai/openapi/trillet-oem.yaml">
+    Download the spec for client generators and API tools.
+  </Card>
+</Columns>
+
+Trillet OEM is in early access with design partners. [Contact us](https://form.typeform.com/to/qRRENIBp) to join.

@@ -1,0 +1,52 @@
+---
+title: "Trillet OEM changelog"
+sidebarTitle: "Changelog"
+description: "Dated changes to Trillet OEM, the white-label voice AI API for EHR vendors, telecom providers and software platforms."
+---
+
+Changes to the Trillet OEM API and its documentation, newest first. Within `/partner/v1` changes are additive, so existing integrations keep working. The `Trillet-Version` response header carries the date of the release that served each request.
+
+<Update label="October 28, 2026" description="Trillet-Version: 2026-10-28" tags={["early access"]}>
+
+First release to design partners in early access.
+
+**Partner keys**
+- [Partner keys](/voice-engine/authentication) (`tpk_live_...`) that belong to your account, not a person, created and revoked in the **OEM API** section of account settings.
+- Scopes per key, and optional restriction of a key to some tenants.
+- `GET /partner/v1/key` to check a key's scopes and your tenant limit.
+- A partner key can call a defined set of standard endpoints inside a tenant, with the tenant ID in `x-workspace-id`: agents, node flows, call flows, knowledge bases, numbers, calls, batch calls, call history, recordings, workflows and secrets.
+
+**Tenants**
+- [Create, list, update, suspend, resume, delete and restore](/voice-engine/tenants) a tenant per customer, keyed by your own `externalId`.
+- Suspension stops a tenant's outbound calls, SMS and workflow runs, and answers and ends inbound calls, while keeping its configuration and history.
+- Deleted tenants can be restored for 30 days.
+
+**Phone numbers**
+- [Buy numbers per tenant](/voice-engine/phone-numbers), billed to your partner account at the standard Trillet number price, with monthly renewal.
+- Bring your own numbers over a SIP trunk or a Twilio account.
+- Release numbers individually, or all at once when a tenant is deleted.
+
+**Agents and call flows**
+- Node flows created with a partner key start on the `platform-llm` model and recommended speech settings (responsiveness 10, interruption sensitivity 5.5).
+- [Call flow settings](/voice-engine/call-flow-settings): read and change the greeting, speech timing, recording and call handling timers on a tenant's call flow.
+
+**Events**
+- [Signed webhooks](/voice-engine/events) in the Standard Webhooks format, for all tenants, with retries for about 22 hours, an event log kept for 30 days, and redelivery.
+- Call events: `call.started`, `call.ended`, `call.analyzed`, `call.no_answer`, `call.failed` and `call.blocked`, with conversation data on by default and optional PII redaction.
+- In-call events: `call.transferred`, `call.transfer_failed` and `tool.failed`.
+- Booking, recording, workflow run, number, tenant and usage events.
+- Recording download for a tenant's call.
+
+**Usage and spend caps**
+- [Usage](/voice-engine/usage-and-billing) totals by day or month, per tenant or per charge type, and one row per call charge.
+- Monthly spend caps per tenant, with alerts at 80% and 100%. Inbound calls continue at the cap.
+
+**Conventions**
+- `Idempotency-Key` on tenant creation and number purchase and registration, so retries never create anything twice.
+- One error format with stable `code` values, cursor pagination and the `Trillet-Version` response header.
+
+**Documentation**
+- A [quickstart](/voice-engine/quickstart) from partner key to first phone call, with curl, Node.js and Python.
+- An [OpenAPI 3.1 specification](https://docs.trillet.ai/openapi/trillet-oem.yaml) and a generated [API reference](/voice-engine/api-reference/create-a-tenant).
+
+</Update>
