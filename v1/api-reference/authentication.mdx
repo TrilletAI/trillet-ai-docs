@@ -1,9 +1,10 @@
 ---
-title: 'Authentication'
-description: 'Learn how to authenticate your API requests'
+title: "API keys and workspace authentication"
+sidebarTitle: "Authentication"
+description: "Authenticate Trillet API requests with an API key in the x-api-key header and a workspace ID in x-workspace-id. How to create keys and keep them secure."
 ---
 
-Customer API calls use two headers: `x-api-key` and `x-workspace-id`. Send both on every request.
+Trillet API requests use API keys and workspace authentication: send your API key in the `x-api-key` header and the workspace ID in the `x-workspace-id` header on every request.
 
 ```bash
 curl https://api.trillet.ai/v1/api/workspaces \
