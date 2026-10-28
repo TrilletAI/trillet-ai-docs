@@ -1,16 +1,16 @@
 ---
 title: "Authentication"
 sidebarTitle: "Authentication"
-description: "Partner keys, scopes, tenant restrictions, and calling standard endpoints on behalf of a tenant."
+description: "Trillet OEM partner keys, scopes, tenant restrictions, and calling standard endpoints on behalf of a tenant."
 ---
 
 <Note>
-  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
 </Note>
 
 ## Partner keys
 
-Every Voice Engine request is authenticated with a **partner key**, sent as a bearer token in the `Authorization` header:
+Every Trillet OEM request is authenticated with a **partner key**, sent as a bearer token in the `Authorization` header:
 
 ```bash
 curl https://api.trillet.ai/partner/v1/key \
@@ -198,7 +198,7 @@ Creating and updating simple prompt call flows (`POST` and `PUT /v1/api/call-flo
 | `PUT` | `/v1/api/twilio/phone-numbers/{phoneNumberId}/config` | `resources:write` |
 | `PUT` | `/v1/api/twilio/phone-numbers/{phoneNumberId}/config-messages` | `resources:write` |
 
-Buying, registering and releasing numbers use the [Voice Engine number endpoints](/voice-engine/phone-numbers), not the standard purchase endpoint.
+Buying, registering and releasing numbers use the [Trillet OEM number endpoints](/voice-engine/phone-numbers), not the standard purchase endpoint.
 
 **Calls**
 
@@ -247,7 +247,7 @@ Use `POST /v1/api/call` for outbound calls. See [Start an outbound call](#start-
 | `POST` | `/v2/api/call-history/export-csv` | `resources:read` |
 | `GET` | `/v2/api/recordings/{callHistoryId}` | `resources:read` |
 
-`GET /v2/api/recordings/{callHistoryId}` returns the audio file for a call in the tenant. The [recording download](/voice-engine/events#recordings) on the Voice Engine API returns the same file.
+`GET /v2/api/recordings/{callHistoryId}` returns the audio file for a call in the tenant. The [recording download](/voice-engine/events#recordings) on Trillet OEM returns the same file.
 
 **Workflows**
 
@@ -345,7 +345,7 @@ See [Initiate outbound call](/v1/api-reference/endpoints/calls/initiate-call) fo
 A tenant that is not yours returns `404` `tenant_not_found`, so a key can never confirm another partner's tenant IDs. Your own partner account is not a tenant: a partner key cannot use it as `x-workspace-id`.
 
 <Note>
-  The partner key check uses the [Voice Engine error format](/voice-engine/conventions#errors). Once a request passes the check, the standard endpoint answers in its usual format.
+  The partner key check uses the [Trillet OEM error format](/voice-engine/conventions#errors). Once a request passes the check, the standard endpoint answers in its usual format.
 </Note>
 
 ## Authentication errors
@@ -357,7 +357,7 @@ A tenant that is not yours returns `404` `tenant_not_found`, so a key can never 
 | `400` | `invalid_tenant` | `x-workspace-id` is not a valid tenant ID |
 | `401` | `partner_key_required` | A `/partner/v1` route was called without a partner key |
 | `401` | `invalid_api_key` | The key is malformed, unknown or revoked |
-| `401` | `partner_not_enabled` | The Voice Engine API is not enabled for this account |
+| `401` | `partner_not_enabled` | Trillet OEM is not enabled for this account |
 | `403` | `missing_scope` | The key lacks the scope this endpoint needs |
 | `403` | `route_not_available` | The standard endpoint is not available to partner keys |
 | `403` | `tenant_not_allowed` | The key is restricted and this tenant is not in its list (standard endpoints) |

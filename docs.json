@@ -301,11 +301,11 @@
         ]
       },
       {
-        "tab": "Voice Engine API (Coming soon)",
+        "tab": "Trillet OEM (Coming soon)",
         "icon": "tower-broadcast",
         "groups": [
           {
-            "group": "Voice Engine API",
+            "group": "Trillet OEM",
             "icon": "tower-broadcast",
             "pages": [
               "voice-engine/overview",

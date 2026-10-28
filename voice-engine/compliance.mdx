@@ -1,16 +1,16 @@
 ---
 title: "Compliance and data"
 sidebarTitle: "Compliance and data"
-description: "HIPAA, data residency, what data events carry, and retention for Voice Engine partners."
+description: "HIPAA, data residency, what data events carry, and retention for Trillet OEM partners."
 ---
 
 <Note>
-  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
 </Note>
 
 ## HIPAA
 
-Trillet supports HIPAA workloads. A Business Associate Agreement is available on Agency and Enterprise accounts, including Voice Engine partners, at no extra fee. Execute the BAA before any tenant processes protected health information. See our [Terms of Use](https://trillet.ai/terms-of-use).
+Trillet supports HIPAA workloads. A Business Associate Agreement is available on Agency and Enterprise accounts, including Trillet OEM partners, at no extra fee. Execute the BAA before any tenant processes protected health information. See our [Terms of Use](https://trillet.ai/terms-of-use).
 
 ## Data residency
 
@@ -32,7 +32,7 @@ The event log keeps events for 30 days.
 - Each tenant is a separate workspace. A partner key can reach only its own tenants, and a key can be restricted further to a list of tenants.
 - Requests naming another partner's tenant return `404`.
 - Partner keys are stored as hashes. Webhook signing secrets are stored encrypted.
-- Tenant and phone number changes made through the Voice Engine API are written to the tenant's audit log with the ID of the key that made them.
+- Tenant and phone number changes made through Trillet OEM are written to the tenant's audit log with the ID of the key that made them.
 
 ## Branding
 

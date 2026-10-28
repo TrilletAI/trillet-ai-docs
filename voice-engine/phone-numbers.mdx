@@ -1,11 +1,11 @@
 ---
 title: "Phone numbers"
 sidebarTitle: "Phone numbers"
-description: "Buy phone numbers for each tenant, billed to your partner account, or bring your own Twilio account or SIP carrier."
+description: "Buy phone numbers for each Trillet OEM tenant, billed to your partner account, or bring your own Twilio account or SIP carrier."
 ---
 
 <Note>
-  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
 </Note>
 
 Each tenant needs at least one number for phone calls. You can buy numbers through Trillet, bring your own, or mix both across tenants.
@@ -43,11 +43,11 @@ Each tenant needs at least one number for phone calls. You can buy numbers throu
 }
 ```
 
-`billing` is present for numbers bought through the Voice Engine API and `null` for your own numbers. `billing.status` is `active` or `past_due`.
+`billing` is present for numbers bought through Trillet OEM and `null` for your own numbers. `billing.status` is `active` or `past_due`.
 
 ## Buy a number
 
-Find a number with the standard [available numbers](/v1/api-reference/endpoints/phone-numbers/available-numbers) endpoint, sending the tenant ID in `x-workspace-id`. Then buy it through the Voice Engine API, so it is billed to your partner account instead of a card:
+Find a number with the standard [available numbers](/v1/api-reference/endpoints/phone-numbers/available-numbers) endpoint, sending the tenant ID in `x-workspace-id`. Then buy it through Trillet OEM, so it is billed to your partner account instead of a card:
 
 ```bash
 curl -X POST https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/numbers \
