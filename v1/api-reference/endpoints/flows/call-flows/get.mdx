@@ -87,7 +87,7 @@ description: "Retrieve a specific call flow by its ID."
       The maximum duration for the call, measured in seconds.
     </ResponseField>
     <ResponseField name="endCallOnSilence" type="number">
-      The duration of silence that triggers the end of the call, measured in seconds.
+      Check in after: seconds of caller silence before the agent checks in to ask if anyone is there. Whole seconds, 5 to 30. It does not end the call.
     </ResponseField>
   </ResponseField>
   <ResponseField name="welcomeMessageConfig" type="object">
