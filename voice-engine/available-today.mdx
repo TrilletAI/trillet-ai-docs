@@ -1,10 +1,10 @@
 ---
 title: "Building on Trillet today"
 sidebarTitle: "Available today"
-description: "How software partners run Trillet voice agents for their customers with white-label and the standard API, what the Voice Engine API adds, and the status of each part."
+description: "How software partners run Trillet voice agents for their customers with white-label and the standard API, what Trillet OEM adds, and the status of each part."
 ---
 
-The Voice Engine API is in early access with design partners. You do not need it to start: partners already run Trillet for their customers with white-label and the standard API. This page explains that setup, what the Voice Engine API adds, and what is built today.
+Trillet OEM is in early access with design partners. You do not need it to start: partners already run Trillet for their customers with white-label and the standard API. This page explains that setup, what Trillet OEM adds, and what is built today.
 
 ## The setup that works today
 
@@ -34,9 +34,9 @@ curl https://api.trillet.ai/v1/api/agents \
   A Business Associate Agreement is available on Agency and Enterprise accounts at no extra fee. Execute it before any customer workspace handles protected health information.
 </Note>
 
-## What the Voice Engine API adds
+## What Trillet OEM adds
 
-| Today | With the Voice Engine API |
+| Today | With Trillet OEM |
 |---|---|
 | API keys belong to a person and reach every workspace that person can access | [Partner keys](/voice-engine/authentication) belong to your account, with scopes and optional tenant restrictions |
 | Client workspaces are created in the dashboard | [Tenants](/voice-engine/tenants) are created, suspended, deleted and restored by API, keyed by your own customer ID, with safe retries |
@@ -54,9 +54,12 @@ curl https://api.trillet.ai/v1/api/agents \
 | [Partner keys](/voice-engine/authentication), scopes and tenant restrictions | Built, in early access |
 | [Tenants](/voice-engine/tenants): create, update, suspend, resume, delete and restore | Built, in early access |
 | [Phone numbers](/voice-engine/phone-numbers): partner-billed purchase, release, and bring your own (SIP or Twilio) | Built, in early access |
+| [Call flow settings](/voice-engine/call-flow-settings): greeting, speech, recording and call handling | Built, in early access |
+| Node flows created with a partner key start on `platform-llm` with recommended speech settings | Built, in early access |
 | [Signed events](/voice-engine/events), event log and redelivery | Built, in early access |
 | [Usage and spend caps](/voice-engine/usage-and-billing) | Built, in early access |
-| `call.started`, transfer, `tool.failed` and `sms.*` events | Planned |
+| In-call events: `call.started`, `call.transferred`, `call.transfer_failed`, `tool.failed` and `call.blocked` | Built, in early access |
+| `sms.*` events | Planned |
 | Templates and rollouts | Planned |
 | Embedding | Planned |
 | Sandbox environment | Planned |

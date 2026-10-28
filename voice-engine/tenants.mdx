@@ -1,11 +1,11 @@
 ---
 title: "Tenants"
 sidebarTitle: "Tenants"
-description: "Create, update, suspend, delete and restore a workspace for each of your customers."
+description: "Create, update, suspend, delete and restore a workspace for each of your customers with Trillet OEM."
 ---
 
 <Note>
-  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
 </Note>
 
 A tenant is one of your customers. It is an isolated workspace with its own agents, phone numbers, call history, knowledge bases, workflows and usage. Tenants inherit your white-label branding when your account has white-label enabled, and they draw on your account for billing, so a tenant never needs its own card or balance.
@@ -63,7 +63,8 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
     "externalId": "cust_8842",
     "name": "Harbour Dental",
     "region": "us",
-    "metadata": { "plan": "pro" }
+    "metadata": { "plan": "pro" },
+    "limits": { "monthlySpendCap": 500 }
   }'
 ```
 
@@ -79,6 +80,9 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
 <ParamField body="metadata" type="object">
   Your own data, up to 8 KB.
 </ParamField>
+<ParamField body="limits.monthlySpendCap" type="number | null">
+  Monthly spend cap in USD, 0 or more. `null` or leaving it out creates the tenant with no cap. See [Spend caps](/voice-engine/usage-and-billing#spend-caps).
+</ParamField>
 
 Returns `201` with the tenant. `Idempotency-Key` is required.
 
@@ -91,7 +95,7 @@ Each tenant has a wallet linked to your account and starts with no agents, flows
 | `409` | `tenant_exists` | A live tenant already has this `externalId` |
 | `409` | `tenant_deleted_restorable` | A deleted tenant with this `externalId` can still be restored |
 | `409` | `tenant_limit_reached` | Your account is at its tenant limit (`maxTenants` on [`GET /key`](/voice-engine/authentication#check-a-key)) |
-| `400` | `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_region` | A field is invalid |
+| `400` | `invalid_request`, `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_limits` | A field is invalid. `error.param` names it when the request failed schema validation. |
 
 ## List and look up tenants
 
@@ -103,7 +107,7 @@ curl https://api.trillet.ai/partner/v1/tenants/by-external-id/cust_8842 \
   -H "Authorization: Bearer tpk_live_..."
 ```
 
-`GET /tenants` accepts `status` (`active`, `suspended` or `provisioning_failed`), `externalId`, `limit` and `starting_after`. Deleted tenants are not listed or returned by `GET`; keep the ID if you may restore it. See [Pagination](/voice-engine/conventions#pagination).
+`GET /tenants` accepts `status` (`active`, `suspended` or `provisioning_failed`), `externalId`, `limit` and `starting_after`. Deleted tenants are not listed or returned by `GET`; keep the ID if you may restore it. A `starting_after` that is not a tenant ID returns `400` `invalid_cursor`. See [Pagination](/voice-engine/conventions#pagination).
 
 ## Update a tenant
 
@@ -143,11 +147,11 @@ While a tenant is suspended:
 - You cannot buy numbers for it (`409` `tenant_suspended`).
 - Numbers, agents, configuration and history are kept. You can still read and change them.
 
-`POST /resume` restores traffic immediately. `reason` is optional, up to 500 characters, and is returned as `suspendedReason`.
+`POST /resume` restores traffic immediately. `reason` is optional, up to 500 characters (`400` `invalid_request` otherwise), and is returned as `suspendedReason`.
 
 ## Delete and restore
 
-`DELETE` releases the tenant's numbers, soft-deletes its flows, agents and knowledge bases, and soft-deletes the tenant. It returns the tenant with status `deleted`.
+`DELETE` releases the tenant's numbers (each one sends `number.released` with `reason: "tenant_deleted"`), soft-deletes its flows, agents and knowledge bases, and soft-deletes the tenant. It returns the tenant with status `deleted`.
 
 `POST /restore` brings a deleted tenant back within 30 days. After that it returns `410` `restore_window_expired`. Other restore errors: `409` `tenant_not_deleted`, and `409` `tenant_exists` if a live tenant has taken its `externalId` since.
 

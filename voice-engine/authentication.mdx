@@ -1,16 +1,16 @@
 ---
 title: "Authentication"
 sidebarTitle: "Authentication"
-description: "Partner keys, scopes, tenant restrictions, and calling standard endpoints on behalf of a tenant."
+description: "Trillet OEM partner keys, scopes, tenant restrictions, and calling standard endpoints on behalf of a tenant."
 ---
 
 <Note>
-  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
 </Note>
 
 ## Partner keys
 
-Every Voice Engine request is authenticated with a **partner key**, sent as a bearer token in the `Authorization` header:
+Every Trillet OEM request is authenticated with a **partner key**, sent as a bearer token in the `Authorization` header:
 
 ```bash
 curl https://api.trillet.ai/partner/v1/key \
@@ -19,10 +19,10 @@ curl https://api.trillet.ai/partner/v1/key \
 
 - Keys start with `tpk_live_`. Keys can also be created with the `tpk_sandbox_` prefix, but sandbox tenants are not available yet, so use live keys.
 - A key is shown **once**, when you create it. Trillet stores only a hash, so a lost key cannot be recovered. Create a new one and revoke the old one.
-- Keys are created and revoked in the Partner Keys section of your account settings, by an owner or admin of your partner account. Each key shows its name, prefix, scopes, allowed tenants and when it was last used.
+- Keys are created and revoked in the **OEM API** section of your account settings, by an owner or admin of your partner account. Each key shows its name, prefix, scopes, allowed tenants and when it was last used.
 - A key acts as your partner account, not as a person, so it keeps working when staff leave. Keys do not expire. Revoking a key takes effect immediately.
 - An account can hold up to 50 active keys.
-- Send a partner key only in `Authorization`. Sending it in `x-api-key` is refused, and sending both a partner key and an `x-api-key` returns `400` `conflicting_credentials`.
+- Send a partner key only in `Authorization`. Sending it in `x-api-key` is refused with `401`, and sending both a partner key and an `x-api-key` returns `400` `conflicting_credentials`.
 
 <Warning>
   Treat partner keys like passwords. Keep them on your server, never in a browser or mobile app.
@@ -50,6 +50,8 @@ curl https://api.trillet.ai/partner/v1/key \
 
 `maxTenants` is the number of tenants your account may hold. Ask your account manager to raise it.
 
+`tenantCount` is the number of tenants counted against `maxTenants`: every tenant your account holds that is `active`, `suspended` or `provisioning_failed`. It goes up when a tenant is created or restored and down when one is deleted, so deleted tenants are not counted, even while they can still be restored. It covers your whole account, not only the tenants a restricted key can see.
+
 ## Scopes
 
 Give each key only the scopes it needs. A new key has every scope unless you choose fewer.
@@ -58,7 +60,7 @@ Give each key only the scopes it needs. A new key has every scope unless you cho
 |---|---|
 | `tenants:read` | List and read tenants |
 | `tenants:write` | Create, update, suspend, resume, delete and restore tenants, and set tenant spend caps |
-| `resources:read` | Read agents, call flows, knowledge bases, numbers, call history, workflows and recordings in tenants |
+| `resources:read` | Read agents, call flows, node flows, knowledge bases, numbers, call history, workflows and recordings in tenants |
 | `resources:write` | Create, change and delete those resources |
 | `calls:write` | Start outbound calls, web calls and batch calls, and run or activate workflows |
 | `numbers:write` | Buy, register and release phone numbers (buying costs money) |
@@ -86,29 +88,265 @@ curl https://api.trillet.ai/v1/api/agents \
   -H "x-workspace-id: 6a9622d2c1e8f3a4b5d6e7f8"
 ```
 
-Access is deny by default. Only the endpoints below are available to partner keys, each with the scope shown.
+Access is deny by default. Only the endpoints below are available to partner keys, each with the scope shown. Any other standard endpoint returns `403` `route_not_available`.
 
-| Area | Available | Scope |
+### Building an agent
+
+Today a partner builds a tenant's agent through node flows:
+
+1. `POST /v2/api/node-graphs` creates the node flow together with its agent and call flow. The flow starts as a draft. With a partner key, the new agent uses the model `platform-llm` unless the body names another allowed model in `llmModel` (an unknown model returns `400` `LLM_MODEL_INVALID`), and the call flow starts with speech responsiveness 10 and interruption sensitivity 5.5.
+2. Edit it with `PUT /v2/api/node-graphs/{id}` or `PATCH /v2/api/node-graphs/{id}/draft`, and check it with `POST /v2/api/node-graphs/{id}/validate`.
+3. `POST /v2/api/node-graphs/{id}/publish` makes it live. A flow must be published before it can take calls.
+4. `GET /v2/api/node-graphs/{id}` returns the flow with `pathway`, which holds the call flow ID (`pathway._id`) and the agent (`pathway.agent`, whose `_id` is the agent ID).
+5. `PUT /v1/api/agents/{agentId}` sets the agent's voice, language, model and other agent settings.
+6. `PATCH /partner/v1/tenants/{tenantId}/call-flows/{callFlowId}/settings` sets the greeting, speech timing, recording and call handling timers. See [Call flow settings](/voice-engine/call-flow-settings).
+7. `POST /v1/api/agents/{agentId}/bind/{phoneNumberId}` assigns a number. See [Phone numbers](/voice-engine/phone-numbers#assign-a-number-to-an-agent).
+
+Creating and updating simple prompt call flows (`POST` and `PUT /v1/api/call-flows`) is not available to partner keys yet.
+
+### Available endpoints
+
+**Agents**
+
+| Method | Path | Scope |
 |---|---|---|
-| Agents | List, get, create and delete agents; unassign a number from an agent; list available agents; list, search and preview voices | `resources:read` to read and preview, `resources:write` to change |
-| Call flows | List and get call flows and their metadata; list, update, activate, restore and delete drafts; archive, restore and delete call flows; skill prompt defaults | `resources:read` / `resources:write` |
-| Node flows | List, get, validate and simulate node graphs; list templates, versions and runs; restore a version; duplicate, archive and delete; delete a draft; test a code node | `resources:read` / `resources:write` |
-| Knowledge bases | List, get, create, update and delete knowledge bases; add text and files; delete files; usage and limits | `resources:read` / `resources:write` |
-| Phone numbers | Available countries, available numbers and prices; list the tenant's numbers; get and update a number's configuration (including assigning an agent) | `resources:read` / `resources:write` |
-| Calls | Start an outbound call; connect and disconnect a web call | `calls:write` |
-| Batch calls | Template, validate and preview a batch; create a batch (`calls:write`); get a batch, its status, calls and results; remove a contact; delete a batch; batch history | `resources:read` / `resources:write` / `calls:write` |
-| Call history | List, get and resolve calls; metrics and daily metrics; phonebook; filter options; CSV export | `resources:read` |
-| Workflows | List, get, create, update, delete, duplicate, pause and test workflows; list runs, get, cancel a run; schedule preview; webhook sample; live view. Activate, run and retry need `calls:write`. | `resources:read` / `resources:write` / `calls:write` |
-| Workspace secrets | List, create, update and delete secrets | `resources:read` / `resources:write` |
+| `GET` | `/v1/api/agents` | `resources:read` |
+| `GET` | `/v1/api/agents/{agentId}` | `resources:read` |
+| `GET` | `/v1/api/agents/available` | `resources:read` |
+| `POST` | `/v1/api/agents` | `resources:write` |
+| `PUT` | `/v1/api/agents/{agentId}` | `resources:write` |
+| `DELETE` | `/v1/api/agents/{agentId}` | `resources:write` |
+| `POST` | `/v1/api/agents/{agentId}/bind/{phoneNumberId}` | `resources:write` |
+| `POST` | `/v1/api/agents/{agentId}/release/{phoneNumberId}` | `resources:write` |
+| `GET` | `/v1/api/agents/voices` | `resources:read` |
+| `POST` | `/v1/api/agents/voices/search` | `resources:read` |
+| `POST` | `/v1/api/agents/voices/preview` | `resources:read` |
+| `POST` | `/v1/api/agents/voices/cartesia/preview` | `resources:read` |
 
-Buying, registering and releasing numbers use the [Voice Engine number endpoints](/voice-engine/phone-numbers), not the standard purchase endpoint.
+**Node flows**
 
-Not available to partner keys yet: creating and updating call flows, updating agents, binding a number with `POST /v1/api/agents/{agentId}/bind/{phoneNumberId}`, deactivating drafts, attaching knowledge bases to flows, standard recording endpoints (use the [recording download](/voice-engine/events#recordings) instead), third-party credentials, account, billing, wallet, team members and roles, domains, and API key management. These return `403` `route_not_available`.
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v2/api/node-graphs` | `resources:read` |
+| `GET` | `/v2/api/node-graphs/templates` | `resources:read` |
+| `GET` | `/v2/api/node-graphs/{id}` | `resources:read` |
+| `POST` | `/v2/api/node-graphs` | `resources:write` |
+| `PUT` | `/v2/api/node-graphs/{id}` | `resources:write` |
+| `PATCH` | `/v2/api/node-graphs/{id}/draft` | `resources:write` |
+| `DELETE` | `/v2/api/node-graphs/{id}/draft` | `resources:write` |
+| `POST` | `/v2/api/node-graphs/{id}/validate` | `resources:read` |
+| `POST` | `/v2/api/node-graphs/{id}/simulate` | `resources:read` |
+| `POST` | `/v2/api/node-graphs/{id}/publish` | `resources:write` |
+| `POST` | `/v2/api/node-graphs/{id}/apply-live` | `resources:write` |
+| `GET` | `/v2/api/node-graphs/{id}/versions` | `resources:read` |
+| `POST` | `/v2/api/node-graphs/{id}/versions/{version}/restore` | `resources:write` |
+| `GET` | `/v2/api/node-graphs/{id}/runs` | `resources:read` |
+| `GET` | `/v2/api/node-graphs/{id}/runs/{runId}` | `resources:read` |
+| `POST` | `/v2/api/node-graphs/{id}/test-code` | `resources:write` |
+| `POST` | `/v2/api/node-graphs/{id}/duplicate` | `resources:write` |
+| `POST` | `/v2/api/node-graphs/{id}/archive` | `resources:write` |
+| `DELETE` | `/v2/api/node-graphs/{id}` | `resources:write` |
+
+**Call flows**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/call-flows` | `resources:read` |
+| `GET` | `/v1/api/call-flows/{id}` | `resources:read` |
+| `GET` | `/v1/api/call-flows/skill-prompt-defaults` | `resources:read` |
+| `GET` | `/v2/api/call-flows` | `resources:read` |
+| `GET` | `/v2/api/call-flows/metadata` | `resources:read` |
+| `GET` | `/v1/api/call-flows/{id}/drafts` | `resources:read` |
+| `PATCH` | `/v1/api/call-flows/{id}/drafts/{draftId}` | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/drafts/{draftId}/activate` | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/drafts/{draftId}/restore` | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/drafts/deactivate` | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}/drafts/{draftId}` | `resources:write` |
+| `PATCH` | `/v1/api/call-flows/{id}/archive` | `resources:write` |
+| `PATCH` | `/v1/api/call-flows/{id}/restore` | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}` | `resources:write` |
+
+**Knowledge bases**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/knowledgebase` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/paginated` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/limits` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/workspace-usage` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/{id}` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/{id}/text` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/{id}/usage` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/{id}/files/presigned-url` | `resources:read` |
+| `GET` | `/v1/api/knowledgebase/{id}/files/proxy` | `resources:read` |
+| `POST` | `/v1/api/knowledgebase` | `resources:write` |
+| `PUT` | `/v1/api/knowledgebase/{id}` | `resources:write` |
+| `POST` | `/v1/api/knowledgebase/{id}/text` | `resources:write` |
+| `POST` | `/v1/api/knowledgebase/{id}/files` | `resources:write` |
+| `DELETE` | `/v1/api/knowledgebase/knowledgeBases/{knowledgeBaseId}/files/{fileName}` | `resources:write` |
+| `DELETE` | `/v1/api/knowledgebase/{id}` | `resources:write` |
+
+**Phone numbers**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/twilio/available-countries` | `resources:read` |
+| `GET` | `/v1/api/twilio/available-numbers` | `resources:read` |
+| `GET` | `/v1/api/twilio/phone-number-price` | `resources:read` |
+| `GET` | `/v1/api/twilio/user-phone-numbers` | `resources:read` |
+| `GET` | `/v1/api/twilio/user-phone-number-by-phone-number` | `resources:read` |
+| `GET` | `/v1/api/twilio/phone-numbers/{phoneNumberId}/config` | `resources:read` |
+| `PUT` | `/v1/api/twilio/phone-numbers/{phoneNumberId}/config` | `resources:write` |
+| `PUT` | `/v1/api/twilio/phone-numbers/{phoneNumberId}/config-messages` | `resources:write` |
+
+Buying, registering and releasing numbers use the [Trillet OEM number endpoints](/voice-engine/phone-numbers), not the standard purchase endpoint.
+
+**Calls**
+
+| Method | Path | Scope |
+|---|---|---|
+| `POST` | `/v1/api/call` | `calls:write` |
+| `POST` | `/v1/api/calls/call` | `calls:write` |
+| `POST` | `/v1/api/calls/web/connect` | `calls:write` |
+| `POST` | `/v1/api/calls/web/disconnect` | `calls:write` |
+
+Use `POST /v1/api/call` for outbound calls. See [Start an outbound call](#start-an-outbound-call).
+
+**Batch calls**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/batch-calls/template` | `resources:read` |
+| `POST` | `/v1/api/batch-calls/validate` | `resources:read` |
+| `POST` | `/v1/api/batch-calls/preview` | `resources:read` |
+| `POST` | `/v1/api/batch-calls/schedule-preview` | `resources:read` |
+| `POST` | `/v1/api/batch-calls` | `calls:write` |
+| `GET` | `/v1/api/batch-calls/{batchId}` | `resources:read` |
+| `GET` | `/v1/api/batch-calls/{batchId}/status` | `resources:read` |
+| `GET` | `/v1/api/batch-calls/{batchId}/calls` | `resources:read` |
+| `GET` | `/v1/api/batch-calls/{batchId}/calls/{jobId}` | `resources:read` |
+| `GET` | `/v1/api/batch-calls/{batchId}/export-results` | `resources:read` |
+| `DELETE` | `/v1/api/batch-calls/{batchId}/calls/{jobId}` | `resources:write` |
+| `DELETE` | `/v1/api/batch-calls/{batchId}/contacts/{phone}` | `resources:write` |
+| `DELETE` | `/v1/api/batch-calls/{batchId}` | `resources:write` |
+| `GET` | `/v1/api/batch-history/{batchHistoryId}` | `resources:read` |
+| `GET` | `/v1/api/batch-history/batch/{batchId}` | `resources:read` |
+| `GET` | `/v1/api/batch-history/workspace/{workspaceId}` | `resources:read` |
+
+**Call history and recordings**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/call-history` | `resources:read` |
+| `GET` | `/v2/api/call-history` | `resources:read` |
+| `GET` | `/v2/api/call-history/{callHistoryId}` | `resources:read` |
+| `GET` | `/v2/api/call-history/resolve/{callId}` | `resources:read` |
+| `GET` | `/v2/api/call-history/metrics` | `resources:read` |
+| `GET` | `/v2/api/call-history/metrics/daily` | `resources:read` |
+| `GET` | `/v2/api/call-history/phonebook` | `resources:read` |
+| `GET` | `/v2/api/call-history/filter-options` | `resources:read` |
+| `POST` | `/v2/api/call-history/export-csv` | `resources:read` |
+| `GET` | `/v2/api/recordings/{callHistoryId}` | `resources:read` |
+
+`GET /v2/api/recordings/{callHistoryId}` returns the audio file for a call in the tenant, or `404` when the call has no recording. `callHistoryId` is the `data.call.id` in [call events](/voice-engine/events#event-shape) and the `callHistoryId` in [per-call usage](/voice-engine/usage-and-billing#per-call). The [recording download](/voice-engine/events#recordings) on Trillet OEM returns the same file.
+
+**Workflows**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/workflows` | `resources:read` |
+| `GET` | `/v1/api/workflows/{id}` | `resources:read` |
+| `POST` | `/v1/api/workflows` | `resources:write` |
+| `PUT` | `/v1/api/workflows/{id}` | `resources:write` |
+| `DELETE` | `/v1/api/workflows/{id}` | `resources:write` |
+| `POST` | `/v1/api/workflows/{id}/duplicate` | `resources:write` |
+| `POST` | `/v1/api/workflows/{id}/pause` | `resources:write` |
+| `POST` | `/v1/api/workflows/{id}/test` | `resources:write` |
+| `POST` | `/v1/api/workflows/{id}/activate` | `calls:write` |
+| `POST` | `/v1/api/workflows/{id}/run` | `calls:write` |
+| `GET` | `/v1/api/workflows/{id}/runs` | `resources:read` |
+| `GET` | `/v1/api/workflows/runs/{runId}` | `resources:read` |
+| `POST` | `/v1/api/workflows/runs/{runId}/cancel` | `resources:write` |
+| `POST` | `/v1/api/workflows/runs/{runId}/retry` | `calls:write` |
+| `GET` | `/v1/api/workflows/schedule-preview` | `resources:read` |
+| `GET` | `/v1/api/workflows/{id}/webhook-sample` | `resources:read` |
+| `GET` | `/v1/api/workflows/phone-numbers` | `resources:read` |
+| `GET` | `/v1/api/workflows/pathways` | `resources:read` |
+| `GET` | `/v1/api/workflows/{workflowId}/live` | `resources:read` |
+
+**Workspace secrets**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v2/api/workspaces/secrets` | `resources:read` |
+| `POST` | `/v2/api/workspaces/secrets` | `resources:write` |
+| `PUT` | `/v2/api/workspaces/secrets/{name}` | `resources:write` |
+| `PATCH` | `/v2/api/workspaces/secrets/{name}` | `resources:write` |
+| `DELETE` | `/v2/api/workspaces/secrets/{name}` | `resources:write` |
+
+### Not available yet
+
+These return `403` `route_not_available` to a partner key:
+
+- Creating and updating simple prompt call flows (`POST /v1/api/call-flows`, `PUT /v1/api/call-flows/{id}`). Build agents with node flows instead, and change basic settings with [Call flow settings](/voice-engine/call-flow-settings).
+- Call-flow draft writes other than those listed above: creating a draft, autosave and publishing a draft (`.../drafts`, `.../drafts/autosave`, `.../drafts/{draftId}/publish`), and every other call-flow route not in the table.
+- The `/v1/api/calls/recordings/*` routes. Use `GET /v2/api/recordings/{callHistoryId}` or the [recording download](/voice-engine/events#recordings).
+- Routes that take a target workspace in the body, such as duplicating or moving a flow to another workspace, and sharing.
+- Routes that take a user ID in the path.
+- Third-party credentials: Google, GHL, Meta, bring-your-own voice keys and Google Sheets export.
+- Public demo links, Slack and the prompt helper endpoints.
+- Account, billing, wallet, team members and roles, domains, and API key management.
+
+### Start an outbound call
+
+`POST /v1/api/call` places an outbound call from one of the tenant's numbers. It needs `calls:write`.
+
+```bash
+curl -X POST https://api.trillet.ai/v1/api/call \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: 6a9622d2c1e8f3a4b5d6e7f8" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "+15125550177",
+    "call_agent_id": "6a9623aa1b2c3d4e5f6a7b8c",
+    "dynamic_variables": { "customer_name": "Sam" },
+    "metadata": { "crmLeadId": "L-1042" }
+  }'
+```
+
+<ParamField body="to" type="string" required>
+  The number to call, in E.164 format. Anything else returns `400` `INVALID_PHONE_NUMBER`.
+</ParamField>
+<ParamField body="call_agent_id" type="string" required>
+  The agent to call with. Required unless you send `call_flow_id` instead. The agent's call flow must be live.
+</ParamField>
+<ParamField body="call_flow_id" type="string">
+  A call flow ID, accepted in place of `call_agent_id`. If you send both, they must refer to the same agent, or the request returns `400` `AGENT_FLOW_MISMATCH`.
+</ParamField>
+<ParamField body="from_phone_number_id" type="string">
+  The tenant number to call from. When omitted, one of the agent's numbers is chosen automatically.
+</ParamField>
+<ParamField body="dynamic_variables" type="object">
+  A flat key-value object of variables for the call, for example `{"customer_name": "Sam"}`. Arrays are refused.
+</ParamField>
+<ParamField body="metadata" type="object">
+  Your own data, stored with the call.
+</ParamField>
+<ParamField body="callback_url" type="string">
+  A URL to receive webhook events about this call.
+</ParamField>
+<ParamField body="reject_outside_hours" type="boolean">
+  `true` refuses the call with `409` `OUTSIDE_CALLING_HOURS` when it is outside the flow's calling hours, instead of queueing it for the next calling window. The `409` response includes `next_available_at` and `timezone`.
+</ParamField>
+
+A successful request returns `status: "success"` with `call_agent_id`, `callId` (the call history ID), `roomName` and `jobId`. The call is queued and dialled straight after. Refusals return `status: "error"` with `message`, `error` and, where there is one, `code`. A suspended tenant gets `403` `workspace_suspended`.
+
+See [Initiate outbound call](/v1/api-reference/endpoints/calls/initiate-call) for the full reference. `POST /v1/api/calls/call` is an older route that takes only `agentId` and `toNumber`. Use `POST /v1/api/call`, which validates the number and accepts the fields above.
 
 A tenant that is not yours returns `404` `tenant_not_found`, so a key can never confirm another partner's tenant IDs. Your own partner account is not a tenant: a partner key cannot use it as `x-workspace-id`.
 
 <Note>
-  The partner key check uses the [Voice Engine error format](/voice-engine/conventions#errors). Once a request passes the check, the standard endpoint answers in its usual format.
+  The partner key check uses the [Trillet OEM error format](/voice-engine/conventions#errors). Once a request passes the check, the standard endpoint answers in its usual format.
 </Note>
 
 ## Authentication errors
@@ -120,7 +358,7 @@ A tenant that is not yours returns `404` `tenant_not_found`, so a key can never 
 | `400` | `invalid_tenant` | `x-workspace-id` is not a valid tenant ID |
 | `401` | `partner_key_required` | A `/partner/v1` route was called without a partner key |
 | `401` | `invalid_api_key` | The key is malformed, unknown or revoked |
-| `401` | `partner_not_enabled` | The Voice Engine API is not enabled for this account |
+| `401` | `partner_not_enabled` | Trillet OEM is not enabled for this account |
 | `403` | `missing_scope` | The key lacks the scope this endpoint needs |
 | `403` | `route_not_available` | The standard endpoint is not available to partner keys |
 | `403` | `tenant_not_allowed` | The key is restricted and this tenant is not in its list (standard endpoints) |

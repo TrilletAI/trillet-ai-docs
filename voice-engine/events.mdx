@@ -1,11 +1,11 @@
 ---
 title: "Events and webhooks"
 sidebarTitle: "Events and webhooks"
-description: "Signed webhooks for what happens across your tenants, with retries, an event log and redelivery."
+description: "Trillet OEM signed webhooks for what happens across your tenants, with retries, an event log and redelivery."
 ---
 
 <Note>
-  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
 </Note>
 
 Register webhook endpoints on your partner account. Each endpoint receives the event types it subscribes to, from all of your tenants, signed with the [Standard Webhooks](https://www.standardwebhooks.com) format so you can verify they came from Trillet.
@@ -57,7 +57,7 @@ curl -X POST https://api.trillet.ai/partner/v1/webhook-endpoints \
   Mask emails, phone numbers and card-like numbers in conversation data. Default `false`.
 </ParamField>
 
-The response is the endpoint plus its signing `secret` (`whsec_...`). The secret is returned only here and on rotation, so store it.
+The response is `201` with the endpoint plus its signing `secret` (`whsec_...`). The secret is returned only here and on rotation, so store it.
 
 ```json
 {
@@ -76,11 +76,11 @@ The response is the endpoint plus its signing `secret` (`whsec_...`). The secret
 }
 ```
 
-An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid URL returns `400` `invalid_url`, and an unknown event type `400` `invalid_events`.
+An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid URL returns `400` `invalid_url`, and an unknown event type `400` `invalid_events`. An endpoint ID that is not yours returns `404` `endpoint_not_found`. `DELETE` returns `{ "object": "webhook_endpoint", "id": "...", "deleted": true }`.
 
 `PATCH` accepts the same fields plus `status` (`enabled` or `disabled`). Setting `status: "enabled"` re-enables an endpoint that was disabled after failing.
 
-`POST /webhook-endpoints/{id}/test` sends an `endpoint.test` event to that endpoint only and returns `202` with the event ID. The endpoint must be enabled and subscribed to `endpoint.test` or `*`.
+`POST /webhook-endpoints/{id}/test` sends an `endpoint.test` event to that endpoint only and returns `202` with the event ID. The endpoint must be enabled (`409` `endpoint_disabled` otherwise) and subscribed to `endpoint.test` or `*` (`409` `endpoint_not_subscribed` otherwise).
 
 ## Event shape
 
@@ -133,24 +133,41 @@ An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid 
 | `tenant` | The tenant's `id` and `externalId`. `null` for account-level events. |
 | `data` | Depends on the type. Call events carry `data.call`. |
 
-Call payloads are built when each delivery is sent, from the tenant's region, so a redelivery shows the call record as it is at that time. Values in `data.call` can be `null` when the call did not record them. `direction` is `inbound`, `outbound` or `web`; `channel` is `phone`, `whatsapp` or `web`; `status` is `completed`, `pending`, `failed` or `blocked`. `endReason` and `endedBy` are descriptive text, not a fixed list. `cost` is the call charge in USD. The conversation fields (`summary`, `extractedData`, `variables`, `booking`, `transcript`) are omitted when conversation data is off for the endpoint.
+Call payloads are built when each delivery is sent, from the tenant's region, so a redelivery shows the call record as it is at that time. `data.call.id` is the call history ID: use it with `GET /v2/api/call-history/{callHistoryId}`, `GET /v2/api/recordings/{callHistoryId}` and to match `callHistoryId` in [per-call usage](/voice-engine/usage-and-billing#per-call). Values in `data.call` can be `null` when the call did not record them. `direction` is `inbound`, `outbound` or `web`; `channel` is `phone`, `whatsapp` or `web`; `status` is `completed`, `pending`, `failed` or `blocked`. `endReason` and `endedBy` are descriptive text, not a fixed list. `cost` is the call charge in USD. The conversation fields (`summary`, `extractedData`, `variables`, `booking`, `transcript`) are omitted when conversation data is off for the endpoint.
 
 ## Event types
 
 ### Sent today
+
+Events sent during a call, as it happens:
+
+| Type | When | `data` |
+|---|---|---|
+| `call.started` | A call is connected to an agent and its call record is active | `call`, `direction`, `callType` |
+| `call.transferred` | A transfer to a person or another number connected | `call`, `team`, `target`, `mode` |
+| `call.transfer_failed` | A transfer attempt failed. Sent once per attempt. | `call`, `team`, `target`, `mode`, `reason` |
+| `tool.failed` | A custom tool or API call during a call failed or returned an HTTP error. At most 5 per call. | `call`, `tool`, `kind`, `status` (HTTP status, when there is one), `error` |
+| `call.blocked` | A call was refused before reaching the agent: the tenant is suspended, an inbound calling rule matched, or there is not enough balance | `call`, `reason`, `rule`, `direction` |
+
+Events sent after a call's post-call processing finishes, not at the moment it ends:
 
 | Type | When | `data` |
 |---|---|---|
 | `call.ended` | A call ended normally | `call` |
 | `call.no_answer` | An outbound call was not answered, was busy, or reached voicemail | `call` |
 | `call.failed` | A call failed | `call` |
-| `call.blocked` | A call was refused, for example an inbound call to a suspended tenant | `call` |
+| `call.blocked` | A call record finished with status `blocked` | `call` |
 | `call.analyzed` | The call has a summary or extracted data | `call` |
 | `booking.created`, `booking.rescheduled`, `booking.cancelled` | The call created, moved or cancelled an appointment | `call` |
 | `recording.available` | The call has a recording | `call` |
+
+Other events:
+
+| Type | When | `data` |
+|---|---|---|
 | `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only) |
-| `number.provisioned` | A number was bought or registered | `phoneNumber`, and `provider` for registered numbers |
-| `number.released` | A number was released | `phoneNumber` |
+| `number.provisioned` | A number was bought or registered | `phoneNumber`, `provider` |
+| `number.released` | A number was released, either directly or because its tenant was deleted | `phoneNumber`. A direct release also has `provider` (currently `null`); a tenant delete has `reason: "tenant_deleted"` instead. |
 | `number.renewal_failed` | A monthly number charge failed | `phoneNumber`, `amount` |
 | `tenant.created` | A tenant was created | `externalId` |
 | `tenant.updated` | A tenant's name, metadata or spend cap changed | none |
@@ -159,7 +176,13 @@ Call payloads are built when each delivery is sent, from the tenant's region, so
 | `usage.threshold_reached` | A spend cap reached 80% or 100% this month. See [Spend caps](/voice-engine/usage-and-billing#spend-caps). | `scope`, `percent`, `cap`, `monthToDate`, `month` |
 | `endpoint.test` | You sent a test event | `message` |
 
-The events for a call are sent after the call's post-call processing finishes, not at the moment it ends.
+Notes on the in-call events:
+
+- `data.call` is the call record at delivery time. It can be `null`, for example for a call refused for insufficient balance, which has no call record.
+- `target` is masked: only the last 4 digits of a phone number or SIP user are shown.
+- `tool.failed` never includes the third-party response body. `kind` is `custom_tool` or `api` when known.
+- `reason` on `call.blocked` is a short code such as `workspace_suspended`, `insufficient_balance` or `inbound_rule`. `rule` is the name of the matched inbound rule, when there is one.
+- `call.blocked` is listed in both tables: one is sent at the moment of refusal, the other when a blocked call record finishes post-call processing. The same call can produce both, so de-duplicate on `data.call.id` as well as the event `id`.
 
 ### Coming soon
 
@@ -167,9 +190,6 @@ These types are accepted in `enabledEvents` but are not sent yet:
 
 | Type | When |
 |---|---|
-| `call.started` | A call is connected to an agent |
-| `call.transferred`, `call.transfer_failed` | A transfer to a person happened or failed |
-| `tool.failed` | A custom tool or API call during a call returned an error |
 | `sms.received`, `sms.sent`, `sms.failed` | Text messages |
 
 Template rollout events are planned with [templates](/voice-engine/templates). New event types may be added at any time. Ignore types you do not handle.
@@ -332,7 +352,7 @@ curl "https://api.trillet.ai/partner/v1/events?type=call.ended&tenantId=6a9622d2
 }
 ```
 
-In the log, `data` holds only the facts stored with the event. The call details are rendered when the event is delivered.
+In the list, `data` holds only the facts stored with the event. `GET /events/{eventId}` returns one event and, for call events, renders `data.call` as a delivery would, using your account's conversation data setting. It does not apply an endpoint's `redactPII`. An unknown event ID returns `404` `event_not_found`.
 
 To send an event again:
 
