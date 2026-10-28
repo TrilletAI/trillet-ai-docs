@@ -56,7 +56,7 @@ Flags: `writes` `idempotent`
 | Name | Type | Required | Description |
 | --- | --- | --- | --- |
 | `flow_id` | string | yes |  |
-| `end_call_on_silence` | number | no | Seconds of caller silence before ending |
+| `end_call_on_silence` | integer | no | Seconds of caller silence before the agent checks in to ask if anyone is there (whole seconds, 5 to 30). Not the hang-up timer. |
 | `silence_reminder_retries` | number | no |  |
 | `max_call_duration` | number | no | Seconds (default 1800) |
 | `max_call_duration_message` | string | no |  |
