@@ -1,0 +1,58 @@
+---
+title: "Building on Trillet today"
+sidebarTitle: "Available today"
+description: "How software partners can run Trillet voice agents for their customers now, before the Voice Engine API is released, and what the Voice Engine API will add."
+---
+
+The Voice Engine API is in development. You do not need to wait for it to start: partners already run Trillet for their customers with white-label and the standard API. This page explains that setup and what changes when the Voice Engine API is released.
+
+## The setup that works today
+
+<Steps>
+  <Step title="An Agency or Enterprise account with white-label">
+    Your account holds your branding: portal domain, logo, colours and email sender. Client workspaces can inherit it, so your customers see your brand, not Trillet's.
+  </Step>
+  <Step title="One client workspace per customer">
+    Each of your customers gets its own workspace with its own agents, call flows, numbers, call history and knowledge bases. Create them in the dashboard. Each workspace can draw on your account's wallet or hold its own balance.
+  </Step>
+  <Step title="The standard API for everything inside a workspace">
+    Create an API key and send the client workspace ID in `x-workspace-id` to manage that customer's agents, call flows, numbers, calls, batch calls and call history. See [Authentication](/v1/api-reference/authentication).
+  </Step>
+  <Step title="Webhooks per call flow">
+    Configure the post-call webhook and the [inbound call webhook](/documentation/inbound-call-webhook) on each call flow to send call results to your system.
+  </Step>
+</Steps>
+
+```bash
+# List one customer's agents, using your API key and that customer's workspace ID
+curl https://api.trillet.ai/v1/api/agents \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: CLIENT_WORKSPACE_ID"
+```
+
+<Note>
+  A Business Associate Agreement is available on Agency and Enterprise accounts at no extra fee. Execute it before any customer workspace handles protected health information.
+</Note>
+
+## What the Voice Engine API adds
+
+| Today | With the Voice Engine API |
+|---|---|
+| API keys belong to a person and reach every workspace that person can access | [Partner keys](/voice-engine/authentication) belong to your account, with scopes and optional tenant restrictions |
+| Client workspaces are created in the dashboard | [Tenants](/voice-engine/tenants) are created, suspended and deleted by API, keyed by your own customer ID, with safe retries |
+| Each customer's agent is configured separately | [Templates](/voice-engine/templates) are installed in every tenant and upgraded in staged rollouts |
+| Webhooks are set on each call flow | One set of [signed events](/voice-engine/events) for all tenants, with retries, replay and an event log |
+| Usage is viewed per workspace in the dashboard | A [usage API](/voice-engine/usage-and-billing) per tenant, with wholesale and retail amounts and spend caps |
+| Your users sign in to the Trillet portal (under your brand) | [Embedded screens](/voice-engine/embedding) inside your own app, with no separate login |
+
+## Release status
+
+| Area | Status |
+|---|---|
+| Platform groundwork: tenant isolation, suspension that stops traffic, usage recorded per tenant, safe retries, hashed API keys | Built, in testing |
+| Partner keys, tenants, phone numbers, signed events, usage and spend caps | In development |
+| Templates and rollouts | Planned |
+| Embedding | Planned |
+| Sandbox environment | Planned |
+
+Pages in this section marked **Coming soon** describe the planned design and may change before release. To join early access, contact your Trillet account manager or [talk to us](https://form.typeform.com/to/qRRENIBp).

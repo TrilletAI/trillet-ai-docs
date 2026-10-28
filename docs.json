@@ -309,6 +309,7 @@
             "icon": "tower-broadcast",
             "pages": [
               "voice-engine/overview",
+              "voice-engine/available-today",
               "voice-engine/authentication",
               "voice-engine/conventions"
             ]
