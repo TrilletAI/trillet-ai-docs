@@ -1,25 +1,34 @@
 ---
 title: "Events and webhooks"
 sidebarTitle: "Events and webhooks"
-description: "Signed webhooks for everything that happens across your tenants, with retries, replay and an event log."
+description: "Signed webhooks for what happens across your tenants, with retries, an event log and redelivery."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
-</Warning>
+<Note>
+  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
 
-Register one or more webhook endpoints on your partner account. Each receives the events you subscribe to, from all of your tenants, signed so you can verify they came from Trillet.
+Register webhook endpoints on your partner account. Each endpoint receives the event types it subscribes to, from all of your tenants, signed with the [Standard Webhooks](https://www.standardwebhooks.com) format so you can verify they came from Trillet.
 
 ## Endpoints
 
-| Method | Path | Purpose |
+| Method | Path | Scope |
 |---|---|---|
-| `POST` | `/partner/v1/webhook-endpoints` | Add an endpoint |
-| `GET` / `PATCH` / `DELETE` | `/partner/v1/webhook-endpoints/{id}` | Read, change or remove it |
-| `POST` | `/partner/v1/webhook-endpoints/{id}/rotate-secret` | Rotate its signing secret |
-| `POST` | `/partner/v1/webhook-endpoints/{id}/test` | Send a test event |
-| `GET` | `/partner/v1/events` | Event log for the last 30 days |
-| `POST` | `/partner/v1/events/{id}/redeliver` | Send an event again |
+| `POST` | `/partner/v1/webhook-endpoints` | `webhooks:write` |
+| `GET` | `/partner/v1/webhook-endpoints` | `events:read` |
+| `GET` | `/partner/v1/webhook-endpoints/{id}` | `events:read` |
+| `PATCH` | `/partner/v1/webhook-endpoints/{id}` | `webhooks:write` |
+| `DELETE` | `/partner/v1/webhook-endpoints/{id}` | `webhooks:write` |
+| `POST` | `/partner/v1/webhook-endpoints/{id}/rotate-secret` | `webhooks:write` |
+| `POST` | `/partner/v1/webhook-endpoints/{id}/test` | `webhooks:write` |
+| `GET` | `/partner/v1/events` | `events:read` |
+| `GET` | `/partner/v1/events/{eventId}` | `events:read` |
+| `POST` | `/partner/v1/events/{eventId}/redeliver` | `webhooks:write` |
+| `GET` | `/partner/v1/tenants/{tenantId}/calls/{callId}/recording` | `resources:read` |
+
+Webhook endpoint routes need a key that is not [restricted to some tenants](/voice-engine/authentication#restricting-a-key-to-some-tenants), because an endpoint receives events for every tenant.
+
+## Add an endpoint
 
 ```bash
 curl -X POST https://api.trillet.ai/partner/v1/webhook-endpoints \
@@ -27,87 +36,197 @@ curl -X POST https://api.trillet.ai/partner/v1/webhook-endpoints \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://api.example.com/trillet/events",
-    "eventTypes": ["call.ended", "call.analyzed", "booking.created"],
-    "includeConversationData": true
+    "description": "Production",
+    "enabledEvents": ["call.ended", "call.analyzed", "booking.created"]
   }'
 ```
+
+<ParamField body="url" type="string" required>
+  A public `https` URL on the default port 443. No credentials or fragment in the URL.
+</ParamField>
+<ParamField body="description" type="string">
+  Up to 200 characters.
+</ParamField>
+<ParamField body="enabledEvents" type="string[]">
+  Event types to send, or `["*"]` for all (the default). Up to 50 entries.
+</ParamField>
+<ParamField body="includeConversationData" type="boolean | null">
+  Whether call payloads include the summary, extracted data, variables, booking and transcript. `null` (the default) uses your account setting, which is on unless Trillet has turned it off for you.
+</ParamField>
+<ParamField body="redactPII" type="boolean">
+  Mask emails, phone numbers and card-like numbers in conversation data. Default `false`.
+</ParamField>
+
+The response is the endpoint plus its signing `secret` (`whsec_...`). The secret is returned only here and on rotation, so store it.
+
+```json
+{
+  "object": "webhook_endpoint",
+  "id": "6b2e0f1a3c4d5e6f7a8b9c0d",
+  "url": "https://api.example.com/trillet/events",
+  "description": "Production",
+  "enabledEvents": ["call.ended", "call.analyzed", "booking.created"],
+  "status": "enabled",
+  "disabledReason": null,
+  "failingSince": null,
+  "includeConversationData": null,
+  "redactPII": false,
+  "createdAt": "2026-11-02T10:30:00.000Z",
+  "secret": "whsec_..."
+}
+```
+
+An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid URL returns `400` `invalid_url`, and an unknown event type `400` `invalid_events`.
+
+`PATCH` accepts the same fields plus `status` (`enabled` or `disabled`). Setting `status: "enabled"` re-enables an endpoint that was disabled after failing.
+
+`POST /webhook-endpoints/{id}/test` sends an `endpoint.test` event to that endpoint only and returns `202` with the event ID. The endpoint must be enabled and subscribed to `endpoint.test` or `*`.
 
 ## Event shape
 
 ```json
 {
-  "id": "evt_01JC9V8K2T",
+  "id": "evt_6b3a1c2d4e5f6a7b8c9d0e1f",
   "type": "call.ended",
-  "apiVersion": "2026-11-01",
-  "occurredAt": "2026-11-02T15:04:11Z",
+  "created": 1762095851,
   "livemode": true,
-  "tenant": { "id": "ten_6a9622d2", "externalId": "cust_8842", "metadata": { "plan": "pro" } },
+  "tenant": { "id": "6a9622d2c1e8f3a4b5d6e7f8", "externalId": "cust_8842" },
   "data": {
-    "callId": "call_8f2a",
-    "direction": "inbound",
-    "from": "+15125550177",
-    "to": "+15125550142",
-    "startedAt": "2026-11-02T15:01:40Z",
-    "endedAt": "2026-11-02T15:04:11Z",
-    "billedSeconds": 151,
-    "outcome": "booked",
-    "endedBy": "agent",
-    "summary": "Caller booked a cleaning for Thursday 3pm.",
-    "cost": { "retail": 0.38, "wholesale": 0.23, "currency": "USD" }
+    "call": {
+      "id": "6b3a1c0f9e8d7c6b5a4f3e2d",
+      "direction": "inbound",
+      "channel": "phone",
+      "status": "completed",
+      "from": "+15125550177",
+      "to": "+15125550142",
+      "agentId": "6a9623aa1b2c3d4e5f6a7b8c",
+      "callFlowId": "6a9623bb1b2c3d4e5f6a7b8c",
+      "startedAt": "2026-11-02T15:01:40.000Z",
+      "endedAt": "2026-11-02T15:04:11.000Z",
+      "durationSeconds": 151,
+      "endReason": "user_hangup",
+      "endedBy": "user",
+      "cost": 0.38,
+      "batchId": null,
+      "recording": {
+        "available": true,
+        "url": "https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/calls/6b3a1c0f9e8d7c6b5a4f3e2d/recording"
+      },
+      "summary": "Caller booked a cleaning for Thursday 3pm.",
+      "extractedData": { "appointment_type": "cleaning" },
+      "variables": { "customer_name": "Sam" },
+      "booking": { "booked": true },
+      "transcript": [
+        { "role": "assistant", "text": "Harbour Dental, how can I help?", "at": "2026-11-02T15:01:41.000Z" }
+      ]
+    }
   }
 }
 ```
 
+| Field | Notes |
+|---|---|
+| `id` | Event ID. Also sent in the `webhook-id` header. Use it to de-duplicate. |
+| `type` | The event type |
+| `created` | When the event happened, in Unix seconds |
+| `livemode` | Always `true` until sandbox tenants are available |
+| `tenant` | The tenant's `id` and `externalId`. `null` for account-level events. |
+| `data` | Depends on the type. Call events carry `data.call`. |
+
+Call payloads are built when each delivery is sent, from the tenant's region, so a redelivery shows the call record as it is at that time. Values in `data.call` can be `null` when the call did not record them. `direction` is `inbound`, `outbound` or `web`; `channel` is `phone`, `whatsapp` or `web`; `status` is `completed`, `pending`, `failed` or `blocked`. `endReason` and `endedBy` are descriptive text, not a fixed list. `cost` is the call charge in USD. The conversation fields (`summary`, `extractedData`, `variables`, `booking`, `transcript`) are omitted when conversation data is off for the endpoint.
+
 ## Event types
+
+### Sent today
+
+| Type | When | `data` |
+|---|---|---|
+| `call.ended` | A call ended normally | `call` |
+| `call.no_answer` | An outbound call was not answered, was busy, or reached voicemail | `call` |
+| `call.failed` | A call failed | `call` |
+| `call.blocked` | A call was refused, for example an inbound call to a suspended tenant | `call` |
+| `call.analyzed` | The call has a summary or extracted data | `call` |
+| `booking.created`, `booking.rescheduled`, `booking.cancelled` | The call created, moved or cancelled an appointment | `call` |
+| `recording.available` | The call has a recording | `call` |
+| `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only) |
+| `number.provisioned` | A number was bought or registered | `phoneNumber`, and `provider` for registered numbers |
+| `number.released` | A number was released | `phoneNumber` |
+| `number.renewal_failed` | A monthly number charge failed | `phoneNumber`, `amount` |
+| `tenant.created` | A tenant was created | `externalId` |
+| `tenant.updated` | A tenant's name, metadata or spend cap changed | none |
+| `tenant.suspended` | A tenant was suspended | `reason`, if given |
+| `tenant.resumed`, `tenant.deleted`, `tenant.restored` | Tenant lifecycle | none |
+| `usage.threshold_reached` | A spend cap reached 80% or 100% this month. See [Spend caps](/voice-engine/usage-and-billing#spend-caps). | `scope`, `percent`, `cap`, `monthToDate`, `month` |
+| `endpoint.test` | You sent a test event | `message` |
+
+The events for a call are sent after the call's post-call processing finishes, not at the moment it ends.
+
+### Coming soon
+
+These types are accepted in `enabledEvents` but are not sent yet:
 
 | Type | When |
 |---|---|
-| `call.started` | A call is connected to an agent (inbound, outbound or web) |
-| `call.ended` | A call ends. Outcome, duration, cost and summary. |
-| `call.analyzed` | Post-call analysis is done. Transcript and extracted data. |
-| `call.no_answer`, `call.failed`, `call.blocked` | A call did not connect, failed, or was blocked (for example, tenant suspended) |
+| `call.started` | A call is connected to an agent |
 | `call.transferred`, `call.transfer_failed` | A transfer to a person happened or failed |
-| `booking.created`, `booking.cancelled`, `booking.rescheduled` | The agent changed an appointment, from any calendar or practice system integration |
 | `tool.failed` | A custom tool or API call during a call returned an error |
-| `recording.available` | The call recording is ready (a signed, expiring URL) |
 | `sms.received`, `sms.sent`, `sms.failed` | Text messages |
-| `workflow_run.completed`, `workflow_run.failed` | Workflow runs |
-| `number.provisioned`, `number.released` | Phone numbers |
-| `tenant.created`, `tenant.suspended`, `tenant.resumed`, `tenant.deleted`, `tenant.provisioning_failed` | Tenant lifecycle |
-| `rollout.completed`, `rollout.paused` | Template rollouts |
-| `usage.threshold_reached` | A tenant or your account reached 80% or 100% of a spend cap |
 
-New event types may be added at any time. Ignore types you do not handle.
+Template rollout events are planned with [templates](/voice-engine/templates). New event types may be added at any time. Ignore types you do not handle.
 
 ## Conversation data
 
-Transcripts, summaries and extracted data are included by default. Turn them off for an endpoint with `includeConversationData: false`, or set `redactPII: true` to mask phone numbers, emails and similar values. Recordings are never sent in the payload, only as a signed URL that expires.
+Transcripts, summaries, extracted data, dynamic variables and booking details are included in call payloads by default.
+
+- Set `includeConversationData: false` on an endpoint to leave them out. Call metadata (numbers, times, duration, status, cost, recording link) is still sent.
+- Set `redactPII: true` to keep them but mask email addresses as `[email]`, phone numbers as `[phone]` and card-like numbers as `[number]` in the summary, extracted data, variables and transcript. Masking is pattern based and best effort. IDs, times and URLs are not masked. The top-level `from` and `to` numbers are not masked.
+
+## Recordings
+
+Recordings are never included in a payload. When a call has one, `data.call.recording.url` points at the recording download endpoint. Fetch it with a partner key that has `resources:read`:
+
+```bash
+curl -L -o call.mp3 \
+  "https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/calls/6b3a1c0f9e8d7c6b5a4f3e2d/recording" \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+The response is the audio file. A call with no recording returns `404` `recording_not_found`.
 
 ## Verifying signatures
 
-Events are signed using the [Standard Webhooks](https://www.standardwebhooks.com) format, so you can use any of its libraries. Each request carries three headers:
+Each delivery is a `POST` with a JSON body and three headers:
 
-- `webhook-id`: the event ID, also useful for de-duplication
-- `webhook-timestamp`: Unix seconds
-- `webhook-signature`: `v1,<base64 HMAC-SHA256>` of `{webhook-id}.{webhook-timestamp}.{raw body}`
+- `webhook-id`: the event ID, the same as `id` in the body
+- `webhook-timestamp`: when this delivery attempt was signed, in Unix seconds
+- `webhook-signature`: `v1,<base64 HMAC-SHA256>` of `{webhook-id}.{webhook-timestamp}.{raw body}`, keyed with the base64-decoded part of your secret after `whsec_`. During a secret rotation there are two signatures, separated by a space.
+
+Any Standard Webhooks library verifies this for you. Verify against the raw request body, before any JSON parsing, and reject timestamps more than 5 minutes old.
 
 <Tabs>
   <Tab title="Node.js">
 
     ```js
+    // npm install standardwebhooks express
+    import express from 'express';
     import { Webhook } from 'standardwebhooks';
 
-    const wh = new Webhook(process.env.TRILLET_WEBHOOK_SECRET);
+    const app = express();
+    const wh = new Webhook(process.env.TRILLET_WEBHOOK_SECRET); // whsec_...
 
     app.post('/trillet/events', express.raw({ type: 'application/json' }), (req, res) => {
       let event;
       try {
-        event = wh.verify(req.body, req.headers);
+        event = wh.verify(req.body.toString('utf8'), {
+          'webhook-id': req.header('webhook-id'),
+          'webhook-timestamp': req.header('webhook-timestamp'),
+          'webhook-signature': req.header('webhook-signature'),
+        });
       } catch {
         return res.status(400).send('invalid signature');
       }
+      res.sendStatus(204); // respond first, then do the work
       handle(event); // de-duplicate on event.id
-      res.sendStatus(204);
     });
     ```
 
@@ -115,28 +234,113 @@ Events are signed using the [Standard Webhooks](https://www.standardwebhooks.com
   <Tab title="Python">
 
     ```python
-    from standardwebhooks import Webhook
+    # pip install standardwebhooks flask
+    import os
+    from flask import Flask, request
+    from standardwebhooks.webhooks import Webhook
 
-    wh = Webhook(os.environ["TRILLET_WEBHOOK_SECRET"])
+    app = Flask(__name__)
+    wh = Webhook(os.environ["TRILLET_WEBHOOK_SECRET"])  # whsec_...
 
     @app.post("/trillet/events")
-    def events(request):
+    def events():
         try:
-            event = wh.verify(request.body, dict(request.headers))
+            event = wh.verify(request.get_data(), {
+                "webhook-id": request.headers["webhook-id"],
+                "webhook-timestamp": request.headers["webhook-timestamp"],
+                "webhook-signature": request.headers["webhook-signature"],
+            })
         except Exception:
-            return Response(status=400)
-        handle(event)  # de-duplicate on event["id"]
-        return Response(status=204)
+            return "invalid signature", 400
+        handle(event)  # de-duplicate on event["id"]; queue slow work
+        return "", 204
+    ```
+
+  </Tab>
+  <Tab title="Node.js (no library)">
+
+    ```js
+    import crypto from 'node:crypto';
+
+    export function verifyTrilletEvent(rawBody, headers, secret) {
+      const id = headers['webhook-id'];
+      const timestamp = headers['webhook-timestamp'];
+      const signatures = headers['webhook-signature'] || '';
+
+      if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
+
+      const key = Buffer.from(secret.replace(/^whsec_/, ''), 'base64');
+      const expected = crypto
+        .createHmac('sha256', key)
+        .update(`${id}.${timestamp}.${rawBody}`)
+        .digest('base64');
+
+      return signatures.split(' ').some((entry) => {
+        const [version, signature] = entry.split(',');
+        return (
+          version === 'v1' &&
+          signature.length === expected.length &&
+          crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+        );
+      });
+    }
     ```
 
   </Tab>
 </Tabs>
 
-Verify against the raw request body, before any JSON parsing. Reject timestamps more than 5 minutes old. During a secret rotation both the old and new signatures are sent for 24 hours.
+### Rotating a secret
+
+`POST /webhook-endpoints/{id}/rotate-secret` returns a new `secret`. The previous secret keeps signing alongside the new one for 24 hours (`previousSecretExpiresAt`), so you can deploy the new secret without missing events.
 
 ## Delivery and retries
 
-- Respond with any `2xx` within 10 seconds. Do slow work after responding.
-- Failed deliveries are retried with backoff for about 24 hours.
-- Events can arrive more than once and out of order. De-duplicate on `id` and use `occurredAt` for ordering.
-- An endpoint that fails for 3 days is disabled and your account contact is emailed. Re-enable it and use the event log to redeliver what you missed.
+- Respond with any `2xx` within 10 seconds. Do slow work after responding. Redirects are not followed.
+- A failed delivery is retried up to 9 times, after 10 seconds, 1 minute, 5 minutes, 30 minutes, 1 hour, 2 hours, 4 hours, 6 hours and 8 hours: about 22 hours in all.
+- Events can arrive more than once and out of order. De-duplicate on `id` and use `created` for ordering.
+- An endpoint that keeps failing for 3 days is disabled, and the owner of your partner account is emailed. Events raised while it is disabled are still recorded in the event log. Fix the endpoint, re-enable it with `PATCH`, then redeliver what you missed.
+
+## Event log and redelivery
+
+The event log keeps events for 30 days. It records an event when at least one of your endpoints subscribes to its type.
+
+```bash
+curl "https://api.trillet.ai/partner/v1/events?type=call.ended&tenantId=6a9622d2c1e8f3a4b5d6e7f8&since=1762041600&limit=50" \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+`GET /events` accepts `type`, `tenantId`, `since` (Unix seconds), `limit` and `starting_after`. Each entry shows the delivery status per endpoint:
+
+```json
+{
+  "object": "event",
+  "id": "evt_6b3a1c2d4e5f6a7b8c9d0e1f",
+  "type": "call.ended",
+  "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
+  "data": {},
+  "created": 1762095851,
+  "deliveries": [
+    {
+      "endpointId": "6b2e0f1a3c4d5e6f7a8b9c0d",
+      "status": "failed",
+      "attempts": 10,
+      "lastAttemptAt": "2026-11-03T13:05:00.000Z",
+      "lastStatusCode": 503,
+      "lastError": "HTTP 503"
+    }
+  ]
+}
+```
+
+In the log, `data` holds only the facts stored with the event. The call details are rendered when the event is delivered.
+
+To send an event again:
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/events/evt_6b3a1c2d4e5f6a7b8c9d0e1f/redeliver \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "endpointId": "6b2e0f1a3c4d5e6f7a8b9c0d" }'
+```
+
+Without `endpointId`, the event is sent to every enabled endpoint subscribed to its type. Returns `202` with the number of endpoints it is being sent to. With no enabled endpoint to send to, it returns `409` `no_enabled_endpoint`.

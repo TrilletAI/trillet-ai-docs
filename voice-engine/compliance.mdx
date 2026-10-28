@@ -4,9 +4,9 @@ sidebarTitle: "Compliance and data"
 description: "HIPAA, data residency, what data events carry, and retention for Voice Engine partners."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
-</Warning>
+<Note>
+  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
 
 ## HIPAA
 
@@ -14,23 +14,26 @@ Trillet supports HIPAA workloads. A Business Associate Agreement is available on
 
 ## Data residency
 
-Each tenant is created in a region, `us` or `au`. Its call records, transcripts and recordings are stored in that region. Webhook payloads are built from the tenant's regional data when they are delivered.
+Each tenant is created in a region, `us` or `au`. Its call records, transcripts and recordings are stored in that region. Events are stored in the tenant's region too, and hold references rather than transcripts: webhook payloads are built from the tenant's regional data when they are delivered.
 
 ## Data in events
 
-Events include transcripts, summaries and extracted call data by default. For each webhook endpoint you can:
+Call events include transcripts, summaries, extracted data and variables by default. For each webhook endpoint you can:
 
 - turn conversation data off (`includeConversationData: false`), or
-- keep it and mask personal data (`redactPII: true`).
+- keep it and mask emails, phone numbers and card-like numbers (`redactPII: true`). Masking is pattern based and best effort.
 
-Recordings are never included in payloads, only as signed URLs that expire.
+Recordings are never included in payloads. A payload carries a link to the recording download endpoint, which needs a partner key with `resources:read`. See [Events](/voice-engine/events#conversation-data).
+
+The event log keeps events for 30 days.
 
 ## Isolation
 
-- Each tenant is a separate workspace. A partner key can reach only its own tenants, and an embed session only one tenant.
+- Each tenant is a separate workspace. A partner key can reach only its own tenants, and a key can be restricted further to a list of tenants.
 - Requests naming another partner's tenant return `404`.
-- Partner keys and webhook signing secrets are stored hashed or encrypted, and every change made with a partner key is written to the tenant's audit log with the key that made it.
+- Partner keys are stored as hashes. Webhook signing secrets are stored encrypted.
+- Tenant and phone number changes made through the Voice Engine API are written to the tenant's audit log with the ID of the key that made them.
 
 ## Branding
 
-Tenants inherit your branding. Emails, SMS sender names, embedded screens and webhook headers your customers might see do not mention Trillet.
+When your account has white-label enabled, new tenants inherit your branding: company name, logo, colours and theme. Webhook requests are sent from Trillet to your servers and identify Trillet (for example in the `User-Agent` header); your customers do not see them.

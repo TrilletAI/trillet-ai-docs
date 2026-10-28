@@ -1,39 +1,42 @@
 ---
 title: "Tenants"
 sidebarTitle: "Tenants"
-description: "Create, configure, suspend, delete and restore a workspace for each of your customers."
+description: "Create, update, suspend, delete and restore a workspace for each of your customers."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
-</Warning>
+<Note>
+  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
 
-A tenant is one of your customers. It is a fully isolated workspace with its own agents, phone numbers, call history, knowledge bases, workflows and usage. Tenants inherit your branding.
+A tenant is one of your customers. It is an isolated workspace with its own agents, phone numbers, call history, knowledge bases, workflows and usage. Tenants inherit your white-label branding when your account has white-label enabled, and they draw on your account for billing, so a tenant never needs its own card or balance.
 
 ## The tenant object
 
 ```json
 {
-  "id": "ten_6a9622d2",
+  "object": "tenant",
+  "id": "6a9622d2c1e8f3a4b5d6e7f8",
   "externalId": "cust_8842",
   "name": "Harbour Dental",
   "status": "active",
   "region": "us",
   "metadata": { "plan": "pro", "crmAccountId": "0015g00000X" },
-  "limits": { "maxConcurrentCalls": 5, "monthlySpendCap": 500 },
-  "templateInstalls": [ { "templateId": "tpl_reception", "version": 4, "pinned": false } ],
-  "phoneNumbers": [ { "id": "num_1", "e164": "+15125550142" } ],
-  "createdAt": "2026-11-02T10:14:00Z"
+  "limits": { "monthlySpendCap": 500 },
+  "suspendedAt": null,
+  "suspendedReason": null,
+  "deletedAt": null,
+  "createdAt": "2026-11-02T10:14:00.000Z"
 }
 ```
 
 | Field | Notes |
 |---|---|
-| `externalId` | Your ID for this customer. Unique across your tenants. Look tenants up by it. |
+| `id` | The tenant ID. Use it in paths and as `x-workspace-id` on standard endpoints. |
+| `externalId` | Your ID for this customer, 1 to 128 characters with no leading or trailing spaces. Unique among your live tenants. Look tenants up by it. |
 | `status` | `active`, `suspended`, `deleted` or `provisioning_failed` |
 | `region` | `us` or `au`. Set at creation; decides where call data is stored. |
-| `metadata` | Up to 4 KB of your own key-value data. Returned on events. |
-| `limits` | Optional caps for this tenant. See [Usage and billing](/voice-engine/usage-and-billing). |
+| `metadata` | Up to 8 KB of your own JSON data. Trillet does not read it. |
+| `limits.monthlySpendCap` | Optional monthly spend cap in USD, or `null`. See [Usage and spend caps](/voice-engine/usage-and-billing#spend-caps). |
 
 ## Endpoints
 
@@ -41,13 +44,13 @@ A tenant is one of your customers. It is a fully isolated workspace with its own
 |---|---|---|
 | `POST` | `/partner/v1/tenants` | `tenants:write` |
 | `GET` | `/partner/v1/tenants` | `tenants:read` |
-| `GET` | `/partner/v1/tenants/{id}` | `tenants:read` |
+| `GET` | `/partner/v1/tenants/{tenantId}` | `tenants:read` |
 | `GET` | `/partner/v1/tenants/by-external-id/{externalId}` | `tenants:read` |
-| `PATCH` | `/partner/v1/tenants/{id}` | `tenants:write` |
-| `POST` | `/partner/v1/tenants/{id}/suspend` | `tenants:write` |
-| `POST` | `/partner/v1/tenants/{id}/resume` | `tenants:write` |
-| `DELETE` | `/partner/v1/tenants/{id}` | `tenants:write` |
-| `POST` | `/partner/v1/tenants/{id}/restore` | `tenants:write` |
+| `PATCH` | `/partner/v1/tenants/{tenantId}` | `tenants:write` |
+| `POST` | `/partner/v1/tenants/{tenantId}/suspend` | `tenants:write` |
+| `POST` | `/partner/v1/tenants/{tenantId}/resume` | `tenants:write` |
+| `DELETE` | `/partner/v1/tenants/{tenantId}` | `tenants:write` |
+| `POST` | `/partner/v1/tenants/{tenantId}/restore` | `tenants:write` |
 
 ## Create a tenant
 
@@ -60,12 +63,7 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
     "externalId": "cust_8842",
     "name": "Harbour Dental",
     "region": "us",
-    "timezone": "America/Chicago",
-    "metadata": { "plan": "pro" },
-    "template": {
-      "templateId": "tpl_reception",
-      "variables": { "practice_name": "Harbour Dental", "transfer_number": "+15125550100" }
-    }
+    "metadata": { "plan": "pro" }
   }'
 ```
 
@@ -73,37 +71,94 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
   Your ID for this customer.
 </ParamField>
 <ParamField body="name" type="string" required>
-  Display name.
+  Display name, up to 100 characters.
 </ParamField>
 <ParamField body="region" type="string">
-  `us` (default) or `au`.
+  `us` or `au`. Defaults to your partner account's region.
 </ParamField>
-<ParamField body="template" type="object">
-  Install a [template](/voice-engine/templates) as part of creation, with this tenant's variable values.
-</ParamField>
-<ParamField body="limits" type="object">
-  `maxConcurrentCalls`, `maxOutboundPerMinute`, `monthlySpendCap`.
+<ParamField body="metadata" type="object">
+  Your own data, up to 8 KB.
 </ParamField>
 
-`Idempotency-Key` is required. If the template install fails, the tenant is still created, its status is `provisioning_failed`, and a `tenant.provisioning_failed` event explains why. Fix the cause and install the template again.
+Returns `201` with the tenant. `Idempotency-Key` is required.
+
+If the workspace is created but its setup does not complete, the tenant is returned with status `provisioning_failed`. Contact support with the tenant ID. If you delete it instead, its `externalId` stays reserved for 30 days (see [Delete and restore](#delete-and-restore)).
+
+Each tenant has a wallet linked to your account and starts with no agents, flows or numbers. Build them with the [standard endpoints](/voice-engine/authentication#calling-standard-endpoints-for-a-tenant) and the tenant ID in `x-workspace-id`.
+
+| Status | Code | When |
+|---|---|---|
+| `409` | `tenant_exists` | A live tenant already has this `externalId` |
+| `409` | `tenant_deleted_restorable` | A deleted tenant with this `externalId` can still be restored |
+| `409` | `tenant_limit_reached` | Your account is at its tenant limit (`maxTenants` on [`GET /key`](/voice-engine/authentication#check-a-key)) |
+| `400` | `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_region` | A field is invalid |
+
+## List and look up tenants
+
+```bash
+curl "https://api.trillet.ai/partner/v1/tenants?status=active&limit=50" \
+  -H "Authorization: Bearer tpk_live_..."
+
+curl https://api.trillet.ai/partner/v1/tenants/by-external-id/cust_8842 \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+`GET /tenants` accepts `status` (`active`, `suspended` or `provisioning_failed`), `externalId`, `limit` and `starting_after`. Deleted tenants are not listed or returned by `GET`; keep the ID if you may restore it. See [Pagination](/voice-engine/conventions#pagination).
+
+## Update a tenant
+
+```bash
+curl -X PATCH https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "name": "Harbour Dental Group", "limits": { "monthlySpendCap": 750 } }'
+```
+
+<ParamField body="name" type="string">
+  New display name.
+</ParamField>
+<ParamField body="metadata" type="object">
+  Replaces the whole metadata object.
+</ParamField>
+<ParamField body="limits.monthlySpendCap" type="number | null">
+  Monthly spend cap in USD, 0 or more. `null` removes the cap.
+</ParamField>
 
 ## Suspend and resume
 
 Suspending a tenant stops its traffic but keeps everything else. Use it for unpaid accounts, offboarding or abuse.
 
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/suspend \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{ "reason": "Invoice overdue" }'
+```
+
 While a tenant is suspended:
 
-- Outbound calls, web calls and SMS are refused with `403` `workspace_suspended`.
-- New workflow runs are recorded as skipped.
-- Inbound calls are answered and ended straight away, with no speech and no charge, and recorded in call history as blocked.
+- Outbound calls, web calls and SMS are refused with `403` and code `workspace_suspended`.
+- New workflow runs are recorded as skipped, with skip reason `workspace_suspended`.
+- Inbound calls are answered and ended straight away, with no speech, and recorded in call history with status `blocked`.
+- You cannot buy numbers for it (`409` `tenant_suspended`).
 - Numbers, agents, configuration and history are kept. You can still read and change them.
 
-`POST /resume` restores traffic immediately.
+`POST /resume` restores traffic immediately. `reason` is optional, up to 500 characters, and is returned as `suspendedReason`.
 
 ## Delete and restore
 
-`DELETE` releases the tenant's numbers and soft-deletes the tenant. You can restore it within 30 days. While a deleted tenant can still be restored, creating a new tenant with the same `externalId` returns `409` `tenant_deleted_restorable` with the existing tenant's ID.
+`DELETE` releases the tenant's numbers, soft-deletes its flows, agents and knowledge bases, and soft-deletes the tenant. It returns the tenant with status `deleted`.
+
+`POST /restore` brings a deleted tenant back within 30 days. After that it returns `410` `restore_window_expired`. Other restore errors: `409` `tenant_not_deleted`, and `409` `tenant_exists` if a live tenant has taken its `externalId` since.
+
+While a deleted tenant can still be restored, creating a new tenant with the same `externalId` returns `409` `tenant_deleted_restorable`. After 30 days the `externalId` is free again.
+
+A delete already in progress returns `409` `tenant_delete_in_progress`.
 
 ## Events
 
-Every change emits an event: `tenant.created`, `tenant.suspended`, `tenant.resumed`, `tenant.deleted`, `tenant.provisioning_failed`. See [Events](/voice-engine/events).
+Tenant changes emit `tenant.created`, `tenant.updated`, `tenant.suspended`, `tenant.resumed`, `tenant.deleted` and `tenant.restored`. See [Events](/voice-engine/events).
+
+<Note>
+  Adopting an existing client workspace as a tenant, and installing a [template](/voice-engine/templates) at creation, are planned.
+</Note>

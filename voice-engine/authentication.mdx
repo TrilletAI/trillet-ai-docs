@@ -4,70 +4,125 @@ sidebarTitle: "Authentication"
 description: "Partner keys, scopes, tenant restrictions, and calling standard endpoints on behalf of a tenant."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
-</Warning>
+<Note>
+  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
 
 ## Partner keys
 
-Every Voice Engine request is authenticated with a **partner key**, sent as a bearer token:
+Every Voice Engine request is authenticated with a **partner key**, sent as a bearer token in the `Authorization` header:
 
 ```bash
-curl https://api.trillet.ai/partner/v1/tenants \
-  -H "Authorization: Bearer tpk_live_..." \
-  -H "Content-Type: application/json"
+curl https://api.trillet.ai/partner/v1/key \
+  -H "Authorization: Bearer tpk_live_..."
 ```
 
-- Live keys start with `tpk_live_`, sandbox keys with `tpk_sandbox_`.
-- A key is shown **once**, when you create it. Trillet stores only a hash, so a lost key cannot be recovered; create a new one and revoke the old one.
-- Keys are created and revoked in your partner settings. Each key shows its prefix, scopes and when it was last used.
-- A key acts as your partner account, not as a person, so it keeps working when staff leave.
+- Keys start with `tpk_live_`. Keys can also be created with the `tpk_sandbox_` prefix, but sandbox tenants are not available yet, so use live keys.
+- A key is shown **once**, when you create it. Trillet stores only a hash, so a lost key cannot be recovered. Create a new one and revoke the old one.
+- Keys are created and revoked in the Partner Keys section of your account settings, by an owner or admin of your partner account. Each key shows its name, prefix, scopes, allowed tenants and when it was last used.
+- A key acts as your partner account, not as a person, so it keeps working when staff leave. Keys do not expire. Revoking a key takes effect immediately.
+- An account can hold up to 50 active keys.
+- Send a partner key only in `Authorization`. Sending it in `x-api-key` is refused, and sending both a partner key and an `x-api-key` returns `400` `conflicting_credentials`.
 
 <Warning>
-  Treat partner keys like passwords. Keep them on your server, never in a browser or mobile app. For anything that runs on a user's device, use an [embed session](/voice-engine/embedding).
+  Treat partner keys like passwords. Keep them on your server, never in a browser or mobile app.
 </Warning>
+
+### Check a key
+
+`GET /partner/v1/key` returns the key's mode, scopes, tenant restriction and your partner account. It needs no scope.
+
+```json
+{
+  "object": "partner_key",
+  "id": "6720c1f4a9b3e2d1c0f5a7b8",
+  "mode": "live",
+  "scopes": ["tenants:read", "tenants:write", "resources:read", "usage:read"],
+  "tenantIds": [],
+  "partner": {
+    "id": "671f0e2a8c4d3b1a2e5f6c7d",
+    "name": "Example Health",
+    "maxTenants": 100,
+    "tenantCount": 12
+  }
+}
+```
+
+`maxTenants` is the number of tenants your account may hold. Ask your account manager to raise it.
 
 ## Scopes
 
-Give each key only the scopes it needs.
+Give each key only the scopes it needs. A new key has every scope unless you choose fewer.
 
 | Scope | Allows |
 |---|---|
 | `tenants:read` | List and read tenants |
-| `tenants:write` | Create, update, suspend, resume, delete and restore tenants |
-| `resources:read` | Read agents, call flows, knowledge bases, numbers, call history and workflows in tenants |
-| `resources:write` | Create and change those resources |
-| `calls:write` | Start outbound calls and web calls |
-| `numbers:write` | Buy, release and register phone numbers (these cost money) |
-| `templates:read` / `templates:write` | Read, capture and roll out templates |
-| `events:read` | Read the event log and redeliver events |
-| `webhooks:write` | Manage webhook endpoints and signing secrets |
-| `usage:read` | Read usage and invoices |
-| `sessions:write` | Create embed sessions |
+| `tenants:write` | Create, update, suspend, resume, delete and restore tenants, and set tenant spend caps |
+| `resources:read` | Read agents, call flows, knowledge bases, numbers, call history, workflows and recordings in tenants |
+| `resources:write` | Create, change and delete those resources |
+| `calls:write` | Start outbound calls, web calls and batch calls, and run or activate workflows |
+| `numbers:write` | Buy, register and release phone numbers (buying costs money) |
+| `events:read` | Read the event log and webhook endpoints |
+| `webhooks:write` | Manage webhook endpoints, rotate secrets, send test events and redeliver events |
+| `usage:read` | Read usage |
+| `templates:read` / `templates:write` | Reserved for [templates](/voice-engine/templates) (planned). No endpoint uses them yet. |
+| `sessions:write` | Reserved for [embedding](/voice-engine/embedding) (planned). No endpoint uses it yet. |
 
-A key can also be **restricted to a list of tenants**, for example a key used by one regional team.
+### Restricting a key to some tenants
+
+A key can be **restricted to a list of tenants**, for example a key used by one regional team. A restricted key:
+
+- sees only those tenants in lists, usage and the event log;
+- gets `404` `tenant_not_found` for any other tenant on `/partner/v1` routes, and `403` `tenant_not_allowed` on standard routes;
+- cannot manage webhook endpoints (`403` `key_restricted`), because endpoints receive events for every tenant.
 
 ## Calling standard endpoints for a tenant
 
-A partner key can call the standard API on behalf of any tenant it can reach. Send the tenant ID in `x-workspace-id`:
+A partner key can call a set of standard API endpoints on behalf of one of its tenants. Send the tenant ID in `x-workspace-id`:
 
 ```bash
 curl https://api.trillet.ai/v1/api/agents \
   -H "Authorization: Bearer tpk_live_..." \
-  -H "x-workspace-id: TENANT_ID"
+  -H "x-workspace-id: 6a9622d2c1e8f3a4b5d6e7f8"
 ```
 
-Available to partner keys: agents, call flows (including drafts and publishing), node flows, knowledge bases, phone number search and configuration, outbound and batch calls, call history and recordings, workflows, and workspace secrets.
+Access is deny by default. Only the endpoints below are available to partner keys, each with the scope shown.
 
-Not available to partner keys: account, billing, wallet, team members and roles, domains, API key management, and copying resources between workspaces (use [templates](/voice-engine/templates) instead). These return `403`.
+| Area | Available | Scope |
+|---|---|---|
+| Agents | List, get, create and delete agents; unassign a number from an agent; list available agents; list, search and preview voices | `resources:read` to read and preview, `resources:write` to change |
+| Call flows | List and get call flows and their metadata; list, update, activate, restore and delete drafts; archive, restore and delete call flows; skill prompt defaults | `resources:read` / `resources:write` |
+| Node flows | List, get, validate and simulate node graphs; list templates, versions and runs; restore a version; duplicate, archive and delete; delete a draft; test a code node | `resources:read` / `resources:write` |
+| Knowledge bases | List, get, create, update and delete knowledge bases; add text and files; delete files; usage and limits | `resources:read` / `resources:write` |
+| Phone numbers | Available countries, available numbers and prices; list the tenant's numbers; get and update a number's configuration (including assigning an agent) | `resources:read` / `resources:write` |
+| Calls | Start an outbound call; connect and disconnect a web call | `calls:write` |
+| Batch calls | Template, validate and preview a batch; create a batch (`calls:write`); get a batch, its status, calls and results; remove a contact; delete a batch; batch history | `resources:read` / `resources:write` / `calls:write` |
+| Call history | List, get and resolve calls; metrics and daily metrics; phonebook; filter options; CSV export | `resources:read` |
+| Workflows | List, get, create, update, delete, duplicate, pause and test workflows; list runs, get, cancel a run; schedule preview; webhook sample; live view. Activate, run and retry need `calls:write`. | `resources:read` / `resources:write` / `calls:write` |
+| Workspace secrets | List, create, update and delete secrets | `resources:read` / `resources:write` |
 
-A tenant that belongs to another partner always returns `404`, so a key can never confirm another partner's tenant IDs.
+Buying, registering and releasing numbers use the [Voice Engine number endpoints](/voice-engine/phone-numbers), not the standard purchase endpoint.
 
-## Errors
+Not available to partner keys yet: creating and updating call flows, updating agents, binding a number with `POST /v1/api/agents/{agentId}/bind/{phoneNumberId}`, deactivating drafts, attaching knowledge bases to flows, standard recording endpoints (use the [recording download](/voice-engine/events#recordings) instead), third-party credentials, account, billing, wallet, team members and roles, domains, and API key management. These return `403` `route_not_available`.
 
-| Status | Meaning |
-|---|---|
-| `401` | Missing, malformed, revoked or expired key |
-| `403` | The key lacks the scope, or the endpoint is not available to partner keys |
-| `404` | The tenant does not exist or is not yours |
-| `429` | Rate limit reached; retry after the `Retry-After` header |
+A tenant that is not yours returns `404` `tenant_not_found`, so a key can never confirm another partner's tenant IDs. Your own partner account is not a tenant: a partner key cannot use it as `x-workspace-id`.
+
+<Note>
+  The partner key check uses the [Voice Engine error format](/voice-engine/conventions#errors). Once a request passes the check, the standard endpoint answers in its usual format.
+</Note>
+
+## Authentication errors
+
+| Status | Code | Meaning |
+|---|---|---|
+| `400` | `conflicting_credentials` | Both a partner key and an `x-api-key` were sent |
+| `400` | `tenant_required` | A standard endpoint was called without `x-workspace-id` |
+| `400` | `invalid_tenant` | `x-workspace-id` is not a valid tenant ID |
+| `401` | `partner_key_required` | A `/partner/v1` route was called without a partner key |
+| `401` | `invalid_api_key` | The key is malformed, unknown or revoked |
+| `401` | `partner_not_enabled` | The Voice Engine API is not enabled for this account |
+| `403` | `missing_scope` | The key lacks the scope this endpoint needs |
+| `403` | `route_not_available` | The standard endpoint is not available to partner keys |
+| `403` | `tenant_not_allowed` | The key is restricted and this tenant is not in its list (standard endpoints) |
+| `404` | `tenant_not_found` | The tenant does not exist or is not yours |
+| `429` | `rate_limited` | Too many invalid keys from your IP address in the last minute |

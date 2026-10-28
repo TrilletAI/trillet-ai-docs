@@ -1,20 +1,27 @@
 ---
 title: "API conventions"
 sidebarTitle: "Conventions"
-description: "Idempotency, errors, pagination, versioning and rate limits for the Voice Engine API."
+description: "Idempotency, errors, pagination and versioning for the Voice Engine API."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
-</Warning>
+<Note>
+  **Early access.** The Voice Engine API is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
 
 - **Base URL:** `https://api.trillet.ai/partner/v1`
-- **Format:** JSON request and response bodies, UTF-8, timestamps in ISO 8601 UTC.
-- **IDs:** Trillet IDs are opaque strings. Store them as strings.
+- **Format:** JSON request and response bodies, UTF-8. Timestamps are ISO 8601 UTC, except `created` on events, which is Unix seconds.
+- **IDs:** Tenant, number, endpoint and key IDs are 24-character hexadecimal strings. Event IDs start with `evt_`. Store all IDs as strings.
+- **Objects:** Every response object has an `object` field, for example `tenant`, `phone_number`, `event` or `list`.
 
 ## Idempotency
 
-Networks fail. Send an `Idempotency-Key` header on every request that creates something, so a retry never creates it twice. Tenant creation requires one.
+Networks fail. Endpoints that create something billable or hard to undo require an `Idempotency-Key` header, so a retry never creates it twice:
+
+| Endpoint | `Idempotency-Key` |
+|---|---|
+| `POST /partner/v1/tenants` | Required |
+| `POST /partner/v1/tenants/{tenantId}/numbers` | Required |
+| `POST /partner/v1/tenants/{tenantId}/numbers/external` | Required |
 
 ```bash
 curl -X POST https://api.trillet.ai/partner/v1/tenants \
@@ -27,62 +34,82 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
 | Situation | Result |
 |---|---|
 | First request with a key | Runs normally. The response is stored for 24 hours. |
-| Retry with the same key and the same body | The stored response is returned with `Idempotent-Replayed: true`. Nothing runs twice. |
-| Same key, different body | `422` `idempotency_key_reused` |
+| Retry with the same key and the same request | The stored response is returned with the header `Idempotent-Replayed: true`. Nothing runs twice. |
+| Same key, different request | `422` `idempotency_key_reused` |
 | Same key while the first request is still running | `409` `idempotency_key_in_use`. Retry after `Retry-After`. |
-| The first request failed with a `5xx` | Not stored. A retry runs again. |
+| No key on an endpoint that requires one | `400` `idempotency_key_required` |
+| The first request failed with a `5xx`, `401`, `403`, `409` or `429` | Not stored. A retry runs again. |
 
-Keys are 1 to 255 printable characters and are scoped to your partner account. A UUID, or your own operation ID, works well.
+- Keys are 1 to 255 printable ASCII characters, with no spaces, and are scoped to your partner account. A UUID, or your own operation ID, works well. A key that does not fit returns `400` `idempotency_key_invalid`.
+- "The same request" means the same method, path, query string and JSON body. Key order in the body does not matter.
+- If a request is interrupted before it finishes, the key is locked for up to 2 minutes, after which a retry can run.
+
+Idempotency errors have `type: "idempotency_error"` and no `requestId`.
 
 ## Errors
 
-Every error has the same shape:
+Every other error has the same shape:
 
 ```json
 {
   "error": {
-    "type": "invalid_request",
+    "type": "conflict_error",
     "code": "tenant_deleted_restorable",
-    "message": "A deleted tenant with this externalId can still be restored.",
-    "param": "externalId",
-    "requestId": "req_7Qe2..."
+    "message": "A deleted tenant 6a9622d2c1e8f3a4b5d6e7f8 has this externalId. Restore it, or use a different externalId.",
+    "requestId": "req-1a2b"
   }
 }
 ```
 
-Handle errors by `code`, not by `message`. Include `requestId` when you contact support.
+`param` is included when a request body field failed validation. Handle errors by `code`, not by `message`. Include `requestId` when you contact support.
 
-| Status | Meaning |
-|---|---|
-| `400` | The request is malformed or a required field is missing |
-| `401` | Authentication failed |
-| `403` | Not allowed for this key |
-| `404` | Not found, or not yours |
-| `409` | Conflict, for example a duplicate `externalId` or a request still in progress |
-| `422` | The request is well formed but cannot be applied |
-| `429` | Rate limited |
-| `5xx` | A problem on our side. Safe to retry with the same `Idempotency-Key`. |
+| Status | `type` | Meaning |
+|---|---|---|
+| `400` | `invalid_request_error` | The request is malformed or a field is invalid (`invalid_request`, or a specific code such as `invalid_external_id`) |
+| `401` | `authentication_error` | Authentication failed. See [Authentication](/voice-engine/authentication#authentication-errors). |
+| `402` | `invalid_request_error` | `insufficient_funds`: your account cannot pay for a number purchase |
+| `403` | `permission_error` | The key is not allowed to do this |
+| `404` | `invalid_request_error` | Not found, or not yours |
+| `409` | `conflict_error` | Conflict, for example a duplicate `externalId` or a tenant limit |
+| `410` | `invalid_request_error` | `restore_window_expired`: a tenant deleted more than 30 days ago |
+| `429` | `rate_limit_error` | Rate limited |
+| `500` | `api_error` | A problem on our side. Safe to retry with the same `Idempotency-Key`. |
+
+Each page lists the codes its endpoints return.
 
 ## Pagination
 
-List endpoints return a page and a cursor:
+List endpoints return a page, newest first:
 
 ```json
 {
-  "data": [ { "id": "ten_1" }, { "id": "ten_2" } ],
-  "hasMore": true,
-  "nextCursor": "ten_2"
+  "object": "list",
+  "data": [ { "object": "tenant", "id": "6a9622d2c1e8f3a4b5d6e7f8" } ],
+  "hasMore": true
 }
 ```
 
-Pass `limit` (1 to 100, default 20) and `starting_after=<nextCursor>` to get the next page.
+To get the next page, pass the `id` of the last item as `starting_after`, with an optional `limit`:
+
+```bash
+curl "https://api.trillet.ai/partner/v1/tenants?limit=50&starting_after=6a9622d2c1e8f3a4b5d6e7f8" \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+| List | `limit` |
+|---|---|
+| `GET /tenants` | 1 to 100, default 20 |
+| `GET /events` | 1 to 100, default 20 |
+| `GET /usage/calls` | 1 to 200, default 50 |
+
+`GET /tenants/{tenantId}/numbers` and `GET /webhook-endpoints` return every item in one page.
 
 ## Versioning
 
 The major version is in the path (`/partner/v1`). Within a version we only add things: new endpoints, new optional fields, new event types. Your code should ignore fields and event types it does not recognise.
 
-Breaking changes ship as a new major version, with notice and an overlap period. Webhook payloads carry an `apiVersion` field.
+Every response carries a `Trillet-Version` header with the date of the API release that served it, for example `Trillet-Version: 2026-10-28`. It is informational: requests cannot pin a version yet. Version pinning by request header is planned.
 
 ## Rate limits
 
-Limits apply per key. The default is 100 requests per second in bursts and 6,000 per minute. A `429` response includes `Retry-After`. Contact us if your integration needs more.
+During early access there is no published per-key request limit. Repeated invalid keys from one IP address (20 in a minute) are refused with `429` `rate_limited` for the rest of that minute. Tell your account manager about expected volumes before large provisioning runs.
