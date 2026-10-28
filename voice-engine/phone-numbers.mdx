@@ -35,7 +35,7 @@ Each tenant needs at least one number for phone calls. You can buy numbers throu
   "agentId": null,
   "callFlowId": null,
   "billing": {
-    "monthlyPrice": 2.5,
+    "monthlyPrice": 4.99,
     "nextChargeAt": "2026-12-02T10:20:00.000Z",
     "status": "active"
   },
@@ -77,7 +77,7 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/
 
 Returns `201` with the number. `Idempotency-Key` is required.
 
-- Number pricing is set in your agreement. By default it is the standard monthly number price for the country and type. A price change applies to new purchases and from each number's next renewal.
+- Numbers are charged at the standard Trillet monthly number price for the country and type, the same price every Trillet customer pays. Numbers start at $4.99 per month. A price change applies to new purchases and from each number's next renewal.
 - The first month is charged to your account when you buy. After that each number renews monthly on the date it was bought. Renewals are processed daily.
 - If a charge cannot be taken, the number keeps working, `billing.status` becomes `past_due`, and the charge is retried daily. A failed renewal also sends a `number.renewal_failed` event. Releasing the number is your decision.
 - Number charges appear in [usage](/voice-engine/usage-and-billing) as `phone_number_charge`.

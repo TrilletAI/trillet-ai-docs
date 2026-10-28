@@ -10,9 +10,9 @@ description: "Trillet OEM usage per tenant and per call, how tenants are billed,
 
 ## How you are billed
 
-Tenants are billed to your partner account, at the rates in your agreement. Each tenant's wallet is linked to your account, so your tenants do not need cards or balances on Trillet. Depending on your agreement, charges are drawn from your account balance or recorded and invoiced to you.
+Tenants are billed to your partner account at the standard Trillet rates, the same rates every Trillet customer pays: calls start at $0.12 per minute and phone numbers start at $4.99 per month. Each tenant's wallet is linked to your account, so your tenants do not need cards or balances on Trillet. Charges are drawn from your account balance, or recorded and invoiced to you if your account is set up for invoicing.
 
-Usage amounts in this API are **wholesale**: what Trillet charges you. What you charge your own customers is up to you and is not stored on Trillet.
+Usage amounts in this API are what Trillet charges your account. What you charge your own customers is up to you and is not stored on Trillet.
 
 ## Endpoints
 
@@ -96,8 +96,8 @@ curl "https://api.trillet.ai/partner/v1/usage/calls?tenantId=6a9622d2c1e8f3a4b5d
       "callHistoryId": "6b3a1c0f9e8d7c6b5a4f3e2d",
       "at": "2026-11-02T15:04:12.000Z",
       "billedSeconds": 151,
-      "ratePerMinute": 0.09,
-      "amount": 0.2265
+      "ratePerMinute": 0.12,
+      "amount": 0.302
     }
   ],
   "hasMore": true
@@ -117,7 +117,7 @@ Rows are newest first. Page with `limit` (1 to 200, default 50) and `starting_af
 
 ## Spend caps
 
-A spend cap limits a month's wholesale usage, from the first of the month (UTC). There are two:
+A spend cap limits a month's usage, from the first of the month (UTC). There are two:
 
 | Cap | Set by | Applies to |
 |---|---|---|
@@ -166,5 +166,5 @@ Inbound phone calls continue, so a business's line keeps working. Raise or remov
 Usage totals for caps are refreshed about once a minute, so a burst of activity can go slightly past a cap before it is enforced.
 
 <Note>
-  A partner invoices endpoint, partner wholesale rate cards in the API, and concurrency and outbound pacing limits per tenant are planned.
+  A partner invoices endpoint and concurrency and outbound pacing limits per tenant are planned.
 </Note>
