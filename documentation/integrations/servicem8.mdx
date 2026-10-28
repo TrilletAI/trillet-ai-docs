@@ -1,0 +1,222 @@
+---
+title: "ServiceM8"
+sidebarTitle: "ServiceM8"
+description: "Connect ServiceM8 to a Trillet call flow so your agent can find customers, offer job times, book jobs and add notes during a call."
+---
+
+Connect a ServiceM8 account to a call flow and your agent can book jobs while it is on the phone. It finds the caller in ServiceM8, offers open times, books the job into your ServiceM8 diary, and reads the job number back to the caller.
+
+You connect ServiceM8 per call flow. Each call flow that should book jobs needs its own connection.
+
+## What the agent can do
+
+When ServiceM8 is connected, the agent has four abilities.
+
+| Ability | What happens in ServiceM8 | What the caller experiences |
+| --- | --- | --- |
+| **Look up a client** | Searches for an existing client by phone number, then by name. Nothing is changed. | The agent can greet a returning customer. If no match is found, the agent says it will create a record when it books. |
+| **Check availability** | Works out open times from your booking hours and the jobs already in the diary. | The agent offers the two or three open times closest to what the caller asked for. It doesn't read out a long list. |
+| **Book a job** | Finds or creates the client, creates a job with the caller's description and address, and places it in the diary. | The agent confirms the day and time and reads out the ServiceM8 job number. |
+| **Add a note to the job** | Adds a note to the job booked on this call. | The caller can add details after booking, such as a gate code, access instructions or pets on site. |
+
+The agent always checks availability before it books. If someone else takes the time while the caller is deciding, the agent says the time was just taken and offers other times. It never double-books a time.
+
+<Note>
+  The agent can only add a note to a job it booked on the same call. It can't add notes to existing jobs.
+</Note>
+
+## Before you start
+
+- **A ServiceM8 account** that is active and has the staff members and job queues you want to use.
+- **A ServiceM8 API key.** In ServiceM8, go to **Settings > Account Settings > API Keys** and copy the key. Keys start with `smk-`. Copy the key itself, not its name or ID.
+- **A saved call flow in Trillet.** Save the call flow before you connect. ServiceM8 can't be connected to a flow that hasn't been saved yet.
+
+## Connect ServiceM8
+
+You can connect from either call flow editor. The connection and its settings are the same in both.
+
+<Tabs>
+  <Tab title="Call flow editor">
+    <Steps>
+      <Step title="Open Integrations">
+        Open your call flow and go to **Settings > Advanced Settings > Integrations**. You can also go to **Settings > Tools > + Add > Connect a new app**.
+      </Step>
+      <Step title="Choose ServiceM8">
+        Select **ServiceM8** (Book jobs in your ServiceM8 account).
+      </Step>
+      <Step title="Paste your API key">
+        Paste your ServiceM8 API key into **API Key** and select **Verify & Connect**. Trillet checks the key with ServiceM8 and stores it encrypted.
+      </Step>
+      <Step title="Set your booking settings">
+        Fill in the **Booking settings**. See [Booking settings](#booking-settings) below.
+      </Step>
+      <Step title="Save the call flow">
+        Save and publish the call flow so live calls use the new settings.
+      </Step>
+    </Steps>
+
+    The four abilities are added to the agent automatically, along with default ServiceM8 instructions in its prompt. You can find them under **Settings > Tools**.
+  </Tab>
+  <Tab title="Node flow editor">
+    <Steps>
+      <Step title="Open Integrations">
+        Open your node flow. In the right panel, select the **Data** tab, then **Connect / manage integrations** under **Integrations**.
+      </Step>
+      <Step title="Choose ServiceM8 and connect">
+        Select **ServiceM8**, paste your API key into **API Key**, and select **Verify & Connect**.
+      </Step>
+      <Step title="Set your booking settings">
+        Fill in the **Booking settings**. See [Booking settings](#booking-settings) below.
+      </Step>
+      <Step title="Turn on abilities for each step">
+        Select a Conversation node, open the **Node** tab, and under **Abilities** turn on the ServiceM8 abilities that step needs: **Look up a client**, **Check availability**, **Book a job** and **Add a note to the job**.
+      </Step>
+      <Step title="Save and publish">
+        Save and publish the flow so live calls use the new settings.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+Once connected, the panel shows **Connected** with your default staff member. Select **Test** at any time to check the connection still works.
+
+## Booking settings
+
+These settings appear on the ServiceM8 panel after you connect.
+
+| Setting | What it does | Default |
+| --- | --- | --- |
+| **Business timezone** | The timezone jobs are booked in. Set it to the same timezone as your ServiceM8 account. See [Timezone](#timezone). | The call flow's timezone |
+| **Booking hours** | The agent only offers job times between these hours. | 9:00 to 17:00 |
+| **Job duration** | How long each booked job blocks out in the diary: 30, 45, 60, 90 or 120 minutes. | 60 minutes |
+| **Default staff member** | The staff member every new job is assigned to. | Any available staff (each job goes to someone free at that time) |
+| **Job queue** | The ServiceM8 queue new jobs are added to. | Default queue |
+
+New jobs are created in ServiceM8 with the status **Work Order**.
+
+## Timezone
+
+ServiceM8 stores job times without a timezone, so Trillet needs to know which timezone your business works in.
+
+- **Set Business timezone to the timezone your ServiceM8 account uses.** Jobs are booked, and times are offered to the caller, in that timezone.
+- **If you leave it blank,** the panel shows **Agent timezone** and Trillet uses the call flow's own timezone (**Settings > Advanced Settings > Locale**).
+
+<Warning>
+  If the Business timezone doesn't match your ServiceM8 account, jobs land in the diary at the wrong time, usually off by whole hours. Always set it when your business and your call flow are in different timezones.
+</Warning>
+
+## Booking variables
+
+After the agent books a job, Trillet fills in these variables for the call. You can copy them from **Available in messages & workflows** on the ServiceM8 panel.
+
+| Variable | What it contains | Example |
+| --- | --- | --- |
+| `servicem8_job_number` | The job number as ServiceM8 shows it | `1042` |
+| `servicem8_job_uuid` | ServiceM8's internal ID for the job | `a1b2c3d4-…` |
+| `servicem8_client_uuid` | ServiceM8's internal ID for the client the job was booked for | `e5f6a7b8-…` |
+| `servicem8_job_start` | Scheduled start time (ISO 8601, in the Business timezone) | `2026-11-03T10:00:00+11:00` |
+| `servicem8_job_end` | Scheduled end time (ISO 8601, in the Business timezone) | `2026-11-03T11:00:00+11:00` |
+| `servicem8_staff_name` | The staff member the job is assigned to | `Sam Taylor` |
+
+If no job was booked on the call, these variables are empty. `servicem8_staff_name` holds whoever the job was assigned to, including a staff member picked automatically.
+
+### Where you can use them
+
+- **Webhooks.** In the webhook payload designer, insert a variable as `{{servicem8_job_number}}`. The post-call webhook also includes all six under `call_metadata.extracted_variables`.
+- **Workflows.** Use them in workflow steps that run after the call, for example to create a follow-up task or send a message.
+- **Post-call SMS.** When a job was booked, the customer's post-call SMS automatically includes **"Your job number is 1042."** You don't need to set this up.
+
+### Webhook example
+
+A payload designed in the webhook payload designer:
+
+```json
+{
+  "event": "servicem8_job_booked",
+  "job_number": "{{servicem8_job_number}}",
+  "job_start": "{{servicem8_job_start}}",
+  "job_end": "{{servicem8_job_end}}",
+  "technician": "{{servicem8_staff_name}}"
+}
+```
+
+The same values in the post-call webhook:
+
+```json
+{
+  "call_metadata": {
+    "extracted_variables": {
+      "servicem8_job_number": "1042",
+      "servicem8_job_uuid": "a1b2c3d4-...",
+      "servicem8_client_uuid": "e5f6a7b8-...",
+      "servicem8_job_start": "2026-11-03T10:00:00+11:00",
+      "servicem8_job_end": "2026-11-03T11:00:00+11:00",
+      "servicem8_staff_name": "Sam Taylor"
+    }
+  }
+}
+```
+
+## How customers are matched
+
+When the agent looks up or books for a caller, Trillet searches ServiceM8 in this order:
+
+1. **Phone number.** The caller's number is checked against your ServiceM8 contacts in common formats (with and without the country code).
+2. **Name.** The name must match a ServiceM8 client exactly. Differences in capital letters and punctuation are ignored, and common nicknames for the first name count as the same person, so "Bob Smith" finds "Robert Smith".
+
+Trillet doesn't guess. A name that is spelled differently, or only partly matches, is treated as a new customer. When no match is found, booking creates a new client in ServiceM8 with the caller's name, address, phone number and email.
+
+<Tip>
+  Phone matching is the most reliable. Make sure your existing customers have a mobile or phone number on their ServiceM8 contact.
+</Tip>
+
+## Current limits
+
+ServiceM8 support covers booking a new job. Be clear with customers about what it doesn't do yet.
+
+- **One queue, one staff rule.** Every job goes to the **Job queue** you set. With a **Default staff member**, every job goes to that person. With **Any available staff**, each job goes to the first staff member who is free in that slot. The caller can't choose a technician.
+- **Availability comes from your booking hours.** Open times are worked out from the **Booking hours** and **Job duration** on the panel, minus jobs already in the diary. They don't come from ServiceM8's own booking windows or staff schedules. Booking hours apply to every day of the week, including weekends.
+- **With Any available staff,** a time is offered while at least one staff member is free in it.
+- **New bookings only.** The agent can't reschedule a job, cancel a job, or tell a caller the status of an existing job.
+- **Notes only on jobs booked in the same call.**
+
+### Coming later
+
+These are planned and not available yet:
+
+- Offering times from ServiceM8's real booking windows and staff schedules.
+- Letting the caller choose a staff member.
+- Rescheduling and cancelling jobs, and looking up the status of an existing job.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The panel says the ServiceM8 account isn't active">
+    ServiceM8 rejected the saved API key. This usually means the ServiceM8 account has expired or is unpaid, or the key was revoked.
+
+    Make sure the ServiceM8 account is active, create a new API key in ServiceM8, then select **Disconnect** on the panel and connect again with the new key.
+  </Accordion>
+  <Accordion title="The API key is rejected when I connect">
+    - Check you copied the key itself. ServiceM8 API keys start with `smk-`. A long string of letters and numbers without `smk-` is the key's ID, not the key.
+    - Check the ServiceM8 account is active.
+    - If the panel asks you to save first, save the call flow, then connect.
+  </Accordion>
+  <Accordion title="Jobs appear at the wrong time in ServiceM8">
+    Check **Business timezone** on the ServiceM8 panel. It must match the timezone of your ServiceM8 account. If it is blank, Trillet uses the call flow's timezone, which may be different. Set it, then save and publish the call flow.
+  </Accordion>
+  <Accordion title="The agent offers times when we're closed">
+    Check **Booking hours** and **Job duration** on the panel. Booking hours apply to every day, so tell the agent in its prompt which days you don't take bookings.
+  </Accordion>
+  <Accordion title="The agent said it booked, but there's no job in ServiceM8">
+    - Open the call in call history and check whether the agent read out a job number. No job number usually means the booking didn't go through.
+    - Select **Test** on the ServiceM8 panel to check the connection.
+    - Check the **Job queue** and **Default staff member** you set, and look for the job in that queue and that person's diary.
+    - Check the call flow was published after you connected ServiceM8.
+  </Accordion>
+  <Accordion title="The agent says it can't check availability or book">
+    The agent couldn't reach ServiceM8. It offers to take a message or arrange a call back instead. Select **Test** on the ServiceM8 panel. If the test fails, reconnect with a valid API key.
+  </Accordion>
+  <Accordion title="Returning customers are created again as new clients">
+    The caller's phone number didn't match a ServiceM8 contact, and their name didn't match exactly. Add the customer's phone number to their ServiceM8 contact so future calls match by phone.
+  </Accordion>
+</AccordionGroup>
