@@ -4,7 +4,11 @@ api: "POST /v1/api/calls/web/connect"
 description: "Initiate a live web-based call session with an AI agent."
 ---
 
-Initiate a web call that runs entirely via WebRTC in the browser (no phone number required). The agent can interact via voice.  
+Initiate a web call that runs entirely via WebRTC in the browser (no phone number required). The response carries the LiveKit URL and token your client uses to join the call.
+
+Authenticate with your API key (`x-api-key`) or a dashboard session token. An SDK token from [Create SDK Token](/v1/api-reference/endpoints/calls/sdk/auth) is currently rejected by this endpoint with `401 {"error": "Invalid token"}`, so call it from your server.
+
+The workspace's wallet is checked first: a spent balance returns `400` with code `INSUFFICIENT_FUNDS`.
 
 ### Headers  
 
@@ -12,33 +16,91 @@ Initiate a web call that runs entirely via WebRTC in the browser (no phone numbe
   Workspace identifier for the API.
 </ParamField>
 
-
 ### Request Body
 
 <ParamField body="agentId" type="string" required>
-  The ID of the agent that will handle this web call.
+  The ID of the agent that will handle this web call. The agent's call flow must be live.
 </ParamField>
 
 <ParamField body="mode" type="string">
-  The mode of the call. Defaults to "voice".
+  The mode of the call. Defaults to `voice`.
 </ParamField>
+
+<ParamField body="dynamic_variables" type="object">
+  Values for `{{variable}}` placeholders in the call flow, as a flat object of strings.
+</ParamField>
+
+<ParamField body="initial_modality" type="string">
+  The modality the session starts in.
+</ParamField>
+
+<ParamField body="pathwayId" type="string">
+  A call flow ID. When that call flow has an active draft, the call tests the draft's settings instead of the published ones.
+</ParamField>
+
+<ParamField body="test_direction" type="string">
+  `inbound` or `outbound`: which greeting to play. Defaults to the call flow's inbound greeting, or outbound for an outbound-only call flow.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="status" type="string">
+  `success`.
+</ResponseField>
+
+<ResponseField name="callId" type="string">
+  A 10-character ID for this call.
+</ResponseField>
+
+<ResponseField name="callHistoryId" type="string | null">
+  The Call History record for this call. Use it with [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get).
+</ResponseField>
+
+<ResponseField name="roomName" type="string">
+  The LiveKit room, `web-<agentId>-<callId>`. Send it to [Disconnect a Web Call](/v1/api-reference/endpoints/calls/web/disconnect) to end the call.
+</ResponseField>
+
+<ResponseField name="token" type="string">
+  The LiveKit access token for the room.
+</ResponseField>
+
+<ResponseField name="connection" type="object">
+  `url` (the LiveKit server to connect to) and `token` (the same as `token` above).
+</ResponseField>
+
+<ResponseField name="agent" type="object">
+  `id`, `name`, `model` (the agent's LLM settings) and `voice` (the agent's voice settings).
+</ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "x-workspace-id header is required"}` | No `x-workspace-id` |
+| `400` | `{"code", "error", "message", "fix"}` | The agent has no live call flow. `code` says why, for example `FLOW_ARCHIVED` or `FLOW_INACTIVE` |
+| `400` | `{"error": "Agent must have a phone number configured to use transfers"}` | The call flow has transfers but the agent has no number |
+| `400` | `{"error": "Insufficient funds", "code": "INSUFFICIENT_FUNDS", ...}` | The wallet balance is spent |
+| `401` | `{"error": "..."}` | Missing or invalid credentials |
+| `404` | `{"error": "Agent not found or unauthorized"}` | No agent with that ID in this workspace |
+| `500` | `{"error": "Failed to initiate web call", "details", "requestId"}` | Server error |
 
 <ResponseExample>
 ```json
 {
   "status": "success",
-  "callId": "call1234",
-  "roomName": "web-genericAgent-call1234",
-  "token": "<REDACTED_JWT_TOKEN>",
+  "callId": "k3j9x0a1bq",
+  "callHistoryId": "6650f1a2b3c4d5e6f7a8b9c0",
+  "roomName": "web-665a1b2c3d4e5f6a7b8c9d0f-k3j9x0a1bq",
+  "token": "<LIVEKIT_TOKEN>",
+  "connection": {
+    "url": "wss://livekit.example.com",
+    "token": "<LIVEKIT_TOKEN>"
+  },
   "agent": {
-    "id": "agent12345678",
-    "name": "Generic Agent",
-    "model": "llm-mini",
-    "voice": {
-      "provider": "genericVoiceProvider",
-      "voiceId": "standard",
-      "language": "en"
-    }
+    "id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "name": "Front Desk",
+    "model": { "provider": "openai", "model": "gpt-4.1-mini" },
+    "voice": { "provider": "cartesia", "voiceId": "a0e99841-438c-4a64-b679-ae501e7d6091" }
   }
 }
 ```

@@ -1,40 +1,49 @@
 ---
 title: "Get Call Recording"
 api: "GET /v1/api/calls/recordings/{callSid}"
-description: "Retrieve audio recording for a completed call session."
+description: "Stream the recording of a phone call that was recorded through Twilio."
 ---
+
+<Note>
+This endpoint only serves calls recorded through Twilio. Most recordings, including every web call, are stored by Trillet and served by [Get Recording](/v1/api-reference/endpoints/recordings/get) instead. The simplest way to get any recording is the `recordingUrl` from [Call History](/v1/api-reference/endpoints/calls/call-history/get): it already points at the right endpoint.
+</Note>
 
 ### Headers  
 <ParamField header="x-workspace-id" type="string" required>
 The unique identifier of the workspace being accessed.
 </ParamField>
 
-
 ### Path Parameters
 
 <ParamField path="callSid" type="string" required>
-  The Twilio Call SID of the call whose recording you want.
+  The Twilio Call SID of the call. Call History doesn't return it as a field; it appears only inside `recordingUrl` for Twilio-recorded calls.
 </ParamField>
-
-### Response Fields
-
-<ResponseField name="Content-Type" type="string">
-  Indicates the MIME type of the streamed content, which is 'audio/mpeg' for MP3 audio files.
-</ResponseField>
-
-<ResponseField name="Content-Disposition" type="string">
-  Describes how the content should be handled by the browser; set to 'inline' with a filename indicating the name of the downloaded or played file.
-</ResponseField>
 
 ### Response
 
-An audio/mpeg file (MP3) is streamed back. You can download or play it in the browser.
+The first Twilio recording for the call, streamed as MP3.
+
+<ResponseField name="Content-Type" type="string">
+  `audio/mpeg`.
+</ResponseField>
+
+<ResponseField name="Content-Disposition" type="string">
+  `inline; filename="<RecordingSid>.mp3"`.
+</ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `403` | `{"error": "Unauthorized access to recording"}` | The call belongs to a workspace you aren't a member of |
+| `404` | `{"error": "Call details not found"}` | No call with that Call SID |
+| `404` | `{"error": "No recordings found for this call"}` | Twilio has no recording for the call |
+| `500` | `{"error": "Unable to fetch recording"}` | Any other failure, including a call whose number is no longer in Trillet |
 
 <ResponseExample>
-  ```json 
-  HTTP/1.1 200 OK 
-  Content-Type: audio/mpeg 
-  Content-Disposition: inline;
-  filename="exampleRecordingSid.mp3" 
+  ```text
+  HTTP/1.1 200 OK
+  Content-Type: audio/mpeg
+  Content-Disposition: inline; filename="RE0123456789abcdef0123456789abcdef.mp3"
   ```
 </ResponseExample>

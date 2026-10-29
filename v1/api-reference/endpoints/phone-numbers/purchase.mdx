@@ -1,8 +1,19 @@
 ---
 title: "Purchase Phone Number"
 api: "POST /v1/api/twilio/purchase-number"
-description: "Purchase a phone number for your workspace."
+description: "Buy a phone number for your workspace, either from your plan's free allowance or through a Stripe Checkout page."
 ---
+
+What happens depends on your plan:
+
+- **Free allowance.** If your plan still has free numbers left (Studio and Agency Plus include some), the number is bought straight away and the response is a JSON object.
+- **Paid number.** Otherwise the API does **not** buy the number yet. It creates a Stripe Checkout session and returns its URL as the response body. The number is provisioned only after someone opens that URL in a browser and completes the payment.
+
+Pick a number first with [Search Available Numbers](/v1/api-reference/endpoints/phone-numbers/available-numbers).
+
+<Note>
+Your role needs the `phone_number:create` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -12,64 +23,97 @@ Workspace identifier for the API.
 ## Request Body
 
 <ParamField body="country" type="string" required>
-Country code for the phone number (e.g., "US", "CA").
+Country code: `US`, `CA`, `AU`, or `GB` (GB only when it appears in [Available Countries](/v1/api-reference/endpoints/phone-numbers/available-countries)). Any other country also needs `addressSid`.
 </ParamField>
 
-<ParamField body="type" type="string" required>
-Type of phone number. Options: "local", "tollFree", "mobile".
+<ParamField body="type" type="string">
+Number type: `local` or `mobile`. Required for every country except `AU`.
+
+Toll-free numbers can't be bought through the API. `tollFree`, or any number with a toll-free area code (800, 833, 844, 855, 866, 877, 888), is refused with `403` and code `TOLL_FREE_NOT_AVAILABLE`. For `GB`, only `mobile` is available: `local` returns `400` with code `UK_LOCAL_NOT_AVAILABLE`.
 </ParamField>
 
 <ParamField body="phoneNumber" type="string" required>
-The specific phone number to purchase in E.164 format.
+The number to buy, in E.164 format, as returned by Search Available Numbers.
 </ParamField>
 
 <ParamField body="addressSid" type="string">
-Address SID for regulatory compliance (required for some countries).
+Address SID for regulatory compliance. Required for countries other than US, CA, AU and GB.
 </ParamField>
 
 <ParamField body="coupon" type="string">
-Coupon code for a discount.
+Stripe coupon applied to the checkout. Used only for a paid number.
 </ParamField>
 
-## Response Fields
+## Response
 
-<ResponseField name="success" type="boolean">
-Whether the purchase was successful.
+### Free allowance (`201`)
+
+<ResponseField name="mode" type="string">
+Always `free`.
 </ResponseField>
 
-<ResponseField name="phoneNumber" type="object">
-The purchased phone number details.
-
-<ResponseField name="_id" type="string">
-Unique identifier for the phone number record.
+<ResponseField name="message" type="string">
+`Phone number purchased using free plan allowance.`
 </ResponseField>
 
 <ResponseField name="phoneNumber" type="string">
-The purchased phone number in E.164 format.
+The number you bought, in E.164 format.
 </ResponseField>
 
-<ResponseField name="country" type="string">
-Country code.
+<ResponseField name="sid" type="string">
+The provider's ID for the number. This is the `sid` you send to [Release Phone Number](/v1/api-reference/endpoints/phone-numbers/release).
 </ResponseField>
 
-<ResponseField name="type" type="string">
-Phone number type.
+<ResponseField name="freeStatus" type="object">
+Your free allowance after this purchase: `limit`, `used`, `remaining` and `hasFree`.
 </ResponseField>
 
-</ResponseField>
+### Paid number (`201`)
 
-<ResponseExample>
+The body is a bare string: the Stripe Checkout URL. Open it in a browser to pay. The number appears in [List Phone Numbers](/v1/api-reference/endpoints/phone-numbers/list) once the payment completes.
+
+## Errors
+
+Errors return `{"error": "...", "code": "..."}`. `code` is present on the errors raised during the purchase itself.
+
+| Status | `code` | When |
+| --- | --- | --- |
+| `400` | none | `country`, `phoneNumber` or `x-workspace-id` missing, `type` missing for a non-AU country, or `addressSid` missing where it's required |
+| `400` | `INVALID_COUNTRY` | `GB` is not available on this deployment |
+| `400` | `UK_LOCAL_NOT_AVAILABLE` | `GB` with `type` `local` |
+| `400` | `MARKUP_BELOW_MIN` / `MARKUP_EXCEEDS_MAX` | Sub-workspace billed through its agency's own Stripe, with a phone number markup outside $5 to $20 a month |
+| `403` | `TOLL_FREE_NOT_AVAILABLE` | Toll-free type or toll-free number |
+| `403` | `FREE_PLAN_PURCHASE_BLOCKED` | The workspace is on the free plan. You can still [bring your own number](/v1/api-reference/endpoints/telephony/register-externalNumber) |
+| `403` | `TRIAL_PURCHASE_BLOCKED` | The plan is still in its free trial. Numbers can be bought once the first payment goes through |
+| `500` | `PURCHASE_FAILED` | Anything else, for example the number was taken by someone else in the meantime |
+
+<RequestExample>
 ```json
 {
-  "success": true,
-  "phoneNumber": {
-    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-    "phoneNumber": "+14155551234",
-    "country": "US",
-    "type": "local",
-    "status": "active",
-    "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e"
+  "country": "US",
+  "type": "local",
+  "phoneNumber": "+14155550123"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json Free allowance
+{
+  "mode": "free",
+  "message": "Phone number purchased using free plan allowance.",
+  "phoneNumber": "+14155550123",
+  "sid": "1293384261075731499",
+  "freeStatus": {
+    "limit": 3,
+    "used": 1,
+    "remaining": 2,
+    "hasFree": true
   }
 }
+```
+
+```text Paid number
+https://checkout.stripe.com/c/pay/cs_live_a1B2c3D4e5F6g7H8
 ```
 </ResponseExample>

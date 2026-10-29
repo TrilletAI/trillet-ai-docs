@@ -1,8 +1,12 @@
 ---
 title: "Get Phone Number Price"
 api: "GET /v1/api/twilio/phone-number-price"
-description: "Get the pricing for purchasing a phone number by country and type."
+description: "Get the monthly price of a phone number by country and type."
 ---
+
+<Note>
+Your role needs the `phone_number:view` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -12,33 +16,66 @@ Workspace identifier for the API.
 ## Query Parameters
 
 <ParamField query="country" type="string" required>
-Country code (e.g., "US", "CA", "AU", "GB").
+Country code, for example `US`, `CA`, `AU` or `GB`.
 </ParamField>
 
 <ParamField query="type" type="string" required>
-Type of phone number. Options: "local", "tollFree", "mobile".
+`local` or `mobile`. Toll-free numbers are not sold through the API: `tollFree` returns `403` with code `TOLL_FREE_NOT_AVAILABLE`.
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="country" type="string">
-Country code.
+The country you asked for.
 </ResponseField>
 
 <ResponseField name="type" type="string">
-Phone number type.
+The type you asked for.
 </ResponseField>
 
-<ResponseField name="price" type="number">
-Monthly price for the phone number in USD.
+<ResponseField name="price" type="object">
+Pricing details.
+
+<Expandable title="properties">
+
+<ResponseField name="monthlyPrice" type="number">
+What you pay per month for the number, in USD. Use this value.
 </ResponseField>
+
+<ResponseField name="number_type" type="string">
+The number type.
+</ResponseField>
+
+<ResponseField name="current_price" type="string">
+The provider's cost, before Trillet pricing. Not what you're charged.
+</ResponseField>
+
+<ResponseField name="basePrice" type="number">
+`current_price` as a number. Not what you're charged.
+</ResponseField>
+
+</Expandable>
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Country, type, and workspace ID are required."}` | A parameter or `x-workspace-id` is missing |
+| `403` | `{"error": "...", "code": "TOLL_FREE_NOT_AVAILABLE"}` | `type` is toll-free |
+| `500` | `{"error": "Failed to retrieve phone number price"}` | No price for that country and type |
 
 <ResponseExample>
 ```json
 {
   "country": "US",
   "type": "local",
-  "price": 1.15
+  "price": {
+    "number_type": "local",
+    "current_price": "0.79",
+    "basePrice": 0.79,
+    "monthlyPrice": 6.79
+  }
 }
 ```
 </ResponseExample>

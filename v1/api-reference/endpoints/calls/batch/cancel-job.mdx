@@ -17,13 +17,74 @@ description: "Cancel one job in a batch."
 </ParamField>
 
 <ParamField path="jobId" type="string" required>
-  The job to cancel. Job ids come from [List Batch Calls](/v1/api-reference/endpoints/calls/batch/list-calls).
+  The numeric job ID to cancel. Job IDs come from the `id` field of [List Batch Calls](/v1/api-reference/endpoints/calls/batch/list-calls).
 </ParamField>
+
+### Behavior
+
+What happens depends on the job's state:
+
+- **Waiting or scheduled retry**: the job is removed from the queue and its status becomes `cancelled`.
+- **In progress**: the live call can't be stopped. It continues, but no further smart-callback retries are scheduled (`reason: "call_in_progress"`).
+- **Already completed or failed**: the call is left as it is, and any scheduled smart-callback retry is cancelled (`reason: "cancelled"`).
+- **Already cancelled**: nothing changes (`409`).
+
+### Response
+
+<ResponseField name="ok" type="boolean">
+  `true` for `cancelled` and `call_in_progress`, otherwise `false`.
+</ResponseField>
+
+<ResponseField name="reason" type="string">
+  `cancelled`, `call_in_progress`, `already_cancelled` or `call_not_found`.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  What happened, in words.
+</ResponseField>
+
+<ResponseField name="jobId" type="string">
+  The job that was acted on. For a contact with a pending retry this can be the retry's job ID.
+</ResponseField>
+
+<ResponseField name="phone" type="string">
+  The contact's phone number.
+</ResponseField>
+
+<ResponseField name="callStatus" type="object">
+  The job's status record (same shape as [Get Individual Call Status](/v1/api-reference/endpoints/calls/batch/get-call-status)), after the change.
+</ResponseField>
+
+| HTTP status | `reason` |
+|---|---|
+| `200` | `cancelled`, `call_in_progress` |
+| `404` | `call_not_found` (the job isn't in this batch), or `{"error": "Batch not found"}` when the batch doesn't exist or belongs to another workspace |
+| `409` | `already_cancelled` |
+| `500` | `{"ok": false, "error": "..."}` on a server error |
 
 ### Example
 
 ```bash
-curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls/job_123" \
+curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq/calls/4821" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+### Example Response
+
+```json
+{
+  "ok": true,
+  "reason": "cancelled",
+  "message": "Call cancelled and removed from batchCallQueue",
+  "jobId": "4821",
+  "phone": "+14155550123",
+  "callStatus": {
+    "jobId": "4821",
+    "batchId": "k3j9x0a1bq",
+    "phoneNumber": "+14155550123",
+    "status": "cancelled",
+    "endTime": 1793284900000
+  }
+}
 ```

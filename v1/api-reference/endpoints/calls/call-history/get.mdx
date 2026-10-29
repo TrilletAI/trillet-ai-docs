@@ -13,113 +13,151 @@ description: "Retrieve detailed information about a specific call history entry.
 ### Path Parameters
 
 <ParamField path="callHistoryId" type="string" required>
-  The unique identifier of the call record in the database.
+  The call history record ID (the `_id` from [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list)).
 </ParamField>
 
 ### Response Fields
 
+The record has the same shape as one item of `data` in [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list), with these differences: the transcript is always included, and `pathwayName`, `telephonyCost`, `warmTransferCharge`, `warmTransferMinutes` and `mode` are not returned.
+
 <ResponseField name="_id" type="string">
-  The unique identifier for the call history record.
+  The call history record ID.
 </ResponseField>
 
-<ResponseField name="workspaceId" type="string">
-  The identifier of the workspace associated with this call history.
+<ResponseField name="timestamp" type="number">
+  Call start time as Unix seconds.
 </ResponseField>
 
-<ResponseField name="agentId" type="string">
-  The identifier of the agent involved in the call.
-</ResponseField>
-
-<ResponseField name="callFlowId" type="string">
-  The identifier of the call flow used during the call.
+<ResponseField name="callId" type="string">
+  Call identifier.
 </ResponseField>
 
 <ResponseField name="roomName" type="string">
-  The virtual room name where the call took place.
+  Room name of the call. Web calls start with `web-`.
 </ResponseField>
 
 <ResponseField name="direction" type="string">
-  The direction of the call (e.g., "inbound" or "outbound").
+  `inbound`, `outbound` or `web`.
 </ResponseField>
 
 <ResponseField name="fromPhoneNumber" type="string">
-  The phone number from which the call originated.
+  Caller number, or `"N/A"`.
 </ResponseField>
 
 <ResponseField name="toPhoneNumber" type="string">
-  The phone number to which the call was made.
+  Destination number, or `"N/A"`.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  The final status of the call (e.g., "completed", "failed", "ongoing").
+  `completed`, `pending`, `failed` or `blocked`.
 </ResponseField>
 
-<ResponseField name="startTime" type="number">
-  The start time of the call as a Unix timestamp.
+<ResponseField name="duration" type="number">
+  Call length in whole seconds. Omitted when zero or unknown.
 </ResponseField>
 
-<ResponseField name="endTime" type="number">
-  The end time of the call as a Unix timestamp.
+<ResponseField name="agent" type="string">
+  Agent name, or `"N/A"`.
 </ResponseField>
 
-<ResponseField name="cost" type="object">
-  Details of the costs incurred during the call.
-  <ResponseField name="customer_charge" type="number">
-    The charge to the customer for the call.
-  </ResponseField>
+<ResponseField name="callFlowName" type="string">
+  Call flow name, or `"N/A"`.
 </ResponseField>
 
-<ResponseField name="metadata" type="object">
-  Additional metadata associated with the call.
+<ResponseField name="cost" type="number">
+  Amount charged for the call. `0` when not charged.
 </ResponseField>
 
-<ResponseField name="functionCalls" type="array">
-  An array detailing any functional calls made during the interaction.
+<ResponseField name="recordingUrl" type="string">
+  Authenticated recording URL, or `null`.
 </ResponseField>
 
 <ResponseField name="summary" type="string">
-  A brief summary of the call.
+  Call summary, or `null`.
 </ResponseField>
 
 <ResponseField name="analyzedData" type="object">
-  Analyzed data from the call that may include additional fields.
-  <ResponseField name="additional_field" type="string">
-    Additional details from the analyzed data.
-  </ResponseField>
+  Post-call analysis results. Keys depend on the call flow's post-call analysis settings.
 </ResponseField>
 
-<ResponseField name="createdAt" type="string">
-    Timestamp when the call history was created.
+<ResponseField name="transcript" type="array">
+  Transcript entries.
 </ResponseField>
-<ResponseField name="updatedAt" type="string">
-  Timestamp when the call history was last updated.
+
+<ResponseField name="functionCalls" type="array">
+  Tool calls made during the call.
 </ResponseField>
+
+<ResponseField name="callEndedBy" type="string">
+  Who ended the call, or `"Unknown"`. Phone calls only.
+</ResponseField>
+
+<ResponseField name="callEndReason" type="string">
+  Why the call ended, or `"Unknown"`. Phone calls only.
+</ResponseField>
+
+See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) for the remaining fields (`charged_duration`, `error`, `hasTelephonyCost`, `publicRecordingUrl`, `batchId`, `pendingReason`, `variables`, `dynamic_variables`, `llm`/`stt`/`tts`, `bookingOutcome` and others).
+
+### Errors
+
+<Note>
+A record that does not exist, or belongs to another workspace, currently returns `500` rather than `404`. A malformed ID also returns `500`.
+</Note>
+
+| Status | Body | When |
+|---|---|---|
+| `500` | `{"error": "Call history record not found"}` | No record with that ID in this workspace |
+| `500` | `{"error": "Cast to ObjectId failed ..."}` | `callHistoryId` is not a valid ID |
 
 <ResponseExample>
 ```json
 {
-  "_id": "1234567890abcdef",
-  "workspaceId": "abcdef1234567890",
-  "agentId": "abcdef1234567890",
-  "callFlowId": "abcdef1234567890",
-  "roomName": "web-1234abcd",
+  "_id": "6a32640492f1c2a7e5b10c44",
+  "timestamp": 1761731294,
+  "callId": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+  "fromPhoneNumber": "+14155550123",
+  "toPhoneNumber": "+14155550188",
   "direction": "outbound",
-  "fromPhoneNumber": "+10000000000",
-  "toPhoneNumber": "+10000000001",
+  "duration": 42,
+  "charged_duration": 42,
+  "transferTiming": null,
+  "agentSegments": null,
+  "agent": "Front Desk",
   "status": "completed",
-  "startTime": 1680000000,
-  "endTime": 1680000300,
-  "cost": {
-    "customer_charge": 0.10
-  },
-  "metadata": {},
-  "functionCalls": [],
-  "summary": "Generic conversation summary about customer engagement.",
+  "error": "None",
+  "callFlowName": "Appointment Booking",
+  "cost": 0.12,
+  "hasTelephonyCost": false,
+  "isCallFromSmartCallback": false,
+  "recordingUrl": "https://api.trillet.ai/v2/api/recordings/6a32640492f1c2a7e5b10c44",
+  "publicRecordingUrl": null,
+  "timezone": "America/Los_Angeles",
+  "scheduledTime": null,
+  "currentTimeOfGivenTimezone": null,
+  "pendingReason": null,
+  "nextAttemptAt": null,
+  "publicRecording": null,
+  "batchId": null,
+  "roomName": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+  "summary": "Caller booked a consultation for Tuesday.",
   "analyzedData": {
-    "additional_field": "generic details"
+    "call_disposition": "booked",
+    "call_sentiment": "positive"
   },
-  "createdAt": "2025-01-01T10:00:00Z",
-  "updatedAt": "2025-01-01T10:05:00Z"
+  "variables": {},
+  "transcript": [],
+  "hipaaCompliance": false,
+  "functionCalls": [],
+  "dynamic_variables": {},
+  "llm": { "model": "gpt-4.1" },
+  "stt": {},
+  "tts": {},
+  "postCallStatus": null,
+  "preCallWebhook": null,
+  "postCallEmailDeliveries": [],
+  "bookingOutcome": null,
+  "callEndedBy": "Unknown",
+  "callEndReason": "Unknown"
 }
 ```
 </ResponseExample>

@@ -1,8 +1,16 @@
 ---
 title: "Bring Your Own Number"
 api: "POST /v1/api/twilio/register-external-number"
-description: "Register your own external phone number with Twilio to use within your workspace."
+description: "Register a phone number you already own (Twilio, Telnyx or your own SIP trunk) so your agents can use it."
 ---
+
+Register a number from your own Twilio account, your own Telnyx account, or any SIP trunk. Numbers you bring yourself cost nothing on Trillet (`monthlyPrice` is `0`). After registering, bind an agent to it with [Update Phone Number Configuration](/v1/api-reference/endpoints/phone-numbers/update-config).
+
+A number can be registered only once across all of Trillet.
+
+<Note>
+Your role needs the `phone_number:create` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
 
 ### Headers
 
@@ -13,42 +21,138 @@ description: "Register your own external phone number with Twilio to use within 
 ### Request Body
 
 <ParamField body="phoneNumber" type="string" required>
-  The external phone number to register, in E.164 format (e.g., `+11234567890`).
+  The number to register, in E.164 format, for example `+14155550123`.
 </ParamField>
 
 <ParamField body="provider" type="string" required>
-  The provider for the phone number. Currently, only `"twilio"` is supported.
+  `twilio`, `telnyx` or `sip`.
 </ParamField>
 
 <ParamField body="credentials" type="object" required>
-  The credentials required for the provider.
-  <Expandable title="Credentials Details">
+  The credentials for the provider. Always send an object, even an empty one: leaving it out fails with `500`.
+  <Expandable title="Twilio (provider: twilio)">
     <ParamField body="accountSid" type="string" required>
-      The Account SID from Twilio.
+      Your Twilio Account SID.
     </ParamField>
     <ParamField body="authToken" type="string" required>
-      The Auth Token from Twilio.
+      Your Twilio Auth Token.
+    </ParamField>
+    The number must already be in that Twilio account. Trillet attaches it to a Trillet SIP trunk in your Twilio account so calls reach your agent.
+  </Expandable>
+  <Expandable title="Telnyx (provider: telnyx)">
+    <ParamField body="apiKey" type="string" required>
+      A Telnyx API key for the account that owns the number.
+    </ParamField>
+    <ParamField body="enableMessaging" type="boolean">
+      Also set the number up for SMS. Default `false`.
+    </ParamField>
+    <ParamField body="messagingProfileId" type="string">
+      An existing Telnyx messaging profile to use when `enableMessaging` is `true`.
+    </ParamField>
+  </Expandable>
+  <Expandable title="SIP trunk (provider: sip)">
+    <ParamField body="sipUri" type="string">
+      Your trunk's termination URI. Outbound calls are sent here.
+    </ParamField>
+    <ParamField body="username" type="string">
+      SIP username for your trunk, if it uses digest authentication.
+    </ParamField>
+    <ParamField body="password" type="string">
+      SIP password for your trunk.
+    </ParamField>
+    <ParamField body="ipAddresses" type="object[]">
+      IP addresses your trunk sends calls from. Each entry is an object with `id` (required, any unique string), `ip` and `subnetMask`. An entry without `id` fails with `500`.
+    </ParamField>
+    <ParamField body="headerMappings" type="object[]">
+      Map incoming SIP headers to call attributes, each `{ "header": "X-Customer-Id", "attribute": "customer_id" }`.
+    </ParamField>
+    <ParamField body="appendPlus" type="boolean">
+      Add a leading `+` to numbers on outbound calls. Default `true`.
+    </ParamField>
+    <ParamField body="sipType" type="string">
+      `direct` (default) or `proxy`.
     </ParamField>
   </Expandable>
 </ParamField>
 
+<ParamField body="workspaceId" type="string">
+  Optional. If sent, it must equal `x-workspace-id`, otherwise the request fails with `403`.
+</ParamField>
+
 ### Response Fields
 
-<ResponseField name="status" type="string">
-  The status of the request, indicating success or failure.
-</ResponseField>
+The response status is `201`.
 
 <ResponseField name="message" type="string">
-  A message providing feedback about the registration process.
+  `<provider> phone number registered successfully`.
 </ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+  The registered number.
+</ResponseField>
+
+<ResponseField name="id" type="string">
+  The new phone number's `_id`. Use it as `phoneNumberId` in [Update Phone Number Configuration](/v1/api-reference/endpoints/phone-numbers/update-config).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Always `active` in this response. A Twilio number is stored as `ready` until you bind an agent to it; check the stored value with [List Phone Numbers](/v1/api-reference/endpoints/phone-numbers/list).
+</ResponseField>
+
+<ResponseField name="monthlyPrice" type="number">
+  Always `0`.
+</ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Phone number, provider type, and workspace ID are required."}` | `phoneNumber` or `provider` missing |
+| `400` | `{"error": "Invalid workspace ID", "message": "..."}` | `x-workspace-id` missing or malformed |
+| `403` | `{"error": "workspaceId in the request body does not match x-workspace-id."}` | Body `workspaceId` differs from the header |
+| `500` | `{"error": "..."}` | Every other failure, with the reason in `error`: the number isn't in E.164 format, it's already registered, the credentials are missing or wrong, the number isn't in that Twilio or Telnyx account, or `provider` isn't one of the three values |
+
+### Example Request
+
+<RequestExample>
+```json Twilio
+{
+  "phoneNumber": "+14155550123",
+  "provider": "twilio",
+  "credentials": {
+    "accountSid": "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "authToken": "your_twilio_auth_token"
+  }
+}
+```
+
+```json SIP trunk
+{
+  "phoneNumber": "+14155550123",
+  "provider": "sip",
+  "credentials": {
+    "sipUri": "sip:pbx.example.com",
+    "username": "trillet",
+    "password": "your_sip_password",
+    "ipAddresses": [
+      { "id": "pbx-1", "ip": "203.0.113.10", "subnetMask": "32" }
+    ],
+    "sipType": "direct"
+  }
+}
+```
+</RequestExample>
 
 ### Example Response
 
 <ResponseExample>
 ```json
 {
-  "status": "success",
-  "message": "Phone number registered successfully"
+  "message": "twilio phone number registered successfully",
+  "phoneNumber": "+14155550123",
+  "id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "status": "active",
+  "monthlyPrice": 0
 }
 ```
 </ResponseExample>

@@ -18,6 +18,52 @@ This endpoint accepts `multipart/form-data`.
   CSV file to validate. Maximum file size: 20MB. Use the columns from [Download Batch CSV Template](/v1/api-reference/endpoints/calls/batch/template).
 </ParamField>
 
+<Warning>
+  A CSV with invalid rows still returns HTTP `200`. Check the `valid` field, not the status code. Rows with errors are skipped when you [start the batch](/v1/api-reference/endpoints/calls/batch/start).
+</Warning>
+
+### Response
+
+<ResponseField name="valid" type="boolean">
+  `true` when no row has an error or warning.
+</ResponseField>
+
+<ResponseField name="totalRecords" type="number">
+  Number of data rows in the file.
+</ResponseField>
+
+<ResponseField name="validRecords" type="number">
+  Number of rows without errors. These are the rows a batch would call.
+</ResponseField>
+
+<ResponseField name="preview" type="array">
+  The first 5 rows after normalization (phone numbers formatted to E.164). Each row has an internal `_hasErrors` flag.
+</ResponseField>
+
+<ResponseField name="allRecords" type="array">
+  Every row after normalization, including rows with errors.
+</ResponseField>
+
+<ResponseField name="validationErrors" type="array | null">
+  One entry per row with problems, or `null` when there are none.
+  <Expandable title="Row entry">
+    <ResponseField name="rowNumber" type="number">
+      Line number in the file (the header is line 1).
+    </ResponseField>
+    <ResponseField name="errors" type="array">
+      Each item has `field`, `message`, `rowNumber`, `value`, `severity` (`error` or `warning`) and sometimes `suggestion`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="hasWarningsOnly" type="boolean">
+  `true` when there are issues but all of them are warnings (for example a value over 500 characters). Rows with only warnings are still called.
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  `"Successfully validated N records"` or `"Found issues in X out of N records"`.
+</ResponseField>
+
 ### Example
 
 ```bash
@@ -26,3 +72,49 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls/validate" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@contacts.csv"
 ```
+
+### Example Response
+
+```json
+{
+  "valid": false,
+  "totalRecords": 2,
+  "validRecords": 1,
+  "preview": [
+    { "phone_number": "+14155550123", "contact_name": "John Smith", "_hasErrors": false },
+    { "phone_number": "12ab", "contact_name": "Jane Doe", "_hasErrors": true }
+  ],
+  "allRecords": [
+    { "phone_number": "+14155550123", "contact_name": "John Smith", "_hasErrors": false },
+    { "phone_number": "12ab", "contact_name": "Jane Doe", "_hasErrors": true }
+  ],
+  "validationErrors": [
+    {
+      "rowNumber": 3,
+      "errors": [
+        {
+          "field": "phone_number",
+          "message": "Phone number contains invalid characters",
+          "rowNumber": 3,
+          "value": "12ab",
+          "severity": "error"
+        },
+        {
+          "field": "phone_number",
+          "message": "Phone number must be in international format with + prefix",
+          "rowNumber": 3,
+          "value": "12ab",
+          "severity": "error",
+          "suggestion": "Format as +[country code][number], e.g., +12125551234"
+        }
+      ]
+    }
+  ],
+  "hasWarningsOnly": false,
+  "message": "Found issues in 1 out of 2 records"
+}
+```
+
+### Error Responses
+
+`400` with `{"valid": false, "error": "..."}` when no file is uploaded, the file can't be parsed as CSV, or it has no data rows.

@@ -1,8 +1,10 @@
 ---
 title: "Get Phone Numbers"
 api: "GET /v1/api/twilio/user-phone-numbers"
-description: "Retrieve a list of phone numbers associated with the user."
+description: "Retrieve every phone number in the workspace."
 ---
+
+This is the same endpoint as [List Phone Numbers](/v1/api-reference/endpoints/phone-numbers/list). It returns all phone numbers in the workspace, not only those added by the calling user. The caller's role needs phone number view permission (otherwise `403 {"error": "Insufficient permissions"}`).
 
 ### Headers
 
@@ -10,34 +12,115 @@ description: "Retrieve a list of phone numbers associated with the user."
   Workspace identifier for the API.
 </ParamField>
 
-### Response Fields
+### Response
 
-<ResponseField name="phoneNumbers" type="array">
-  An array of phone numbers associated with the user, in E.164 format.
+The response is a JSON array of phone number objects (not wrapped in an object). An empty workspace returns `[]`. Commonly used fields:
+
+<ResponseField name="_id" type="string">
+  Phone number record ID.
+</ResponseField>
+
+<ResponseField name="phoneNumber" type="string">
+  The number in E.164 format.
+</ResponseField>
+
+<ResponseField name="sid" type="string">
+  Provider identifier for the number.
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+  `twilio`, `sip`, `telnyx`, `commschannel` or `whatsapp`.
+</ResponseField>
+
+<ResponseField name="isExternal" type="boolean">
+  `true` for numbers imported from your own carrier account.
+</ResponseField>
+
+<ResponseField name="country" type="string">
+  Country code of the number.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `ready`, `active`, `released`, `reserved` or `error`.
+</ResponseField>
+
+<ResponseField name="flowType" type="string">
+  What the number is bound to: `call`, `message`, `both` or `undefined`.
+</ResponseField>
+
+<ResponseField name="agentId" type="object">
+  The bound agent, returned as the full agent object, or `null`.
+</ResponseField>
+
+<ResponseField name="pathwayId" type="object">
+  The bound call flow, returned as the full call flow object, or `null`.
+</ResponseField>
+
+<ResponseField name="messagePathwayId" type="object">
+  The bound message flow object, or `null`.
+</ResponseField>
+
+<ResponseField name="omniFlowAgentId" type="object">
+  The bound omni-channel agent object, or `null`.
+</ResponseField>
+
+<ResponseField name="recordingEnabled" type="boolean">
+  Whether call recording is enabled on the number.
+</ResponseField>
+
+<ResponseField name="monthlyPrice" type="number">
+  Monthly price of the number.
+</ResponseField>
+
+<ResponseField name="scheduledReleaseAt" type="string">
+  ISO date when a cancelled number will be released, or `null`.
+</ResponseField>
+
+<ResponseField name="cancelAtPeriodEnd" type="boolean">
+  Whether the number's subscription is set to cancel at the end of the period.
+</ResponseField>
+
+<ResponseField name="subscriptionStatus" type="string">
+  Status of the number's subscription, or `null`.
+</ResponseField>
+
+<ResponseField name="subscriptionExpiresAt" type="string">
+  When the subscription expires, or `null`.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Creation timestamp.
 </ResponseField>
 
 ### Example Response
 
 <ResponseExample>
 ```json
-{
-  "_id": "123abc456def789gh012i345jkl6789",
-  "workspaceId": "987xyz654abc321mno987pqr654stu",
-  "phoneNumber": "+12345678901",
-  "country": "US",
-  "type": "local",
-  "status": "released",
-  "recordingEnabled": true,
-  "pathwayId": "xyz123abc456",
-  "monthlyPrice": 19.99,
-  "expiresAt": "2025-12-31T11:59:59.999Z",
-  "transferEnabled": true,
-  "createdAt": "2025-01-01T00:00:00.000Z",
-  "updatedAt": "2025-01-10T15:30:00.000Z",
-  "agentId": "789xyz123abc456def",
-  "flowType": "outbound",
-  "messagePathwayId": "123abc456xyz789",
-  "omniFlowAgentId": "omni123flow456agent789"
-}
+[
+  {
+    "_id": "6a2f1b0c9e8d7c6b5a493827",
+    "workspaceId": "695a4b40af74e5bb4bf8149d",
+    "phoneNumber": "+14155550123",
+    "sid": "PN0123456789abcdef0123456789abcdef",
+    "country": "US",
+    "type": "local",
+    "provider": "twilio",
+    "isExternal": false,
+    "status": "active",
+    "flowType": "call",
+    "agentId": { "_id": "6a1f0c2b7d5e4a0012ab34cd", "name": "Front Desk" },
+    "pathwayId": { "_id": "6a1f0c2b7d5e4a0012ab3500", "name": "Appointment Booking" },
+    "messagePathwayId": null,
+    "omniFlowAgentId": null,
+    "recordingEnabled": true,
+    "monthlyPrice": 6.79,
+    "scheduledReleaseAt": null,
+    "cancelAtPeriodEnd": false,
+    "subscriptionStatus": "active",
+    "subscriptionExpiresAt": "2026-11-29T00:00:00.000Z",
+    "createdAt": "2026-10-29T10:00:00.000Z",
+    "updatedAt": "2026-10-29T10:00:00.000Z"
+  }
+]
 ```
 </ResponseExample>

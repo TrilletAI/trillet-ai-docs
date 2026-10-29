@@ -4,121 +4,130 @@ sidebarTitle: "Batch calls overview"
 description: "Use the batch AI calls API to place outbound AI calls to a list of contacts from a CSV: validate the file, start the batch, track progress and cancel calls."
 ---
 
-The batch AI calls API places outbound AI calls to many contacts at once from a CSV file. Each row becomes a call, and the columns are available to your agent as variables. Use it for appointment reminders, lead follow-up, surveys and other outbound campaigns.
+The batch AI calls API places outbound AI calls to many contacts at once from a CSV file. Each row becomes a call, and the other columns in the row are passed to your agent as dynamic variables. Use it for appointment reminders, lead follow-up, surveys and other outbound campaigns.
+
+## Before you start
+
+<Warning>
+  The agent must have an **active imported (bring-your-own) phone number**. Batch calls are not placed from numbers bought through Trillet. If the agent has no active imported number, [Start Batch Calls](/v1/api-reference/endpoints/calls/batch/start) returns `400` with `"Selected agent does not have an external active phone number"`. To import a number, see [Register External Number](/v1/api-reference/endpoints/telephony/register-externalNumber).
+</Warning>
+
+- The agent must belong to the workspace in `x-workspace-id`. Agent IDs are 24-character IDs; any other value returns `404`.
+- The workspace needs a positive wallet balance. Every batch endpoint except the template, validate and preview endpoints runs the wallet check, and returns `400` with `"code": "INSUFFICIENT_FUNDS"` when the balance is spent. This also applies to reading and cancelling batches.
 
 ## Key Features
 
 - **CSV-based data upload** - Upload contact lists with custom fields for personalization
-- **Template generation** - Download properly formatted CSV templates
-- **Data validation** - Validate your CSV data before starting batch operations
-- **Real-time monitoring** - Track progress and individual call status
-- **Batch management** - Start, monitor, and cancel batch operations
-- **Rate limit compliance** - Automatic queue management respecting your account limits
+- **Template generation** - Download a formatted CSV template
+- **Data validation** - Check your CSV before starting a batch
+- **Monitoring** - Track batch counters and individual call status
+- **Batch management** - Start, schedule and cancel batches, or cancel single contacts
+- **Smart callbacks** - Optionally retry contacts based on the call outcome
 
 ## Workflow
 
 ### 1. Prepare Your Data
 
-Prepare your CSV file with the required columns:
+Download the [template](/v1/api-reference/endpoints/calls/batch/template) or build a CSV with a phone number column:
 
 ```csv
-phone_number,first_name,last_name,email,custom_field_1,custom_field_2
-+1234567890,John,Doe,john.doe@example.com,Premium Customer,West Coast
-+1987654321,Jane,Smith,jane.smith@example.com,Standard Customer,East Coast
+phone_number,business,contact_name,service,date,amount,notes
++14155550123,Acme Dental,John Smith,Cleaning,"November 12th, 2026",$120,Prefers mornings
++14155550187,Acme Dental,Jane Doe,Checkup,"November 14th, 2026",$90,
 ```
 
-### 2. Start Batch Operation
+### 2. Validate the File (optional)
 
-Start the batch call operation by uploading your CSV file and specifying the agent to use:
+```bash
+curl -X POST "https://api.trillet.ai/v1/api/batch-calls/validate" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -F "file=@your-contacts.csv"
+```
+
+### 3. Start the Batch
+
+Upload the CSV and name the agent that will make the calls:
 
 ```bash
 curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@your-contacts.csv" \
-  -F "agentId=agent_123456"
+  -F "agentId=665f1c2e8b3a4d0012345678"
 ```
 
-### 3. Monitor Progress
+The response includes a `batchId`, a 10-character lowercase ID such as `k3j9x0a1bq`.
 
-Track the progress of your batch operation in real-time:
+### 4. Monitor Progress
 
 ```bash
-curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
 
 ## CSV File Requirements
 
-### Required Columns
+### Phone number column
 
-- `phone_number` - Valid phone number in international format (e.g., +1234567890)
+- The phone number column may be named `phone_number`, `phone` or `Phone`.
+- Spaces, dashes and brackets are removed.
+- A 10-digit US/Canada number (for example `4155550123`) gets `+1` added. An 11-digit number starting with `1` gets `+` added. Other digit-only numbers are treated as already including a country code and get `+` added.
+- After formatting, the number must be in E.164 format (`+` followed by up to 15 digits).
+- Rows with a missing or invalid phone number are **skipped**: the batch runs for the valid rows only.
 
-### Optional Columns
+### Other columns
 
-- `first_name` - First name for personalization
-- `last_name` - Last name for personalization  
-- `email` - Email address
-- Custom fields - Any additional columns for dynamic variables
+Every other column is passed to the call as a dynamic variable, under the column name. Values longer than 500 characters produce a warning, not an error.
 
 ### File Specifications
 
 - **Maximum file size:** 20MB
-- **Supported format:** CSV (Comma-Separated Values)
+- **Supported format:** CSV (Comma-Separated Values) with a header row
 - **Encoding:** UTF-8 recommended
-- **Maximum records:** Varies by account plan
 
 ## Dynamic Variables
 
-All CSV columns can be used as dynamic variables in your agent's script. For example, if your CSV has a `first_name` column, you can reference it in your agent's prompt as `{first_name}`.
+Each CSV column (other than the phone number) is available in your agent's prompt as a dynamic variable with double braces. For example, with a `contact_name` column:
 
 ```text
-"Hello {first_name}, this is an automated call from {company_name}. 
-We're reaching out to customers in {region} to..."
+"Hello {{contact_name}}, this is a reminder from {{business}} about your {{service}} on {{date}}."
 ```
 
-## Rate Limits and Processing
+## Processing
 
-- Batch calls respect your account's rate limits
-- Calls are queued and processed automatically
-- Processing speed depends on your plan and current system load
-- Failed calls are automatically retried based on failure reason
+- Calls are queued and placed automatically. Pacing and office hours come from the agent's call flow settings.
+- Use `scheduledAt` on [Start Batch Calls](/v1/api-reference/endpoints/calls/batch/start) to start the batch later.
+- Calls are not retried unless you send a `smartCallbackConfig` with `enabled: true`. With smart callbacks on, follow-up attempts are scheduled from the call outcome, up to `maxAttempts`, using the `gaps` between attempts.
 
 ## Status Tracking
 
-Each batch operation provides detailed status information:
+[Get Batch Status](/v1/api-reference/endpoints/calls/batch/get-status) reports counters for:
 
-- **Waiting:** Calls queued but not yet started
-- **Active:** Calls currently in progress
-- **Completed:** Successfully completed calls
-- **Failed:** Calls that failed due to errors
+- **waiting:** calls queued but not yet started
+- **active:** calls currently being placed
+- **completed:** dial jobs that finished. This does not mean the conversation succeeded; read the outcome from Call History.
+- **failed:** dial jobs that failed
 
-## Error Handling
-
-Common reasons for call failures:
-
-- **Invalid phone number** - Number format is incorrect
-- **Number unreachable** - Phone number doesn't exist or is disconnected
-- **Busy signal** - Number is busy (retried automatically)
-- **No answer** - Call went to voicemail or wasn't answered
-- **Carrier blocked** - Call was blocked by the carrier
+<Note>
+  Live batch tracking is kept for **7 days**. After that, Get Batch Status, Get Batch Progress and Get Individual Call Status no longer have data for the batch (Get Batch Status and Cancel return `404 Batch not found`). For older batches use [Call History](/v1/api-reference/endpoints/calls/call-history/list) filtered by `batchId`, [List Batch Calls](/v1/api-reference/endpoints/calls/batch/list-calls) (which falls back to the stored batch record), or `GET /v1/api/batch-history/batch/{batchId}`.
+</Note>
 
 ## Best Practices
 
 ### Data Preparation
 
-- Clean your phone number data before upload
-- Use consistent formatting for phone numbers
-- Include personalization fields for better engagement
+- Run [Validate Batch CSV](/v1/api-reference/endpoints/calls/batch/validate) first and fix rows with errors; they are skipped when the batch starts
+- Use E.164 numbers (`+14155550123`) to avoid formatting surprises
+- Include personalization columns your prompt uses
 - Test with a small batch before running large campaigns
 
 ### Monitoring
 
-- Monitor batch progress regularly
-- Review failed calls and adjust data if needed
-- Use individual call status for detailed troubleshooting
-- Cancel batches early if issues are detected
+- Poll the batch status while it runs
+- Use Call History with `batchId` for call outcomes, transcripts and analysis
+- Cancel single contacts or the whole batch if issues are detected
 
 ### Compliance
 
@@ -127,18 +136,14 @@ Common reasons for call failures:
 - Include opt-out mechanisms in your call scripts
 - Follow local telecommunications regulations
 
-## Pricing
-
-Batch calls are charged per completed call attempt. Failed calls due to system errors are not charged, but calls that connect (even if they go to voicemail) are billable.
-
 ## Testing with Postman
 
-Since the documentation's "Try Now" buttons don't support file uploads, here's how to test batch call endpoints using Postman:
+The documentation's "Try Now" buttons don't support file uploads. To test batch endpoints with Postman:
 
 ### Start Batch Calls
 - **Method:** POST
 - **URL:** `https://api.trillet.ai/v1/api/batch-calls`
-- **Headers:** 
+- **Headers:**
   - `x-api-key: YOUR_API_KEY`
   - `x-workspace-id: YOUR_WORKSPACE_ID`
 - **Body:** form-data
@@ -146,7 +151,7 @@ Since the documentation's "Try Now" buttons don't support file uploads, here's h
   - Key: `agentId`, Type: Text, Value: `your_agent_id`
 
 <Note>
-  **Important:** The documentation's interactive "Try Now" buttons cannot handle file uploads. Always use cURL, Postman, or similar tools for testing endpoints that require file uploads.
+  **Important:** The documentation's interactive "Try Now" buttons cannot handle file uploads. Use cURL, Postman, or similar tools for endpoints that take a file.
 </Note>
 
 ## Support

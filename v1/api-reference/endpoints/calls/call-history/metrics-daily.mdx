@@ -11,3 +11,118 @@ Returns call history aggregates as a per-day series. Aggregate totals for the sa
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
 </ParamField>
+
+## Query Parameters
+
+<ParamField query="dateRange" type="string" required>
+JSON string with `startDate` and `endDate` ISO 8601 timestamps, applied to the call start time. Example: `{"startDate":"2026-10-01T00:00:00Z","endDate":"2026-10-31T23:59:59Z"}`.
+</ParamField>
+
+<ParamField query="timezone" type="string">
+IANA timezone used to group calls into days and to evaluate `windows`. Defaults to `UTC`.
+</ParamField>
+
+<ParamField query="windows" type="string">
+Optional JSON object of business-hours windows keyed by day, e.g. `{"2026-10-01":{"start":"09:00","end":"17:00"}}`. Times are `HH:MM` in `timezone`; `start` is inclusive and `end` exclusive. Days that are missing, `null` or have an invalid window count as closed. At most 400 days.
+</ParamField>
+
+<ParamField query="agentId" type="string">
+Filter by agent ID, or by agent name.
+</ParamField>
+
+<ParamField query="status" type="string">
+Filter by call status: `completed`, `pending`, `failed` or `blocked`.
+</ParamField>
+
+<ParamField query="direction" type="string">
+Filter by call direction: `inbound`, `outbound` or `web`.
+</ParamField>
+
+<ParamField query="pathwayId" type="string">
+Filter by call flow ID.
+</ParamField>
+
+<ParamField query="batchId" type="string">
+Filter by batch call ID.
+</ParamField>
+
+<ParamField query="callIds" type="string">
+JSON-stringified array of call IDs.
+</ParamField>
+
+<ParamField query="callType" type="string">
+Filter by call type: `sip` or `web`.
+</ParamField>
+
+<ParamField query="search" type="string">
+Free-text search, same as on [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list). At most 200 characters.
+</ParamField>
+
+<ParamField query="postAnalysis" type="string">
+JSON-stringified array of post-call analysis filter objects, same as on List Call Histories.
+</ParamField>
+
+## Response Fields
+
+<ResponseField name="timezone" type="string">
+The timezone the days were computed in.
+</ResponseField>
+
+<ResponseField name="days" type="array">
+One entry per day that has at least one call, sorted by date. Days with no calls are omitted.
+
+<Expandable title="properties">
+
+<ResponseField name="day" type="string">
+Date as `yyyy-MM-dd` in `timezone`.
+</ResponseField>
+
+<ResponseField name="total" type="number">
+Calls on that day.
+</ResponseField>
+
+<ResponseField name="completed" type="number">
+Calls with status `completed`.
+</ResponseField>
+
+<ResponseField name="inHours" type="number">
+Calls that started inside that day's window. `0` when no `windows` are given.
+</ResponseField>
+
+<ResponseField name="inHoursCompleted" type="number">
+Completed calls that started inside that day's window.
+</ResponseField>
+
+<ResponseField name="durationSum" type="number">
+Total call duration for the day, in seconds.
+</ResponseField>
+
+</Expandable>
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "dateRange is required"}` | `dateRange` is missing |
+| `400` | `{"error": "dateRange must be a JSON object with startDate and endDate ..."}` | `dateRange` is invalid |
+| `500` | `{"error": "Invalid timezone: <value>"}` | `timezone` is not a valid IANA name |
+| `500` | `{"error": "windows covers too many days (max 400)"}` | `windows` has more than 400 entries |
+
+<ResponseExample>
+```json
+{
+  "timezone": "America/New_York",
+  "days": [
+    {
+      "day": "2026-10-01",
+      "total": 12,
+      "completed": 11,
+      "inHours": 9,
+      "inHoursCompleted": 9,
+      "durationSum": 1534
+    }
+  ]
+}
+```
+</ResponseExample>
