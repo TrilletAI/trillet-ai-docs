@@ -147,7 +147,7 @@ Events sent during a call, as it happens:
 | `call.transferred` | A transfer to a person or another number connected | `call`, `team`, `target`, `mode` |
 | `call.transfer_failed` | A transfer attempt failed. Sent once per attempt. | `call`, `team`, `target`, `mode`, `reason` |
 | `tool.failed` | A custom tool or API call during a call failed or returned an HTTP error. At most 5 per call. | `call`, `tool`, `kind`, `status` (HTTP status, when there is one), `error` |
-| `call.blocked` | A call was refused before reaching the agent: the tenant is suspended, an inbound calling rule matched, or there is not enough balance | `call`, `reason`, `rule`, `direction` |
+| `call.blocked` | A call was refused before reaching the agent: the tenant is suspended, an inbound calling rule matched, or there is not enough balance | `call`, `reason`, `rule`, `direction` (`inbound` or `outbound/webcall`) |
 
 Events sent after a call's post-call processing finishes, not at the moment it ends:
 
@@ -165,7 +165,7 @@ Other events:
 
 | Type | When | `data` |
 |---|---|---|
-| `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only) |
+| `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only). The payload does not include the workflow ID or run ID yet. |
 | `number.provisioned` | A number was bought or registered | `phoneNumber`, `provider` |
 | `number.released` | A number was released, either directly or because its tenant was deleted | `phoneNumber`. A direct release also has `provider` (currently `null`); a tenant delete has `reason: "tenant_deleted"` instead. |
 | `number.renewal_failed` | A monthly number charge failed | `phoneNumber`, `amount` |
@@ -180,7 +180,7 @@ Notes on the in-call events:
 
 - `data.call` is the call record at delivery time. It can be `null`, for example for a call refused for insufficient balance, which has no call record.
 - `target` is masked: only the last 4 digits of a phone number or SIP user are shown.
-- `tool.failed` never includes the third-party response body. `kind` is `custom_tool` or `api` when known.
+- `tool.failed` does not forward the third-party response body. `error` is a short error message of up to 300 characters. It can include text from the failing library or service, and `redactPII` does not apply to it. `kind` is `custom_tool` or `api` when known.
 - `reason` on `call.blocked` is a short code such as `workspace_suspended`, `insufficient_balance` or `inbound_rule`. `rule` is the name of the matched inbound rule, when there is one.
 - `call.blocked` is listed in both tables: one is sent at the moment of refusal, the other when a blocked call record finishes post-call processing. The same call can produce both, so de-duplicate on `data.call.id` as well as the event `id`.
 
@@ -363,4 +363,4 @@ curl -X POST https://api.trillet.ai/partner/v1/events/evt_6b3a1c2d4e5f6a7b8c9d0e
   -d '{ "endpointId": "6b2e0f1a3c4d5e6f7a8b9c0d" }'
 ```
 
-Without `endpointId`, the event is sent to every enabled endpoint subscribed to its type. Returns `202` with the number of endpoints it is being sent to. With no enabled endpoint to send to, it returns `409` `no_enabled_endpoint`.
+With `endpointId`, the event is sent to that endpoint even if it is not subscribed to the event's type. Without `endpointId`, the event is sent to every enabled endpoint subscribed to its type. Returns `202` with the number of endpoints it is being sent to. With no enabled endpoint to send to, it returns `409` `no_enabled_endpoint`. Redelivery needs `webhooks:write`. Unlike managing endpoints, it also works with a key restricted to some tenants, for those tenants' events.

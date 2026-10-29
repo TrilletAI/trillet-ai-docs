@@ -7,7 +7,7 @@ description: "Ready-made Trillet workflows, readable guides and records, confirm
 Besides its 85 [tools](/mcp/tools/index), the Trillet MCP server offers the other parts of the Model Context Protocol: prompts, resources, confirmation forms, progress updates, and structured results. Clients that support them get a smoother experience. Clients that don't keep working exactly as before.
 
 <Note>
-  These features are live on the hosted server at `https://mcp.trillet.ai/mcp` from version 0.10.0. The `@trillet-ai/mcp` npm package gets them in its next release.
+  These features are live on the hosted server at `https://mcp.trillet.ai/mcp` from version 0.10.0. The `@trillet-ai/mcp` npm package (currently 0.8.1) doesn't have them yet. ChatGPT and Codex connections get no prompts or resources; see [What ChatGPT can do](/mcp/chatgpt#what-chatgpt-can-do).
 </Note>
 
 ## Prompts
@@ -69,11 +69,11 @@ If you decline, nothing happens. The actions are:
 - Publish a call flow draft or a node graph
 - Delete an agent, call flow, knowledge base, workflow, or secret
 
-In clients without forms, the assistant asks you in the chat instead, and your client's own approval prompt still applies. Claude Code may show both its permission prompt and the form for these actions.
+In clients without forms, Trillet can't ask you directly. Most of these tools then need the assistant to pass `confirm: true`, and the assistant is told to ask you in the chat first. Trillet can't check that you agreed, so your client's own approval prompt is the check that reaches you. Claude Code may show both its permission prompt and the form for these actions.
 
 ## Progress updates
 
-Longer actions report progress while they run: text test calls (connecting, waiting for the agent), knowledge base file uploads, call reviews, and usage summaries. Clients that show progress display it; others simply wait for the result.
+Longer actions report progress while they run: text test calls (connecting, waiting for the agent), knowledge base file uploads, call reviews, usage summaries, and waiting for you to answer a confirmation form. Clients that show progress display it; others simply wait for the result.
 
 ## Structured results
 
@@ -88,7 +88,7 @@ What each client supports, based on its published documentation as of October 20
 | Claude Code | Yes | Yes | Yes | Yes | Yes | Not documented |
 | Cursor | Yes | Yes | Yes | Yes | Not documented | Not documented |
 | VS Code | Yes | Yes | Yes | Not documented | Not documented | Not documented |
-| ChatGPT | Yes | Not documented | Not documented | Not documented | Not documented | Yes |
+| ChatGPT | 24 tools ([which ones](/mcp/chatgpt#what-chatgpt-can-do)) | Not offered | Not offered | Not documented | Not documented | Yes |
 | Claude.ai and Claude Desktop | Yes | Not documented | Not documented | Not documented | Not documented | Not documented |
 
-"Not documented" means the feature falls back gracefully: everything still works through tools and chat.
+"Not documented" means the feature falls back gracefully: everything still works through tools and chat. "Not offered" means Trillet doesn't provide it to that client.

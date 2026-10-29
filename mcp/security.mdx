@@ -8,18 +8,21 @@ When you connect ChatGPT or Claude to Trillet, the assistant works as you. This 
 
 ## What the assistant can do
 
-The connection has the same access to your workspaces as your own Trillet login. It can:
+The connection acts as you in your workspaces, within your Trillet role. Through Trillet's tools, a Claude connection can:
 
-- **View** agents, call flows, call history, recordings and transcripts, phone numbers, knowledge bases, and workflows.
+- **View** agents, call flows, call history, recordings and transcripts, phone numbers, knowledge bases, workflows, and your wallet balance, usage, and transactions.
 - **Build and edit** agents, call flows, node flows, knowledge bases, workflows, your website widget, and demo pages.
 - **Place calls**, including text test calls and outbound calls to real phone numbers.
 - **Buy, assign, and release** phone numbers.
+
+A ChatGPT or Codex connection gets a smaller set of tools: it can build and edit agents, call flows, call-flow settings, text knowledge bases, and demo links, and nothing else. It can't read call data. See [What ChatGPT can do](/mcp/chatgpt#what-chatgpt-can-do).
 
 It can work in every workspace you belong to. You pick the workspace it starts in on the consent screen, and it switches when you ask.
 
 ## What it can't do
 
-- It can't see or change your **password**, **email address**, **billing details**, or **API keys**.
+- It can't change your **password** or **email address**, and it can't see or create **API keys**. Trillet blocks these for connected apps whatever your role.
+- **Billing is not blocked** for connected apps. Through Trillet's tools, a Claude connection can read your wallet balance, auto-recharge settings, usage, and transactions, and buying a number charges the workspace. No Trillet tool changes your payment method.
 - It can't reach any workspace you are not a member of. Trillet checks your membership on every request, not just when you connect.
 - It can't do anything your own Trillet login can't do.
 
@@ -32,10 +35,18 @@ Some tools affect the outside world or cost money. They run for real and are cha
 | Outbound call | Trillet calls the phone number you give. The call is billed like any other call. |
 | Text test call | A real call to your agent over text. It costs a few cents in model usage. Bookings, webhooks, and other actions the agent takes during the call happen for real. |
 | Buy a phone number | The number is purchased and its monthly cost is billed. |
-| Run or turn on a workflow | The workflow runs with real side effects, such as sending messages or calling webhooks. |
-| Delete or release | Agents, call flows, knowledge bases, workflows, and numbers are removed. Released numbers may not be recoverable. |
+| Run a workflow | The workflow runs with real side effects, such as sending messages or calling webhooks. |
+| Turn on a workflow | The workflow starts running on its triggers, with the same real side effects. |
+| Delete | Agents, call flows, knowledge bases, workflows, and secrets are removed. |
+| Release a number | The number stops routing to that agent. It stays in your workspace. |
 
-For these tools, Trillet requires an explicit confirmation, so the assistant has to ask you before it goes ahead. ChatGPT and Claude may also ask you to approve tool use. Read the details before you approve.
+How these are checked:
+
+- Buying, registering, or releasing a number, placing an outbound call, running a workflow, publishing a draft or node flow, and deleting an agent, call flow, knowledge base, workflow, or secret are [confirmation actions](/mcp/prompts-and-resources#confirmation-forms). In clients that support MCP forms, Trillet shows you a confirmation form before the tool runs.
+- In other clients, Trillet can't show you a form. Most of these tools then need the assistant to pass `confirm: true`, and the assistant is told to ask you first. Trillet can't check that you actually agreed, so read what the assistant says it will do.
+- Text test calls and turning on a workflow have no Trillet confirmation step.
+
+ChatGPT and Claude may also ask you to approve tool use. Read the details before you approve.
 
 <Tip>
   Keep test calls away from production systems where you can. Point booking and webhook tools at test calendars and test endpoints while you are building.
@@ -84,7 +95,7 @@ You can also remove the Trillet connector inside ChatGPT or Claude. Removing it 
 
 Claude Code, Cursor, and other developer tools usually connect with an API key instead of a login.
 
-- An API key acts on the workspaces its user belongs to. Treat it like a password.
+- An API key acts as its user, with that user's role, in every workspace the user belongs to. Treat it like a password.
 - Trillet accepts the key only in the `Authorization` header, never in a URL.
 - Revoke a key at any time in **Settings > Developer > API Keys**. Revoking stops it working straight away on every connection that uses it.
 
