@@ -29,12 +29,16 @@ curl https://api.trillet.ai/v1/api/workspaces \
   Workspace the request applies to.
 </ParamField>
 
-<ParamField header="Content-Type" type="string" required>
-  Set to `application/json` for JSON bodies.
+<ParamField header="Content-Type" type="string">
+  Set to `application/json` when you send a JSON body. Leave it off requests with no body, such as `DELETE`: an empty body sent as `application/json` is rejected with `400`.
 </ParamField>
 
 <Info>
-  `Authorization: Bearer` is a dashboard session token. The API key belongs in `x-api-key`.
+  An API key acts as the user who created it, with that user's role, in any workspace the user belongs to. `x-workspace-id` picks the workspace. See [Authentication](/v1/api-reference/authentication).
+</Info>
+
+<Info>
+  `Authorization: Bearer` carries dashboard session tokens and connected-app (OAuth) tokens. Voice Engine partner keys (`tpk_...`) also use `Authorization: Bearer`. Your API key belongs in `x-api-key`.
 </Info>
 
 <Note>
@@ -101,36 +105,60 @@ curl https://api.trillet.ai/v1/api/workspaces \
 ## Rate Limits
 
 <Info>
-  The API has rate limits based on your plan. Contact the Trillet team to
-  increase your limits.
-</Info>
+  There is no general per-plan request quota. Two kinds of limit do apply:
 
-| Plan      | Requests per minute | Concurrent calls |
-| --------- | ------------------- | ---------------- |
-| Developer | 60                  | 1                |
+  - **Outbound calls** are limited per workspace, per minute:
+
+    | Workspace | Single calls | Batch calls |
+    |---|---|---|
+    | No paid plan and no top-up | 1 / min | 1 / min |
+    | Studio, Agency Plus, or after a top-up | 20 / min | 40 / min |
+    | Enterprise | No limit | No limit |
+
+    Going over the limit currently returns an error with a message telling you how many seconds to wait (status `500`, not `429`). Wait that long before the next call.
+  - A few endpoints, such as voice previews and the public web call endpoints, have their own limits and answer `429 Too many requests` when you exceed them.
+
+  Back off and retry in both cases. If you expect sustained high volume, talk to the Trillet team first.
+</Info>
 
 ## Error Handling
 
-The API uses conventional HTTP response codes:
+The API uses conventional HTTP status codes:
 
-- `200` - Success
-- `400` - Bad request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not found
-- `429` - Too many requests
-- `500` - Server error
+| Code  | Meaning |
+| ----- | ------- |
+| `200` | Success |
+| `201` | Created (for example, a new folder or role) |
+| `400` | Bad request: a missing or invalid field, a missing `x-workspace-id` (`Workspace ID is required.`), a malformed `x-workspace-id` (`Invalid workspace ID`), or an empty wallet when placing a call (`INSUFFICIENT_FUNDS`) |
+| `401` | Missing, invalid or expired credentials |
+| `402` | Payment required: the subscription is unpaid or the trial has ended, a spend cap has been reached, or creating a workspace needs payment for your plan |
+| `403` | Forbidden: your role lacks the permission, or the key's user is not a member of the workspace in `x-workspace-id` |
+| `404` | Not found |
+| `409` | Conflict, for example a call placed outside the call flow's calling hours (`OUTSIDE_CALLING_HOURS`) |
+| `422` | The request is valid but can't be carried out, for example placing a call with an agent that has no live call flow (`NO_ACTIVE_CALL_FLOW`, `CALL_FLOW_INBOUND_ONLY`) |
+| `423` | Locked: another workspace create or restore for your account is still in progress. Retry shortly |
+| `429` | Too many requests on a rate-limited endpoint |
+| `500` | Server error |
 
-Error responses include a message and error code:
+Error bodies are flat JSON objects. `error` is a short string. Many responses add a human-readable `message`, and some add a machine-readable `code`:
 
 ```json
 {
-  "error": {
-    "code": "invalid_number",
-    "message": "The provided phone number is invalid"
-  }
+  "error": "Workspace ID is required."
 }
 ```
+
+```json
+{
+  "error": "Insufficient funds",
+  "code": "INSUFFICIENT_FUNDS",
+  "message": "Your workspace balance is $0.00. Please add funds to continue.",
+  "balance": 0,
+  "walletScope": "workspace"
+}
+```
+
+A few endpoints use a different shape. [Initiate Call](/v1/api-reference/endpoints/calls/initiate-call) returns `{"status": "error", "message": "...", "code": "INVALID_PHONE_NUMBER"}`, and the folder endpoints return only `{"message": "..."}`. Read `code` when it is present and fall back to `message` or `error`; don't parse the text.
 
 ## Need Help?
 
