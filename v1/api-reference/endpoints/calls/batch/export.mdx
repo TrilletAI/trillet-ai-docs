@@ -16,12 +16,23 @@ description: "Download the results of a batch as a CSV file."
   The batch whose results to export.
 </ParamField>
 
-The response is a CSV file.
+The response is a CSV file (`Content-Type: text/csv`, filename `batch-calls-results-<batchId>.csv`). It works for any batch in your workspace, including batches older than 7 days.
+
+Columns:
+
+- The original CSV columns, in their original order (`phone_number` is always included)
+- `call_status`, `call_duration`, `call_id`, `call_summary`
+- One `analyzed_<field>` column per post-call analysis field found on the batch's calls, sorted by name
+
+### Errors
+
+- `404` `{"error": "Batch not found"}` when the batch doesn't exist or belongs to another workspace
+- `500` `{"error": "..."}` if the export fails
 
 ### Example
 
 ```bash
-curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/export-results" \
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq/export-results" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -o batch-results.csv

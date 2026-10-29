@@ -10,7 +10,14 @@ description: "Download the CSV template for a batch call upload."
   Workspace identifier for the API.
 </ParamField>
 
-The response is a CSV file. [Start Batch Calls](/v1/api-reference/endpoints/calls/batch/start) expects this file, including a `phone_number` column.
+The response is a CSV file (`Content-Type: text/csv`, filename `batch-calls-template.csv`) with a header row and one example row:
+
+```csv
+phone_number,business,contact_name,service,date,amount,notes
+"+12000000000","Trillet","John Smith","Premium Support","December 31st, 2024","$499","Phone numbers: US numbers can be 10 digits (2125551234). All other countries must include country code (Australia: 61393209000, UK: 442071234567)"
+```
+
+Only the phone number column is required by [Start Batch Calls](/v1/api-reference/endpoints/calls/batch/start). It may be named `phone_number`, `phone` or `Phone`. The other columns are examples: you can rename, remove or add columns, and each one is passed to the call as a dynamic variable (for example `{{contact_name}}`). Replace the example row with your contacts before uploading.
 
 ### Example
 

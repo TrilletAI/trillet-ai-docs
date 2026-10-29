@@ -1,7 +1,7 @@
 ---
 title: "Get Batch Status"
 api: "GET /v1/api/batch-calls/{batchId}"
-description: "Get detailed status information for a batch call operation"
+description: "Get status and counters for a batch call operation"
 ---
 
 ### Headers
@@ -12,76 +12,77 @@ description: "Get detailed status information for a batch call operation"
 ### Path Parameters
 
 <ParamField path="batchId" type="string" required>
-  The unique identifier of the batch call operation
+  The 10-character batch ID returned by [Start Batch Calls](/v1/api-reference/endpoints/calls/batch/start).
 </ParamField>
+
+<Note>
+  Live tracking for a batch is kept for **7 days**. After that, a batch that already ran returns `404 Batch not found`. Use [Call History](/v1/api-reference/endpoints/calls/call-history/list) filtered by `batchId`, or `GET /v1/api/batch-history/batch/{batchId}`, for older batches. A scheduled batch that hasn't started yet is always found.
+</Note>
 
 ### Response
 
-<ResponseField name="id" type="string">
-  The batch ID
+<ResponseField name="exists" type="boolean">
+  Always `true` on a `200` response.
+</ResponseField>
+
+<ResponseField name="batchId" type="string">
+  The batch ID.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Current status of the batch operation
-  - `queued` - Batch is waiting to be processed
-  - `processing` - Calls are currently being made
-  - `completed` - All calls have been completed
-  - `cancelled` - Batch was cancelled
-  - `failed` - Batch failed due to an error
+  Status worked out from the counters:
+  - `scheduled` - The batch has a future start time and no calls have been queued yet
+  - `queued` - Calls are waiting and none has completed yet
+  - `processing` - Calls are being placed
+  - `completed` - Nothing is waiting or active, and every job completed or failed
+  - `failed` - Nothing is waiting or active, and every job failed
 </ResponseField>
 
-<ResponseField name="isComplete" type="boolean">
-  Whether the batch operation has finished
-</ResponseField>
-
-<ResponseField name="totalCalls" type="number">
-  Total number of calls in the batch
-</ResponseField>
-
-<ResponseField name="progress" type="object">
-  Detailed progress information
-  <Expandable title="Progress Object">
+<ResponseField name="counters" type="object">
+  Job counters for the batch.
+  <Expandable title="Counters Object">
     <ResponseField name="waiting" type="number">
-      Number of calls waiting in queue
+      Jobs waiting in the queue
     </ResponseField>
     <ResponseField name="active" type="number">
-      Number of calls currently being processed
+      Jobs currently being placed
     </ResponseField>
     <ResponseField name="completed" type="number">
-      Number of successfully completed calls
+      Dial jobs that finished. This doesn't mean the conversation succeeded; read the outcome from Call History.
     </ResponseField>
     <ResponseField name="failed" type="number">
-      Number of failed calls
+      Dial jobs that failed
     </ResponseField>
     <ResponseField name="total" type="number">
-      Total number of calls in the batch
-    </ResponseField>
-    <ResponseField name="startTime" type="number">
-      Timestamp when the batch started processing
-    </ResponseField>
-    <ResponseField name="lastCompletedTime" type="number">
-      Timestamp of the last completed call
-    </ResponseField>
-    <ResponseField name="completedTime" type="number">
-      Timestamp when the batch was completed (if finished)
-    </ResponseField>
-    <ResponseField name="averageCallDuration" type="number">
-      Average duration of completed calls in seconds
-    </ResponseField>
-    <ResponseField name="recent_calls" type="array">
-      Array of recent call results for monitoring
+      Total jobs in the batch
     </ResponseField>
   </Expandable>
 </ResponseField>
 
 <ResponseField name="timestamp" type="number">
-  Timestamp of when this status was retrieved
+  Time this status was read, in Unix milliseconds.
+</ResponseField>
+
+<ResponseField name="progress" type="object">
+  The same object [Get Batch Progress](/v1/api-reference/endpoints/calls/batch/get-progress) returns: `batchId`, `total`, `completed`, `failed`, `waiting`, `active`, `progress` (percent completed, 0-100) and `lastUpdated` (Unix milliseconds).
+</ResponseField>
+
+<ResponseField name="scheduledAt" type="string">
+  Scheduled batches only. Start time as an ISO 8601 string.
+</ResponseField>
+
+<ResponseField name="scheduledTimezone" type="string | null">
+  Scheduled batches only. The `scheduledTimezone` sent when the batch was created, or `null`.
+</ResponseField>
+
+<ResponseField name="timezone" type="string | null">
+  Scheduled batches only. The call flow's office-hours timezone.
 </ResponseField>
 
 ### Example Usage
 
 ```bash
-curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
@@ -90,30 +91,52 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
 
 ```json
 {
-  "id": "batch_7891011121314",
+  "exists": true,
+  "batchId": "k3j9x0a1bq",
   "status": "processing",
-  "isComplete": false,
-  "totalCalls": 150,
-  "progress": {
+  "counters": {
     "waiting": 45,
     "active": 5,
     "completed": 95,
     "failed": 5,
-    "total": 150,
-    "startTime": 1703097600000,
-    "lastCompletedTime": 1703101200000,
-    "completedTime": null,
-    "averageCallDuration": 45.2,
-    "recent_calls": [
-      {
-        "jobId": "call_123",
-        "status": "completed",
-        "phone_number": "+1234567890",
-        "completedAt": 1703101200000
-      }
-    ]
+    "total": 150
   },
-  "timestamp": 1703101300000
+  "timestamp": 1793284800000,
+  "progress": {
+    "batchId": "k3j9x0a1bq",
+    "total": 150,
+    "completed": 95,
+    "failed": 5,
+    "waiting": 45,
+    "active": 5,
+    "progress": 63,
+    "lastUpdated": 1793284800000
+  }
+}
+```
+
+### Example Response (scheduled)
+
+```json
+{
+  "exists": true,
+  "batchId": "p8d2m4t7zs",
+  "status": "scheduled",
+  "scheduledAt": "2026-11-15T14:30:00.000Z",
+  "scheduledTimezone": "America/New_York",
+  "timezone": "America/New_York",
+  "counters": { "waiting": 0, "active": 0, "completed": 0, "failed": 0, "total": 150 },
+  "timestamp": 1793284800000,
+  "progress": {
+    "batchId": "p8d2m4t7zs",
+    "total": 0,
+    "completed": 0,
+    "failed": 0,
+    "waiting": 0,
+    "active": 0,
+    "progress": 0,
+    "lastUpdated": 1793284800000
+  }
 }
 ```
 
@@ -127,10 +150,14 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
   Additional context about the error
 </ResponseField>
 
+<ResponseField name="id" type="string">
+  The batch ID that was not found (on some `404` responses)
+</ResponseField>
+
 **Common Error Codes:**
-- `404` - Batch not found with the specified ID
+- `404` - `Batch not found`: the batch doesn't exist, belongs to another workspace, or its 7-day tracking window has passed
 - `500` - Server error retrieving batch information
 
 ### Status Monitoring
 
-You can poll this endpoint to monitor the progress of your batch calls. The response includes detailed metrics about call completion rates, timing information, and recent call results.
+Poll this endpoint to follow a running batch. For per-call outcomes, transcripts and analysis, use Call History filtered by `batchId`.

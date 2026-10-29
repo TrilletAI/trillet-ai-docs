@@ -12,8 +12,12 @@ description: "Cancel a batch call operation and stop any remaining calls from be
 ### Path Parameters
 
 <ParamField path="batchId" type="string" required>
-  The unique identifier of the batch call operation to cancel
+  The 10-character batch ID to cancel
 </ParamField>
+
+<Note>
+  Cancellation needs the batch's live tracking, which is kept for **7 days**. After that, cancelling a batch that already ran returns `404 Batch not found`. A scheduled batch that hasn't started can be cancelled.
+</Note>
 
 ### Response
 
@@ -50,7 +54,7 @@ description: "Cancel a batch call operation and stop any remaining calls from be
 ### Example Usage
 
 ```bash
-curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
+curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
@@ -59,7 +63,7 @@ curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
 
 ```json
 {
-  "batchId": "batch_7891011121314",
+  "batchId": "k3j9x0a1bq",
   "status": "cancelled",
   "message": "Batch cancelled successfully",
   "details": {
@@ -75,11 +79,10 @@ curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314" \
 
 When you cancel a batch operation:
 
-1. **Queued Calls**: All calls waiting in the queue are immediately cancelled and will not be processed
-2. **Active Calls**: Currently active calls will continue to completion but no new calls will start
+1. **Queued Calls**: Calls waiting in the queue are removed and will not be placed
+2. **Active Calls**: Calls already in progress continue to completion, but no new calls start
 3. **Completed Calls**: Already completed calls are not affected
-4. **Batch Status**: The batch status is updated to "cancelled" 
-5. **History**: The cancellation is recorded in the batch history
+4. **History**: The stored batch record is marked `cancelled`
 
 ### Error Responses
 
@@ -96,8 +99,10 @@ When you cancel a batch operation:
 </ResponseField>
 
 **Common Error Codes:**
-- `404` - Batch not found with the specified ID
+- `404` - `Batch not found`: the batch doesn't exist, belongs to another workspace, or its 7-day tracking window has passed. `Batch progress not found` when its counters can't be read.
 - `500` - Server error during cancellation process
+
+To stop a single contact instead of the whole batch, use [Cancel Batch Job](/v1/api-reference/endpoints/calls/batch/cancel-job) or [Cancel Batch Contact](/v1/api-reference/endpoints/calls/batch/cancel-contact).
 
 ### Use Cases
 
@@ -108,7 +113,7 @@ When you cancel a batch operation:
 
 ### Important Notes
 
-- Cancellation cannot be undone
-- You will still be charged for completed calls
-- Active calls at the time of cancellation will finish normally
-- The batch cannot be restarted after cancellation
+- Cancellation cannot be undone, and the batch cannot be restarted
+- Calls that were already placed are billed as usual
+- Active calls at the time of cancellation finish normally
+- `details` reflects the counters read just before cancelling

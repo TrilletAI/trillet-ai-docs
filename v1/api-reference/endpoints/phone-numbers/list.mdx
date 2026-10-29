@@ -1,68 +1,172 @@
 ---
 title: "List Phone Numbers"
 api: "GET /v1/api/twilio/user-phone-numbers"
-description: "Retrieve all phone numbers associated with your workspace."
+description: "Retrieve every phone number in your workspace."
 ---
+
+Returns all phone numbers in the workspace: numbers bought through Trillet and numbers you brought yourself.
+
+<Note>
+Your role needs the `phone_number:view` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
 </ParamField>
 
-## Response Fields
+## Response
 
-<ResponseField name="phoneNumbers" type="array">
-Array of phone number objects.
+A JSON array of phone number objects (not wrapped in an object). An empty workspace returns `[]`.
 
 <ResponseField name="_id" type="string">
-Unique identifier for the phone number record.
+The phone number's ID. Use it as `phoneNumberId` in [Get](/v1/api-reference/endpoints/phone-numbers/get-config) and [Update Phone Number Configuration](/v1/api-reference/endpoints/phone-numbers/update-config).
+</ResponseField>
+
+<ResponseField name="sid" type="string">
+The provider's ID for the number. Use it as `phoneNumberSid` in [Release Phone Number](/v1/api-reference/endpoints/phone-numbers/release).
 </ResponseField>
 
 <ResponseField name="phoneNumber" type="string">
-The phone number in E.164 format (e.g., +14155551234).
+The number in E.164 format.
 </ResponseField>
 
 <ResponseField name="provider" type="string">
-The telephony provider (e.g., "twilio", "sip").
-</ResponseField>
-
-<ResponseField name="country" type="string">
-Country code of the phone number (e.g., "US", "AU").
+`twilio`, `sip`, `telnyx`, `commschannel` or `whatsapp`.
 </ResponseField>
 
 <ResponseField name="type" type="string">
-Type of phone number (e.g., "local", "tollFree", "mobile").
+The number type as stored, for example `local` or `mobile`, or `external` for a number you brought yourself.
+</ResponseField>
+
+<ResponseField name="isExternal" type="boolean">
+`true` for a number you brought yourself.
+</ResponseField>
+
+<ResponseField name="country" type="string">
+Country code, for example `US` or `AU`.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-Current status of the phone number.
+`ready` (no call agent bound yet), `active`, `reserved` or `error`.
+</ResponseField>
+
+<ResponseField name="flowType" type="string">
+What the number is bound to: `call`, `message`, `both`, or `undefined` (nothing).
+</ResponseField>
+
+<ResponseField name="agentId" type="object | null">
+The bound call agent as a full object, or `null`.
+</ResponseField>
+
+<ResponseField name="pathwayId" type="object | null">
+The bound call flow as a full object, or `null`.
+</ResponseField>
+
+<ResponseField name="messagePathwayId" type="object | null">
+The bound message flow as a full object, or `null`.
+</ResponseField>
+
+<ResponseField name="omniFlowAgentId" type="object | null">
+The bound message agent as a full object, or `null`.
+</ResponseField>
+
+<ResponseField name="recordingEnabled" type="boolean">
+Whether calls on this number are recorded.
+</ResponseField>
+
+<ResponseField name="officeHours" type="object">
+`enabled`, `start`, `end`, `timezone`, `allowedDays` and `blockedDates`. See [Update Phone Number Configuration](/v1/api-reference/endpoints/phone-numbers/update-config).
+</ResponseField>
+
+<ResponseField name="transferCallerIdMode" type="string">
+`from-transferee` or `from-transferor`.
+</ResponseField>
+
+<ResponseField name="metadataTags" type="object">
+Key/value tags on the number.
+</ResponseField>
+
+<ResponseField name="label" type="string | null">
+Optional label.
+</ResponseField>
+
+<ResponseField name="monthlyPrice" type="number">
+What the number costs per month. `0` for numbers you brought yourself.
+</ResponseField>
+
+<ResponseField name="isFreeFromPlan" type="boolean">
+`true` when the number came from your plan's free allowance.
+</ResponseField>
+
+<ResponseField name="scheduledReleaseAt" type="string | null">
+When a paid number whose renewal you cancelled will be removed (ISO 8601), or `null`.
+</ResponseField>
+
+<ResponseField name="cancelAtPeriodEnd" type="boolean">
+`true` when the number's subscription is set to end at the end of the current period.
+</ResponseField>
+
+<ResponseField name="subscriptionStatus" type="string | null">
+Status of the number's subscription, or `null` if it has none.
+</ResponseField>
+
+<ResponseField name="subscriptionExpiresAt" type="string | null">
+When the subscription expires, or `null`.
 </ResponseField>
 
 <ResponseField name="workspaceId" type="string">
-Workspace ID associated with the phone number.
+The workspace the number belongs to.
 </ResponseField>
 
-<ResponseField name="label" type="string">
-Optional label for the phone number.
+<ResponseField name="createdAt" type="string">
+When the number was added (ISO 8601). `updatedAt` is also returned.
 </ResponseField>
 
-</ResponseField>
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
+| `500` | `{"error": "Workspace ID is required."}` | Any server error. The text is misleading: the header was present |
 
 <ResponseExample>
-```json
-{
-  "phoneNumbers": [
-    {
-      "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-      "phoneNumber": "+14155551234",
-      "provider": "twilio",
-      "country": "US",
-      "type": "local",
-      "status": "active",
-      "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
-      "label": "Sales Line"
-    }
-  ]
-}
+```json Trimmed
+[
+  {
+    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+    "sid": "1293384261075731499",
+    "phoneNumber": "+14155550123",
+    "provider": "telnyx",
+    "type": "local",
+    "isExternal": false,
+    "country": "US",
+    "status": "active",
+    "flowType": "call",
+    "agentId": {
+      "_id": "665a1b2c3d4e5f6a7b8c9d0f",
+      "name": "Front Desk"
+    },
+    "pathwayId": {
+      "_id": "665a1b2c3d4e5f6a7b8c9d10",
+      "name": "Front Desk Call Flow"
+    },
+    "messagePathwayId": null,
+    "omniFlowAgentId": null,
+    "recordingEnabled": true,
+    "transferCallerIdMode": "from-transferee",
+    "metadataTags": {},
+    "label": "Front desk",
+    "monthlyPrice": 6.79,
+    "isFreeFromPlan": false,
+    "scheduledReleaseAt": null,
+    "cancelAtPeriodEnd": false,
+    "subscriptionStatus": "active",
+    "subscriptionExpiresAt": null,
+    "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+    "createdAt": "2026-10-01T14:22:05.000Z",
+    "updatedAt": "2026-10-20T09:03:41.000Z"
+  }
+]
 ```
 </ResponseExample>

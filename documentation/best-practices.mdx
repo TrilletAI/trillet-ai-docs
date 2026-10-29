@@ -1,7 +1,7 @@
 ---
 title: "API best practices: keys, errors and rate limits"
 sidebarTitle: "Best practices"
-description: "API best practices for the Trillet REST API: keep API keys secure, handle errors and retries, stay within rate limits, and check your setup before production."
+description: "API best practices for the Trillet REST API: keep API keys secure, handle errors and retries, stay within the outbound call limits, and check your setup before production."
 ---
 
 These API best practices cover how to call the Trillet REST API safely and reliably: keeping API keys secure, handling errors, staying within rate limits and checking your integration before you go to production.
@@ -11,18 +11,14 @@ These API best practices cover how to call the Trillet REST API safely and relia
 ### API Keys
 
 - Keep your API keys secure and never expose them in client-side code
+- An API key acts as the user who created it, with that user's role, in every workspace that user belongs to. Create keys from a dedicated user whose role has only the permissions your integration needs
 - Use different API keys for development and production
 - Rotate your API keys periodically
-- Monitor your API key usage for suspicious activity
-
-```bash
-# API Key format
-xxxxxxxxxxxxxxxxxxx
-```
+- Send the key in the `x-api-key` header, with the workspace in `x-workspace-id`
 
 ## Error Handling
 
-Implement proper error handling for API responses:
+Errors come back as flat JSON objects, not a nested `error` object. Check the HTTP status first, then read `code` when it is present, and fall back to `message` or `error`. Don't parse the text. See [API introduction](/v1/api-reference/introduction) for the status codes.
 
 ```bash
 curl -X POST https://api.trillet.ai/v1/api/call \
@@ -30,57 +26,62 @@ curl -X POST https://api.trillet.ai/v1/api/call \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -H "Content-Type: application/json" \
   -d '{
-    "call_agent_id": "agent_123",
-    "to": "+1234567890"
+    "call_agent_id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "to": "+14155550123"
   }'
 ```
 
-Common error responses:
+An empty wallet (`400`):
 ```json
 {
-  "error": {
-    "code": "insufficient_credits",
-    "message": "Your account has insufficient credits"
-  }
+  "error": "Insufficient funds",
+  "code": "INSUFFICIENT_FUNDS",
+  "message": "Your workspace balance is $0.00. Please add funds to continue.",
+  "balance": 0,
+  "walletScope": "workspace"
 }
 ```
 
+An invalid phone number (`400`):
 ```json
 {
-  "error": {
-    "code": "invalid_number",
-    "message": "The provided phone number is invalid"
-  }
+  "status": "error",
+  "message": "to must be a valid phone number in E.164 format, e.g. +14155550123",
+  "code": "INVALID_PHONE_NUMBER"
 }
 ```
+
+An agent with no live call flow (`422`):
+```json
+{
+  "status": "error",
+  "message": "Failed to initiate call",
+  "error": "This agent has no live call flow, so the call can't run. Use an agent whose call flow is live, or create one in the portal.",
+  "code": "NO_ACTIVE_CALL_FLOW"
+}
+```
+
+[Initiate Outbound Call](/v1/api-reference/endpoints/calls/initiate-call) lists every code that endpoint returns.
 
 ## Rate Limits
 
-- Production API keys are limited to 60 requests per minute
-- Implement backoff when you hit rate limits
-- Monitor your API usage in the dashboard
+There is no general per-key request quota. What is enforced:
 
-Rate limit response:
-```json
-{
-  "error": {
-    "code": "rate_limit_exceeded",
-    "message": "Too many requests. Please try again in 60 seconds.",
-    "reset_at": "2024-01-22T15:30:00Z"
-  }
-}
-```
+- **Outbound calls** ([Initiate Outbound Call](/v1/api-reference/endpoints/calls/initiate-call)) are limited per workspace in a 60-second window: 1 call per minute without a paid plan or wallet top-up, 20 per minute on Studio or Agency Plus or after a top-up, and no limit on Enterprise pricing. Calls placed by a batch use a separate allowance. Over the limit, the API currently answers `500` with `error` "Rate limit exceeded: ... Please wait S seconds before making another call." Wait that many seconds before retrying.
+- **A few other endpoints**, such as voice previews and the public web call endpoints, have their own limits and answer `429` when you exceed them.
+
+Retry with backoff on `429` and on `5xx` responses. Don't retry `4xx` responses unchanged: fix the request first.
 
 ## Production Checklist
 
 1. **Authentication**
-   - Use production API keys
+   - Use production API keys from a dedicated, least-privilege user
    - Implement key rotation
    - Secure key storage
 
 2. **Error Handling**
-   - Handle all error codes
-   - Implement retry logic
+   - Branch on HTTP status and `code`, not on message text
+   - Retry with backoff on `429` and `5xx`, and honour the wait in the outbound call rate-limit message
    - Log errors appropriately
 
 3. **Monitoring**

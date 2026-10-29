@@ -7,42 +7,52 @@ description: "Initiate a batch call operation using a CSV file and specified age
 <ParamField header="x-workspace-id" type="string" required>
   Workspace identifier for the API.
 </ParamField>
+
+<Warning>
+  The agent must have an **active imported (bring-your-own) phone number**. Numbers bought through Trillet cannot place batch calls. Without one, this endpoint returns `400` `"Selected agent does not have an external active phone number"`.
+</Warning>
+
 ### Request Body
 This endpoint accepts multipart/form-data with the following fields:
 <ParamField body="file" type="file" required>
   CSV file containing the batch call data. Maximum file size: 20MB.
 </ParamField>
 <ParamField body="agentId" type="string" required>
-  The ID of the agent that will be used to make the batch calls.
+  The ID of the agent that will make the calls. It must belong to the workspace in `x-workspace-id`.
+</ParamField>
+<ParamField body="fromPhoneNumberId" type="string" optional>
+  ID of the phone number to call from. It must be an active imported number assigned to the agent; otherwise the request returns `400`. If omitted, the agent's numbers are used.
 </ParamField>
 <ParamField body="scheduledAt" type="string" optional>
-  UTC datetime string in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ) to schedule the batch for future execution. If not provided, batch starts immediately.
+  ISO 8601 date-time to start the batch later, for example `2026-11-15T14:30:00Z`. A value with no offset is read as UTC. If omitted, the batch starts immediately. An unparseable value returns `400`.
+</ParamField>
+<ParamField body="scheduledTimezone" type="string" optional>
+  IANA timezone the start time was chosen in (for example `America/New_York`). It is stored for display only and does not change when the batch runs. Unknown zones are ignored.
 </ParamField>
 <ParamField body="smartCallbackConfig" type="string" optional>
-  JSON string containing smart callback configuration. Format: `{"enabled": boolean, "maxAttempts": number, "gaps": [{"days": number, "hours": number}]}`
+  JSON string that turns on outcome-based retries. Format: `{"enabled": boolean, "maxAttempts": number, "gaps": [{"days": number, "hours": number}]}`. `days` is 0-30 and `hours` 0-23. Without it (or with `enabled: false`), contacts are called once. Invalid JSON returns `500`.
 </ParamField>
 <Note>
   **Testing Note**: The "Try Now" button in this documentation doesn't support file uploads. Use the cURL example below or a tool like Postman to test this endpoint.
 </Note>
 ### CSV File Format
-The CSV file should contain the following columns:
-- `phone_number` - The phone number to call (required)
-- `first_name` - First name for personalization
-- `last_name` - Last name for personalization  
-- `email` - Email address
-- Additional custom fields for dynamic variables
+- A phone number column named `phone_number`, `phone` or `Phone` (required). 10-digit US/Canada numbers get `+1` added; numbers must end up in E.164 format.
+- Any other columns are passed to the call as dynamic variables, referenced in the prompt as `{{column_name}}`.
+- Rows with a missing or invalid phone number are skipped. If no row has a valid number, the request returns `400`.
+
+See [Download Batch CSV Template](/v1/api-reference/endpoints/calls/batch/template) for the template columns.
 ### Response
 <ResponseField name="batchId" type="string">
-  Unique identifier for the batch call operation
+  Unique 10-character identifier for the batch, for example `k3j9x0a1bq`.
 </ResponseField>
 <ResponseField name="totalCalls" type="number">
-  Total number of calls that will be made in this batch
+  Number of valid rows that will be called. Rows with errors are not counted.
 </ResponseField>
 <ResponseField name="status" type="string">
-  Current status of the batch operation (e.g., "queued", "processing")
+  `queued` when the batch starts immediately, or `scheduled` when `scheduledAt` was sent.
 </ResponseField>
 <ResponseField name="message" type="string">
-  Success message confirming the batch initiation
+  `"Batch calls queued successfully"`, or `"Batch is scheduled to start at <ISO date-time>"` for a scheduled batch.
 </ResponseField>
 ### Example Usage
 ```bash
@@ -51,25 +61,36 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@batch-calls.csv" \
-  -F "agentId=agent_123456"
+  -F "agentId=665f1c2e8b3a4d0012345678"
 
 # Scheduled batch call with smart callback
 curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@batch-calls.csv" \
-  -F "agentId=agent_123456" \
-  -F "scheduledAt=2024-01-15T14:30:00Z" \
+  -F "agentId=665f1c2e8b3a4d0012345678" \
+  -F "scheduledAt=2026-11-15T14:30:00Z" \
+  -F "scheduledTimezone=America/New_York" \
   -F "smartCallbackConfig={\"enabled\": true, \"maxAttempts\": 3, \"gaps\": [{\"days\": 1, \"hours\": 0}]}"
 ```
 
 ### Example Response
 ```json
 {
-  "batchId": "batch_7891011121314",
+  "batchId": "k3j9x0a1bq",
   "totalCalls": 150,
   "status": "queued",
-  "message": "Batch calls initiated successfully"
+  "message": "Batch calls queued successfully"
+}
+```
+
+### Example Response (scheduled)
+```json
+{
+  "batchId": "p8d2m4t7zs",
+  "totalCalls": 150,
+  "status": "scheduled",
+  "message": "Batch is scheduled to start at 2026-11-15T14:30:00.000Z"
 }
 ```
 
@@ -82,22 +103,22 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
       -H "x-api-key: YOUR_API_KEY" \
       -H "x-workspace-id: YOUR_WORKSPACE_ID" \
       -F "file=@batch-calls.csv" \
-      -F "agentId=agent_123456"
-    
+      -F "agentId=665f1c2e8b3a4d0012345678"
+
     # With verbose output for debugging
     curl -v -X POST "https://api.trillet.ai/v1/api/batch-calls" \
       -H "x-api-key: YOUR_API_KEY" \
       -H "x-workspace-id: YOUR_WORKSPACE_ID" \
       -F "file=@batch-calls.csv" \
-      -F "agentId=agent_123456"
+      -F "agentId=665f1c2e8b3a4d0012345678"
 
     # With scheduled time and smart callback
     curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
       -H "x-api-key: YOUR_API_KEY" \
       -H "x-workspace-id: YOUR_WORKSPACE_ID" \
       -F "file=@batch-calls.csv" \
-      -F "agentId=agent_123456" \
-      -F "scheduledAt=2024-01-15T14:30:00Z" \
+      -F "agentId=665f1c2e8b3a4d0012345678" \
+      -F "scheduledAt=2026-11-15T14:30:00Z" \
       -F "smartCallbackConfig={\"enabled\": true, \"maxAttempts\": 5, \"gaps\": [{\"days\": 1, \"hours\": 0}, {\"days\": 2, \"hours\": 0}]}"
     ```
   </Tab>
@@ -110,11 +131,11 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
 
     const form = new FormData();
     form.append('file', fs.createReadStream('batch-calls.csv'));
-    form.append('agentId', 'agent_123456');
-    
+    form.append('agentId', '665f1c2e8b3a4d0012345678');
+
     // Optional: Schedule for future
-    form.append('scheduledAt', '2024-01-15T14:30:00Z');
-    
+    form.append('scheduledAt', '2026-11-15T14:30:00Z');
+
     // Optional: Smart callback configuration
     form.append('smartCallbackConfig', JSON.stringify({
       enabled: true,
@@ -148,8 +169,8 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
 
     files = {
         'file': open('batch-calls.csv', 'rb'),
-        'agentId': (None, 'agent_123456'),
-        'scheduledAt': (None, '2024-01-15T14:30:00Z'),  # Optional
+        'agentId': (None, '665f1c2e8b3a4d0012345678'),
+        'scheduledAt': (None, '2026-11-15T14:30:00Z'),  # Optional
         'smartCallbackConfig': (None, json.dumps({      # Optional
             "enabled": True,
             "maxAttempts": 3,
@@ -163,18 +184,19 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
   </Tab>
 </Tabs>
 ### Processing Flow
-1. **File Upload**: The CSV file is uploaded and validated
-2. **Record Validation**: Each record in the CSV is validated for required fields
-3. **Batch Preparation**: A batch configuration is created with the specified agent
-4. **Queue Initialization**: Individual call jobs are queued for processing
-5. **Execution**: Calls are made according to your account's rate limits (or at scheduled time)
+1. **File Upload**: The CSV file is uploaded
+2. **Agent and Number Checks**: The agent must be in your workspace and have an active imported number (or the `fromPhoneNumberId` you named)
+3. **Record Validation**: Each row is validated; rows with errors are dropped
+4. **Queue Initialization**: One call job is queued per valid row, or a single delayed job is created for a scheduled batch
+5. **Execution**: Calls are placed according to the call flow's settings (or at the scheduled time)
 ### Error Responses
-<ResponseField name="error" type="string">
-  Error message describing what went wrong
-</ResponseField>
-**Common Error Codes:**
-- `400` - No file uploaded, no agent ID provided, or CSV validation failed
-- `413` - File size exceeds 20MB limit
-- `500` - Failed to prepare batch or start batch execution
-### Rate Limits
-Batch calls are subject to your account's rate limits. The system will automatically manage the call queue to respect these limits while maximizing throughput.
+Errors return a JSON object with an `error` string.
+
+| Status | When |
+|---|---|
+| `400` | `"No file uploaded"`, `"Agent ID is required"`, invalid `scheduledAt`, `fromPhoneNumberId` not an active imported number on the agent, agent has no active imported number, no valid phone numbers in the CSV (also returns `validationErrors`), or `"CSV validation failed: ..."` |
+| `400` | `"code": "INSUFFICIENT_FUNDS"` when the wallet balance is spent |
+| `402` | `"code": "SPEND_CAP_REACHED"` |
+| `403` | Wallet not found, monthly limit exceeded, or the account's service has ended |
+| `404` | `"Agent with ID <id> not found"`: the agent doesn't exist or is in another workspace |
+| `500` | `"Failed to prepare batch: ..."`, `"Failed to start batch: ..."` (for example, no live call flow for the agent on a scheduled batch), invalid `smartCallbackConfig` JSON, or an upload over 20MB |

@@ -1,7 +1,7 @@
 ---
 title: "List Call Histories"
 api: "GET /v2/api/call-history"
-description: "Retrieve a list of call history records in your workspace."
+description: "Retrieve a paginated list of call history records in your workspace."
 ---
 
 ### Headers  
@@ -12,6 +12,8 @@ description: "Retrieve a list of call history records in your workspace."
 
 ### Query Parameters
 
+All filters are exact matches unless stated otherwise. A filter value that matches nothing returns an empty `data` array, not an error.
+
 <ParamField query="page" type="integer">
   Page number for pagination. Defaults to `1`. Results are sorted newest first (by creation order). Calls that arrive while you page shift later pages, so to page a fixed set, set `dateRange.endDate` to the time you start and keep it fixed until you reach the last page.
 </ParamField>
@@ -21,7 +23,7 @@ description: "Retrieve a list of call history records in your workspace."
 </ParamField>
 
 <ParamField query="agentId" type="string">
-  Filter call histories by agent ID.
+  Filter by agent ID. A value that is not an ID is treated as an agent name in the workspace.
 </ParamField>
 
 <ParamField query="pathwayId" type="string">
@@ -33,23 +35,35 @@ description: "Retrieve a list of call history records in your workspace."
 </ParamField>
 
 <ParamField query="status" type="string">
-  Filter by call status (e.g. `completed`, `failed`, `in-progress`).
+  Filter by call status: `completed`, `pending`, `failed` or `blocked`.
 </ParamField>
 
 <ParamField query="direction" type="string">
-  Filter by call direction: `inbound` or `outbound`.
+  Filter by call direction: `inbound`, `outbound` or `web`.
 </ParamField>
 
 <ParamField query="callType" type="string">
-  Filter by call type: `sip` or `web`.
+  Filter by call type: `sip` (phone calls) or `web`. Other values are ignored.
+</ParamField>
+
+<ParamField query="mode" type="string">
+  Filter by conversation mode: `voice` or `text`.
 </ParamField>
 
 <ParamField query="search" type="string">
-  Free-text search across phone numbers / call metadata.
+  Free-text search across phone numbers, call ID, record ID, agent name and call flow name. At most 200 characters. A term with 7 or more digits is matched on digits only, so `+1 (845) 630-...` and `1845630...` find the same number.
+</ParamField>
+
+<ParamField query="fromPhone" type="string">
+  Partial match on the caller number. Only the digits are used, and the value must contain at least one digit. At most 200 characters.
+</ParamField>
+
+<ParamField query="toPhone" type="string">
+  Partial match on the destination number. Same rules as `fromPhone`.
 </ParamField>
 
 <ParamField query="callIds" type="string">
-  JSON-stringified array of specific call IDs to fetch (e.g. `["abc","def"]`).
+  JSON-stringified array of call IDs (`callId` values) to fetch, e.g. `["abc","def"]`.
 </ParamField>
 
 <ParamField query="dateRange" type="string">
@@ -59,114 +73,158 @@ description: "Retrieve a list of call history records in your workspace."
 </ParamField>
 
 <ParamField query="postAnalysis" type="string">
-  JSON-stringified filter object for post-call analysis fields.
+  JSON-stringified **array** of filter objects on post-call analysis fields, e.g. `[{"call_disposition":"booked"}]`. Each key is an `analyzedData` field; all conditions must match. A value can be a plain value, `null`, or an object using `$exists`, `$ne`, `$regex` (with optional `$options`, default `i`) or `$in`. The special key `function_calls` matches calls that invoked a tool by name (a string, or `{"$in": [...]}`).
+
+  <Warning>
+  Send an array. A single object (`{"call_disposition":"booked"}`) is silently ignored and every call is returned.
+  </Warning>
+</ParamField>
+
+<ParamField query="includeTranscripts" type="string">
+  Set to `false` to omit the `transcript` field from each record. Defaults to including it.
+</ParamField>
+
+<ParamField query="slim" type="string">
+  Set to `true` to also omit `postCallStatus`, `preCallWebhook`, `dynamic_variables` and `variables`.
 </ParamField>
 
 ### Response Fields
 
-<ResponseField name="_id" type="string">
-  The unique identifier for the call history record.
+<ResponseField name="data" type="array">
+  Call history records for this page.
+
+  <Expandable title="record fields">
+    <ResponseField name="_id" type="string">The call history record ID. Use it with [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get).</ResponseField>
+    <ResponseField name="timestamp" type="number">Call start time as Unix seconds.</ResponseField>
+    <ResponseField name="callId" type="string">Call identifier.</ResponseField>
+    <ResponseField name="roomName" type="string">Room name of the call. Web calls start with `web-`.</ResponseField>
+    <ResponseField name="fromPhoneNumber" type="string">Caller number, or `"N/A"`.</ResponseField>
+    <ResponseField name="toPhoneNumber" type="string">Destination number, or `"N/A"`.</ResponseField>
+    <ResponseField name="direction" type="string">`inbound`, `outbound` or `web`.</ResponseField>
+    <ResponseField name="status" type="string">`completed`, `pending`, `failed` or `blocked`.</ResponseField>
+    <ResponseField name="mode" type="string">`voice` or `text`.</ResponseField>
+    <ResponseField name="duration" type="number">Call length in whole seconds. Omitted when zero or unknown.</ResponseField>
+    <ResponseField name="charged_duration" type="number">Billed duration, or `null`.</ResponseField>
+    <ResponseField name="error" type="string">Error message for the call, or `"None"`.</ResponseField>
+    <ResponseField name="agent" type="string">Agent name, or `"N/A"`.</ResponseField>
+    <ResponseField name="callFlowName" type="string">Call flow name, or `"N/A"`. `pathwayName` carries the same value.</ResponseField>
+    <ResponseField name="cost" type="number">Amount charged for the call. `0` when not charged.</ResponseField>
+    <ResponseField name="hasTelephonyCost" type="boolean">Whether the call carries a telephony cost.</ResponseField>
+    <ResponseField name="telephonyCost" type="number">Telephony cost of the call.</ResponseField>
+    <ResponseField name="warmTransferCharge" type="number">Warm transfer infrastructure charge.</ResponseField>
+    <ResponseField name="warmTransferMinutes" type="number">Warm transfer infrastructure minutes.</ResponseField>
+    <ResponseField name="transferTiming" type="object">Transfer timings, or `null`.</ResponseField>
+    <ResponseField name="agentSegments" type="array">Per-agent cost segments for multi-agent calls, or `null`.</ResponseField>
+    <ResponseField name="recordingUrl" type="string">Authenticated recording URL, or `null`.</ResponseField>
+    <ResponseField name="publicRecordingUrl" type="string">Public recording URL when public recordings are enabled, or `null`.</ResponseField>
+    <ResponseField name="publicRecording" type="string">Stored public recording link, or `null`.</ResponseField>
+    <ResponseField name="batchId" type="string">Batch ID for batch calls, or `null`.</ResponseField>
+    <ResponseField name="isCallFromSmartCallback" type="boolean">Whether the call was placed by a smart callback.</ResponseField>
+    <ResponseField name="timezone" type="string">Call flow office-hours timezone (or the call's timezone), or `null`.</ResponseField>
+    <ResponseField name="scheduledTime" type="string">Scheduled time for a deferred call, or `null`.</ResponseField>
+    <ResponseField name="currentTimeOfGivenTimezone" type="string">Local time in the call's timezone when scheduled, or `null`.</ResponseField>
+    <ResponseField name="pendingReason" type="string">Why a `pending` call has not dialed: `office_hours`, `smart_callback` or `scheduled`. Otherwise `null`.</ResponseField>
+    <ResponseField name="nextAttemptAt" type="string">When a pending call will next be attempted, or `null`.</ResponseField>
+    <ResponseField name="summary" type="string">Call summary, or `null`.</ResponseField>
+    <ResponseField name="analyzedData" type="object">Post-call analysis results. Keys depend on the call flow's post-call analysis settings (for example `call_disposition`, `call_sentiment`).</ResponseField>
+    <ResponseField name="variables" type="object">Variables collected during the call. Omitted with `slim=true`.</ResponseField>
+    <ResponseField name="dynamic_variables" type="object">Dynamic variables passed into the call. Omitted with `slim=true`.</ResponseField>
+    <ResponseField name="transcript" type="array">Transcript entries. Omitted with `includeTranscripts=false`.</ResponseField>
+    <ResponseField name="hipaaCompliance" type="boolean">Whether the call ran in HIPAA mode.</ResponseField>
+    <ResponseField name="functionCalls" type="array">Tool calls made during the call.</ResponseField>
+    <ResponseField name="llm" type="object">`{ model }` used for the call, or `{}`.</ResponseField>
+    <ResponseField name="stt" type="object">`{ model }` used for the call, or `{}`.</ResponseField>
+    <ResponseField name="tts" type="object">`{ model }` used for the call, or `{}`.</ResponseField>
+    <ResponseField name="postCallStatus" type="object">Post-call processing status, or `null`. Omitted with `slim=true`.</ResponseField>
+    <ResponseField name="preCallWebhook" type="object">Pre-call webhook result, or `null`. Omitted with `slim=true`.</ResponseField>
+    <ResponseField name="postCallEmailDeliveries" type="array">Post-call email delivery records.</ResponseField>
+    <ResponseField name="bookingOutcome" type="object">Booking result for calls that booked an appointment, or `null`.</ResponseField>
+    <ResponseField name="callEndedBy" type="string">Who ended the call, or `"Unknown"`. Phone calls only (not present on web calls).</ResponseField>
+    <ResponseField name="callEndReason" type="string">Why the call ended, or `"Unknown"`. Phone calls only.</ResponseField>
+  </Expandable>
 </ResponseField>
 
-<ResponseField name="timestamp" type="number">
-  The Unix timestamp indicating when the call was made.
+<ResponseField name="pagination" type="object">
+  <Expandable title="properties">
+    <ResponseField name="page" type="number">Current page.</ResponseField>
+    <ResponseField name="limit" type="number">Records per page.</ResponseField>
+    <ResponseField name="totalCount" type="number">Total records matching the filters.</ResponseField>
+    <ResponseField name="totalPages" type="number">Total number of pages.</ResponseField>
+  </Expandable>
 </ResponseField>
 
-<ResponseField name="callId" type="string">
-  A unique identifier associated with the specific call.
-</ResponseField>
+### Errors
 
-<ResponseField name="fromPhoneNumber" type="string">
-  The phone number from which the call originated.
-</ResponseField>
-
-<ResponseField name="toPhoneNumber" type="string">
-  The phone number to which the call was directed.
-</ResponseField>
-
-<ResponseField name="direction" type="string">
-  The direction of the call, typically "inbound", "outbound", or "bidirectional".
-</ResponseField>
-
-<ResponseField name="agent" type="string">
-  The name or identifier of the agent involved in the call.
-</ResponseField>
-
-<ResponseField name="status" type="string">
-  The status of the call, such as "active", "completed", or other relevant statuses.
-</ResponseField>
-
-<ResponseField name="callFlowName" type="string">
-  The name of the call flow  used during the call.
-</ResponseField>
-
-<ResponseField name="cost" type="number">
-  The cost incurred for the call, if applicable.
-</ResponseField>
-
-<ResponseField name="recordingUrl" type="string" optional="true">
-  A URL pointing to the recorded audio of the call, if available.
-</ResponseField>
-
-<ResponseField name="summary" type="string">
-  A brief summary or overview of the call.
-</ResponseField>
-
-<ResponseField name="analyzedData" type="object">
-  An object containing additional analyzed data from the call, such as flags for voicemail detection or other specific features.
-  <ResponseField name="answered_by_voicemail" type="boolean" optional="true">
-    Indicates whether the call was answered by a voicemail system.
-  </ResponseField>
-</ResponseField>
-
-<ResponseField name="variables" type="object">
-  Any variables that were used or modified during the call.
-</ResponseField>
-
-<ResponseField name="transcript" type="array">
-  An array containing elements of the call transcript, if available.
-</ResponseField>
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "dateRange must be a JSON object with startDate and endDate ..."}` | `dateRange` is not valid JSON or has invalid dates |
+| `400` | `{"error": "<field> must be ..."}` | `search`, `fromPhone` or `toPhone` is repeated, over 200 characters, or (phone filters) has no digits |
+| `500` | `{"error": "<parser message>"}` | `callIds` or `postAnalysis` is not valid JSON |
 
 <ResponseExample>
 ```json
-[
-  {
-    "_id": "00000000bf7ca4a7c69e0000",
-    "timestamp": 1737062894.9754236,
-    "callId": "00000000013bd867b55ca000-00t00imaqj",
-    "fromPhoneNumber": "+00000000000",
-    "toPhoneNumber": "+00000000000",
-    "direction": "bidirectional",
-    "agent": "SampleAgent",
-    "status": "active",
-    "callFlowName": "Example Call Flow",
-    "cost": 0,
-    "recordingUrl": null,
-    "summary": "Call summary here",
-    "analyzedData": {},
-    "variables": {},
-    "transcript": []
-  },
-  {
-    "_id": "00000000cbddbe9988450000",
-    "timestamp": 1737061847.891025,
-    "callId": "00000000013bd867b55ca000-00pk0su000",
-    "fromPhoneNumber": "+00000000000",
-    "toPhoneNumber": "+00000000000",
-    "direction": "bidirectional",
-    "duration": 0,
-    "agent": "SampleAgent",
-    "status": "completed",
-    "callFlowName": "Example Call Flow",
-    "cost": 0,
-    "recordingUrl": null,
-    "summary": "Call summary here",
-    "analyzedData": {
-      "answered_by_voicemail": false
-    },
-    "variables": {},
-    "transcript": []
+{
+  "data": [
+    {
+      "_id": "6a32640492f1c2a7e5b10c44",
+      "timestamp": 1761731294,
+      "callId": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+      "fromPhoneNumber": "+14155550123",
+      "toPhoneNumber": "+14155550188",
+      "direction": "outbound",
+      "duration": 42,
+      "charged_duration": 42,
+      "transferTiming": null,
+      "agentSegments": null,
+      "agent": "Front Desk",
+      "status": "completed",
+      "error": "None",
+      "pathwayName": "Appointment Booking",
+      "callFlowName": "Appointment Booking",
+      "cost": 0.12,
+      "hasTelephonyCost": false,
+      "telephonyCost": 0,
+      "warmTransferCharge": 0,
+      "warmTransferMinutes": 0,
+      "isCallFromSmartCallback": false,
+      "recordingUrl": "https://api.trillet.ai/v2/api/recordings/6a32640492f1c2a7e5b10c44",
+      "publicRecordingUrl": null,
+      "timezone": "America/Los_Angeles",
+      "scheduledTime": null,
+      "currentTimeOfGivenTimezone": null,
+      "pendingReason": null,
+      "nextAttemptAt": null,
+      "publicRecording": null,
+      "batchId": null,
+      "roomName": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+      "summary": "Caller booked a consultation for Tuesday.",
+      "analyzedData": {
+        "call_disposition": "booked",
+        "call_sentiment": "positive"
+      },
+      "variables": {},
+      "transcript": [],
+      "hipaaCompliance": false,
+      "functionCalls": [],
+      "dynamic_variables": {},
+      "llm": { "model": "gpt-4.1" },
+      "stt": {},
+      "tts": {},
+      "postCallStatus": null,
+      "preCallWebhook": null,
+      "postCallEmailDeliveries": [],
+      "bookingOutcome": null,
+      "mode": "voice",
+      "callEndedBy": "Unknown",
+      "callEndReason": "Unknown"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "totalCount": 1,
+    "totalPages": 1
   }
-]
+}
 ```
 </ResponseExample>

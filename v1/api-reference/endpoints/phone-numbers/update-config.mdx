@@ -1,8 +1,16 @@
 ---
 title: "Update Phone Number Configuration"
 api: "PUT /v1/api/twilio/phone-numbers/{phoneNumberId}/config"
-description: "Update the call flow configuration for a phone number, including agent assignment, recording, and office hours."
+description: "Bind a call agent to a phone number and change its recording, office hours, transfer caller ID, tags and label."
 ---
+
+Every field is optional. A field you leave out keeps its current value, so you can send only what you want to change. To unassign the agent, send `"agentId": null`.
+
+Binding an agent attaches the number to that agent's live call flow and sets the number's `status` to `active`. If the agent has no call flow yet, the number is saved with `status` `ready` and goes live when you create the agent's call flow. An agent whose call flows are all archived or inactive is refused (see Errors).
+
+<Note>
+Your role needs the `phone_number:edit` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -12,65 +20,142 @@ Workspace identifier for the API.
 ## Path Parameters
 
 <ParamField path="phoneNumberId" type="string" required>
-The unique identifier of the phone number.
+The number's `_id` from [List Phone Numbers](/v1/api-reference/endpoints/phone-numbers/list).
 </ParamField>
 
 ## Request Body
 
-<ParamField body="agentId" type="string">
-The call agent ID to assign to this phone number.
-</ParamField>
-
-<ParamField body="maxCallDuration" type="number">
-Maximum call duration in seconds.
+<ParamField body="agentId" type="string | null">
+The call agent to bind to this number. `null` unassigns the current agent.
 </ParamField>
 
 <ParamField body="recordingEnabled" type="boolean">
-Whether to enable call recording.
+Whether calls on this number are recorded.
 </ParamField>
 
-<ParamField body="officeHours" type="object">
-Office hours configuration.
+<ParamField body="officeHours" type="object | null">
+Office hours for the number. The object you send replaces the stored one, so send every field you want to keep. `null` clears it.
 
 <Expandable title="properties">
 
 <ParamField body="enabled" type="boolean">
-Whether office hours are enabled.
+Whether office hours are enforced. Default `false`.
+</ParamField>
+
+<ParamField body="start" type="string">
+Opening time, `HH:MM` (24-hour). Default `09:00`.
+</ParamField>
+
+<ParamField body="end" type="string">
+Closing time, `HH:MM` (24-hour). Default `17:00`.
 </ParamField>
 
 <ParamField body="timezone" type="string">
-Timezone for office hours (e.g., "America/New_York").
+IANA timezone, for example `America/New_York`. Default `UTC`.
 </ParamField>
 
-<ParamField body="schedule" type="object">
-Weekly schedule with day-specific hours.
+<ParamField body="allowedDays" type="string[]">
+Days the hours apply to, as `Mon`, `Tue`, `Wed`, `Thu`, `Fri`, `Sat`, `Sun`. Default Monday to Friday.
+</ParamField>
+
+<ParamField body="blockedDates" type="string[]">
+Dates when the number is closed all day.
 </ParamField>
 
 </Expandable>
 </ParamField>
 
 <ParamField body="transferCallerIdMode" type="string">
-Caller ID mode for transfers. Options: "agent", "customer".
+Caller ID shown on transferred calls: `from-transferee` (default, the original caller's number) or `from-transferor` (your Trillet number). Any other value fails with `500`.
 </ParamField>
 
-<ParamField body="metadataTags" type="array">
-Array of metadata tag strings to assign.
+<ParamField body="metadataTags" type="object">
+Key/value tags as an object of strings, for example `{"location": "Downtown"}`. Replaces all existing tags.
+</ParamField>
+
+<ParamField body="secretBindings" type="object">
+Map of alias to workspace secret name, for example `{"crm_key": "acme-crm"}`. Aliases and names use lowercase letters, numbers, hyphens and underscores. Every name must be an existing secret in this workspace, otherwise the request fails with `400`. Replaces all existing bindings.
 </ParamField>
 
 <ParamField body="label" type="string">
-A label for the phone number.
+A label for the number.
 </ParamField>
 
-## Response Fields
+<Note>
+Maximum call duration is not a phone number setting. It belongs to the call flow (`settings.callSetting.maxCallDuration`), and a `maxCallDuration` sent here is ignored.
+</Note>
 
-<ResponseField name="success" type="boolean">
-Whether the update was successful.
-</ResponseField>
+## Response
 
-<ResponseExample>
+The updated phone number, in the same shape as an item from [List Phone Numbers](/v1/api-reference/endpoints/phone-numbers/list). `agentId` and `pathwayId` are returned as full objects, or `null`.
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
+| `400` | `{"error": "..."}` | `secretBindings` is malformed or names a secret that doesn't exist |
+| `404` | `{"error": "Phone number not found"}` | No number with that ID in this workspace (also for a malformed ID) |
+| `404` | `{"message", "code": "AGENT_NOT_FOUND", "error"}` | `agentId` isn't an agent in this workspace |
+| `409` | `{"message", "code": "CALL_FLOW_ARCHIVED", "error"}` | Every call flow of the agent is archived or inactive. Restore or turn one on first |
+| `500` | `{"error": "Failed to update phone number configuration", "message": "..."}` | Anything else, including an invalid `transferCallerIdMode` |
+
+When a request is refused, nothing is changed.
+
+<RequestExample>
 ```json
 {
-  "success": true
+  "agentId": "665a1b2c3d4e5f6a7b8c9d0f",
+  "recordingEnabled": true,
+  "officeHours": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "17:00",
+    "timezone": "America/New_York",
+    "allowedDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    "blockedDates": []
+  },
+  "transferCallerIdMode": "from-transferee",
+  "metadataTags": {
+    "location": "Downtown"
+  },
+  "label": "Front desk"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json Trimmed
+{
+  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "phoneNumber": "+14155550123",
+  "sid": "1293384261075731499",
+  "provider": "telnyx",
+  "status": "active",
+  "flowType": "call",
+  "agentId": {
+    "_id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "name": "Front Desk"
+  },
+  "pathwayId": {
+    "_id": "665a1b2c3d4e5f6a7b8c9d10",
+    "name": "Front Desk Call Flow"
+  },
+  "recordingEnabled": true,
+  "officeHours": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "17:00",
+    "timezone": "America/New_York",
+    "allowedDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    "blockedDates": []
+  },
+  "transferCallerIdMode": "from-transferee",
+  "metadataTags": {
+    "location": "Downtown"
+  },
+  "label": "Front desk",
+  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e"
 }
 ```
 </ResponseExample>

@@ -11,60 +11,76 @@ Workspace identifier for the API.
 
 ## Query Parameters
 
+The filters behave the same as on [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list).
+
 <ParamField query="agentId" type="string">
-Filter metrics by a specific agent ID.
+Filter by agent ID, or by agent name.
 </ParamField>
 
 <ParamField query="status" type="string">
-Filter by call status (e.g., "completed", "failed", "no-answer").
+Filter by call status: `completed`, `pending`, `failed` or `blocked`.
 </ParamField>
 
 <ParamField query="direction" type="string">
-Filter by call direction ("inbound", "outbound", "bidirectional").
+Filter by call direction: `inbound`, `outbound` or `web`.
 </ParamField>
 
 <ParamField query="pathwayId" type="string">
 Filter by call flow ID.
 </ParamField>
 
+<ParamField query="batchId" type="string">
+Filter by batch call ID.
+</ParamField>
+
+<ParamField query="callIds" type="string">
+JSON-stringified array of call IDs.
+</ParamField>
+
 <ParamField query="dateRange" type="string">
-JSON string with startDate and endDate in ISO format. Example: `{"startDate":"2024-01-01","endDate":"2024-01-31"}`
+JSON string with `startDate` and `endDate` ISO 8601 timestamps, applied to the call start time in UTC. Example: `{"startDate":"2024-01-01T00:00:00Z","endDate":"2024-01-31T23:59:59Z"}`. An invalid value returns `400`.
 </ParamField>
 
 <ParamField query="callType" type="string">
-Filter by call type: "sip" or "web".
+Filter by call type: `sip` or `web`.
+</ParamField>
+
+<ParamField query="search" type="string">
+Free-text search, same as on List Call Histories. At most 200 characters.
+</ParamField>
+
+<ParamField query="fromPhone" type="string">
+Partial match on the caller number (digits only).
+</ParamField>
+
+<ParamField query="toPhone" type="string">
+Partial match on the destination number (digits only).
+</ParamField>
+
+<ParamField query="postAnalysis" type="string">
+JSON-stringified array of post-call analysis filter objects, same as on List Call Histories. A single object is ignored.
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="totalCalls" type="number">
-Total number of calls matching the filters.
+Number of calls matching the filters.
 </ResponseField>
 
-<ResponseField name="completedCalls" type="number">
-Number of completed calls.
+<ResponseField name="avgDuration" type="string">
+Average call duration formatted as `m:ss`. `"0:00"` when there are no calls.
 </ResponseField>
 
-<ResponseField name="failedCalls" type="number">
-Number of failed calls.
-</ResponseField>
-
-<ResponseField name="averageDuration" type="number">
-Average call duration in seconds.
-</ResponseField>
-
-<ResponseField name="totalCost" type="number">
-Total cost of all calls.
+<ResponseField name="completionRate" type="string">
+Share of matching calls with status `completed`, as a percentage string rounded to one decimal place. `"0%"` when there are no calls.
 </ResponseField>
 
 <ResponseExample>
 ```json
 {
-  "totalCalls": 150,
-  "completedCalls": 120,
-  "failedCalls": 10,
-  "averageDuration": 180,
-  "totalCost": 45.50
+  "totalCalls": 70,
+  "avgDuration": "0:42",
+  "completionRate": "98.6%"
 }
 ```
 </ResponseExample>

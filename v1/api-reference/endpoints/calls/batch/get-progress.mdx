@@ -1,7 +1,7 @@
 ---
 title: "Get Batch Progress"
 api: "GET /v1/api/batch-calls/{batchId}/status"
-description: "Get detailed progress information for a batch call operation"
+description: "Get the job counters and percent complete for a batch call operation"
 ---
 
 ### Headers
@@ -12,63 +12,47 @@ description: "Get detailed progress information for a batch call operation"
 ### Path Parameters
 
 <ParamField path="batchId" type="string" required>
-  The unique identifier of the batch call operation
+  The 10-character batch ID returned by [Start Batch Calls](/v1/api-reference/endpoints/calls/batch/start).
 </ParamField>
 
 ### Response
 
-<ResponseField name="status" type="string">
-  Current status of the batch operation
-</ResponseField>
-
-<ResponseField name="isComplete" type="boolean">
-  Whether the batch operation has finished
-</ResponseField>
-
-<ResponseField name="waiting" type="number">
-  Number of calls waiting in queue
-</ResponseField>
-
-<ResponseField name="active" type="number">
-  Number of calls currently being processed
-</ResponseField>
-
-<ResponseField name="completed" type="number">
-  Number of successfully completed calls
-</ResponseField>
-
-<ResponseField name="failed" type="number">
-  Number of failed calls
+<ResponseField name="batchId" type="string">
+  The batch ID.
 </ResponseField>
 
 <ResponseField name="total" type="number">
-  Total number of calls in the batch
+  Total jobs in the batch
 </ResponseField>
 
-<ResponseField name="startTime" type="number">
-  Timestamp when the batch started processing
+<ResponseField name="completed" type="number">
+  Dial jobs that finished
 </ResponseField>
 
-<ResponseField name="lastCompletedTime" type="number">
-  Timestamp of the last completed call
+<ResponseField name="failed" type="number">
+  Dial jobs that failed
 </ResponseField>
 
-<ResponseField name="completedTime" type="number">
-  Timestamp when the batch was completed (if finished)
+<ResponseField name="waiting" type="number">
+  Jobs waiting in the queue
 </ResponseField>
 
-<ResponseField name="averageCallDuration" type="number">
-  Average duration of completed calls in seconds
+<ResponseField name="active" type="number">
+  Jobs currently being placed
 </ResponseField>
 
-<ResponseField name="recent_calls" type="array">
-  Array of recent call results for monitoring
+<ResponseField name="progress" type="number">
+  Percent of jobs completed, rounded to a whole number (0-100). Failed jobs are not counted as completed.
+</ResponseField>
+
+<ResponseField name="lastUpdated" type="number">
+  Time these counters were read, in Unix milliseconds.
 </ResponseField>
 
 ### Example Usage
 
 ```bash
-curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/status" \
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq/status" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
@@ -77,33 +61,14 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/statu
 
 ```json
 {
-  "status": "processing",
-  "isComplete": false,
-  "waiting": 45,
-  "active": 5,
+  "batchId": "k3j9x0a1bq",
+  "total": 150,
   "completed": 95,
   "failed": 5,
-  "total": 150,
-  "startTime": 1703097600000,
-  "lastCompletedTime": 1703101200000,
-  "completedTime": null,
-  "averageCallDuration": 45.2,
-  "recent_calls": [
-    {
-      "jobId": "call_123",
-      "status": "completed",
-      "phone_number": "+1234567890",
-      "completedAt": 1703101200000,
-      "duration": 42
-    },
-    {
-      "jobId": "call_124", 
-      "status": "failed",
-      "phone_number": "+1987654321",
-      "failedAt": 1703101150000,
-      "error": "Number busy"
-    }
-  ]
+  "waiting": 45,
+  "active": 5,
+  "progress": 63,
+  "lastUpdated": 1793284800000
 }
 ```
 
@@ -114,8 +79,9 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/statu
 </ResponseField>
 
 **Common Error Codes:**
-- `500` - Server error retrieving batch progress information
+- `404` - `Batch not found`: the batch doesn't exist or belongs to another workspace
+- `500` - Server error retrieving batch progress
 
-### Progress Tracking
-
-This endpoint provides real-time progress updates for your batch call operations. Use it to build dashboards or monitor batch completion in your applications.
+<Note>
+  Counters are kept for **7 days**. After that, or before a scheduled batch starts, every counter reads `0`. Use [Get Batch Status](/v1/api-reference/endpoints/calls/batch/get-status) for the batch's overall status.
+</Note>
