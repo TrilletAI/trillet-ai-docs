@@ -1,24 +1,40 @@
 ---
 title: "Disconnect Meta WhatsApp"
 api: "DELETE /v1/api/meta-whatsapp/disconnect"
-description: "Disconnect the Meta WhatsApp Business integration from your workspace."
+description: "Disconnect the WhatsApp Business Account from your workspace."
 ---
+
+<Warning>
+This affects every WhatsApp message flow in the workspace. Each message flow on the `Meta-Whatsapp` channel loses its WhatsApp phone number, access token, default template and customer-number assignments, and its WhatsApp outbound messaging (`settings.whatsappOutbound.enabled`) is turned off. Reconnecting WhatsApp does not restore these. Each flow has to be set up again.
+</Warning>
+
+<Note>
+Your role needs the `workspace:edit` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions", "requiredPermission": "workspace:edit"}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+The workspace to disconnect WhatsApp from.
 </ParamField>
 
 ## Response Fields
 
-<ResponseField name="success" type="boolean">
-Whether the disconnection was successful.
+<ResponseField name="metaWhatsApp" type="null">
+Always `null`, meaning the workspace no longer has a WhatsApp connection.
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `403` | `{"error": "Insufficient permissions"}` | Your role lacks `workspace:edit` |
+| `404` | `{"message": "Workspace not found"}` | The workspace doesn't exist |
+| `500` | `{"message": "Error disconnecting Meta WhatsApp from workspace"}` | Unexpected server error |
 
 <ResponseExample>
 ```json
 {
-  "success": true
+  "metaWhatsApp": null
 }
 ```
 </ResponseExample>

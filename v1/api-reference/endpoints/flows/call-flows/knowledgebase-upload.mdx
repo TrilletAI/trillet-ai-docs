@@ -1,8 +1,12 @@
 ---
 title: "Upload Call Flow Knowledge File"
 api: "POST /v1/api/call-flows/knowledge-base/upload"
-description: "Upload a knowledge file for call flows."
+description: "Upload a file to storage so it can be attached to a call flow."
 ---
+
+<Note>
+  This is the older way to give a call flow documents. For new integrations, use the [Knowledge Base API](/v1/api-reference/endpoints/knowledge-base/create) and add the knowledge base's ID to the flow's `settings.knowledgeBases`.
+</Note>
 
 ### Headers
 
@@ -12,12 +16,56 @@ description: "Upload a knowledge file for call flows."
 
 ### Request Body
 
+Send the file as `multipart/form-data`.
+
 <ParamField body="file" type="file" required>
-  The knowledge file to upload. Accepted formats are PDF (.pdf), plain text
-  (.txt), Word (.docx), and Markdown (.md).
-  <Note>
-    One file per request. The path does not include a call flow id.
-  </Note>
+  The knowledge file to upload. One file per request. The file's content type must be one of `application/pdf`, `text/plain`, `application/vnd.openxmlformats-officedocument.wordprocessingml.document` (DOCX) or `text/markdown`. The type is checked, not the file extension, so a `.md` file sent as `application/octet-stream` is refused. The upload limit is 600,000,000 bytes.
 </ParamField>
 
-The response includes the file key. Pass that key to [Delete Call Flow Knowledge File](/v1/api-reference/endpoints/flows/call-flows/knowledgebase-delete).
+### Attaching the file to a flow
+
+The upload only stores the file. It is not attached to any call flow, and the path does not include a flow ID. To attach it, add the returned object to the flow's `settings.knowledgeBaseFiles` with [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update). `knowledgeBaseFiles` is an array, and arrays replace the stored list, so send the files the flow already has plus the new one:
+
+```json
+{
+  "settings": {
+    "knowledgeBaseFiles": [
+      { "filename": "pricing.pdf", "key": "knowledge-base/6764d172953253138a3a70f4/1736953200000-pricing.pdf", "url": "https://..." }
+    ]
+  }
+}
+```
+
+### Response Fields
+
+`200 OK` with:
+
+<ResponseField name="filename" type="string">
+  The uploaded file's name.
+</ResponseField>
+
+<ResponseField name="key" type="string">
+  A file key of the form `knowledge-base/<workspaceId>/<timestamp>-<filename>`.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  The stored file's URL.
+</ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "No file uploaded"}` | The request has no file |
+| `400` | `{"message": "Invalid file type. Only PDF, TXT, DOCX, and MD files are allowed."}` | The file's content type is not one of the four above |
+| `500` | `{"message": "..."}` | The upload failed |
+
+<ResponseExample>
+```json 200 OK
+{
+  "filename": "pricing.pdf",
+  "key": "knowledge-base/6764d172953253138a3a70f4/1736953200000-pricing.pdf",
+  "url": "https://example-bucket.s3.amazonaws.com/pathways/knowledge-base/6764d172953253138a3a70f4/1736953200000-pricing.pdf/kb/1736953200001-pricing.pdf"
+}
+```
+</ResponseExample>

@@ -1,31 +1,83 @@
 ---
 title: "Get Pending Invitations"
 api: "GET /v1/api/workspaces/invitations/pending"
-description: "Retrieve a list of pending workspace invitations for the authenticated user."
+description: "List the pending workspace invitations sent to your email address."
 ---
 
+Returns every pending, unexpired invitation whose recipient email matches yours, across all workspaces.
+
 ### Headers
-<ParamField header="x-workspace-id" type="string" optional>
-  The workspace ID related to the invitation context. *(Currently optional and not enforced in the query.)*
+<ParamField header="x-workspace-id" type="string" required>
+  The `_id` of any workspace you're a member of. Required with API-key authentication (`400` without it). It doesn't filter the results.
 </ParamField>
-
-### Description
-
-This endpoint returns all **pending workspace invitations** where the authenticated user's email matches the invitation's recipient email.
-
-The response includes:
-- Details about the invitation (role, type, token, expiration).
-- Information about the inviting user (name, email, picture).
-- Workspace details including name, initials, and white-label settings.
-
-If the email is not present in the authenticated user payload, it is fetched from the database using the user ID.
 
 ### Response Fields
 
 <ResponseField name="success" type="boolean">
-  Indicates whether the request was successful.
+  `true`.
 </ResponseField>
 
 <ResponseField name="invitations" type="array">
-  List of pending invitations for the authenticated user.
+  Your pending invitations.
+
+  <Expandable title="properties">
+    <ResponseField name="id" type="string">
+      The invitation ID.
+    </ResponseField>
+    <ResponseField name="email" type="string">
+      The invited email (yours).
+    </ResponseField>
+    <ResponseField name="role" type="string">
+      The role name you'll get, for example `editor`.
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      `internal` or `external`.
+    </ResponseField>
+    <ResponseField name="workspace" type="object">
+      `{id, name, initials, isWhiteLabel, companyName}` of the inviting workspace.
+    </ResponseField>
+    <ResponseField name="invitedBy" type="object">
+      `{id, name, email, picture}` of the person who invited you.
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      When the invitation was sent.
+    </ResponseField>
+    <ResponseField name="expiresAt" type="string">
+      When the invitation expires (7 days after it was sent).
+    </ResponseField>
+    <ResponseField name="token" type="string">
+      The invitation token used to accept it.
+    </ResponseField>
+  </Expandable>
 </ResponseField>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "invitations": [
+    {
+      "id": "6720a1b2c3d4e5f6a7b8c9d0",
+      "email": "jane@company.com",
+      "role": "editor",
+      "type": "internal",
+      "workspace": {
+        "id": "674a3edc2d89622daa9fcfd1",
+        "name": "Sales Team",
+        "initials": "ST",
+        "isWhiteLabel": false
+      },
+      "invitedBy": {
+        "id": "664a1b2c3d4e5f6a7b8c9d0e",
+        "name": "Sam Lee",
+        "email": "sam@company.com",
+        "picture": null
+      },
+      "createdAt": "2026-10-20T09:00:00.000Z",
+      "expiresAt": "2026-10-27T09:00:00.000Z",
+      "token": "3f9c..."
+    }
+  ]
+}
+```
+</ResponseExample>

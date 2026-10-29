@@ -4,6 +4,12 @@ api: 'POST /v1/api/agents'
 description: 'Create a new agent for a workspace.'
 ---
 
+An agent holds the voice, speech-to-text and language model a call flow speaks with. Create the agent first, then pass its `_id` as `agent` when you [create a call flow](/v1/api-reference/endpoints/flows/call-flows/create).
+
+<Note>
+Phone numbers are not attached here. Once the agent belongs to a call flow, attach a number with [Assign Phone Number to Agent](/v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber).
+</Note>
+
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
@@ -16,31 +22,77 @@ Name of the agent being created.
 </ParamField>
 
 <ParamField body="ttsModel" type="object" required>
-Text-to-Speech (TTS) configuration for the agent.
+Text-to-Speech (TTS) configuration for the agent. `provider` and `voiceId` are both required.
 
 <Expandable title="properties">
 
 <ParamField body="provider" type="string" required>
-TTS provider. Must be one of the following: openai, rime, elevenlabs, 11labs_byo, google.
+TTS provider. One of `rime`, `openai`, `openai-live`, `elevenlabs`, `11labs_byo`, `cartesia`, `cartesia_byo`, `google`, `gemini-3.8-flash`, `gemini-3.8-flash-lite`, `azure`, `hume`, `xai`, `grok`, `deepgram`, `fish`. A value outside this list fails with `500`.
+
+Custom voices you create with the [Voices API](/v1/api-reference/endpoints/voices/create) use `cartesia`.
 </ParamField>
 
 <ParamField body="voiceId" type="string" required>
-The voice ID used for generating speech. e.g for Trillet Voices,
-"mistv2_Wildflower" - Alt Female, Smart
-"mistv2_Brook" - Male, Friendly
-"mistv2_Violet" - Female, Professional
+The voice to speak with. Take it from the `voiceId` field of [Search Voices](/v1/api-reference/endpoints/voices/search) rather than hardcoding one, because the catalog changes. Trillet Voices (provider `rime`) look like `mistv3_wildflower`, `mistv3_brook` or `mistv3_violet`.
 </ParamField>
 
+<ParamField body="name" type="string">
+Display name of the voice, for example `Wildflower`.
+</ParamField>
 
-<ParamField body="language" type="string" default='en' required>
+<ParamField body="rimeModel" type="string">
+Rime model for a `rime` voice, for example `mistv3`. Search Voices returns it with each Rime voice.
+</ParamField>
+
+<ParamField body="elevenLabsModel" type="string">
+ElevenLabs model. One of `eleven_turbo_v2`, `eleven_flash_v2_5`, `eleven_turbo_v2_5`, `eleven_multilingual_v2`, `eleven_v4`, `eleven_v4_turbo`.
+</ParamField>
+
+<ParamField body="language" type="string" default="en">
 Language code (e.g., en, fr).
 </ParamField>
 
 <ParamField body="elevenLabsApiKey" type="string">
-ElevenLabs API key (required only when provider is "11labs_byo"). This will be encrypted and stored securely.
+Your ElevenLabs API key, used only when provider is `11labs_byo`. It is encrypted before it is stored.
+</ParamField>
+
+<ParamField body="elevenLabsApiKeySecret" type="string">
+Name of a workspace secret that holds your ElevenLabs key, as an alternative to `elevenLabsApiKey`.
+</ParamField>
+
+<ParamField body="cartesiaApiKey" type="string">
+Your Cartesia API key, used only when provider is `cartesia_byo`. It is encrypted before it is stored.
+</ParamField>
+
+<ParamField body="cartesiaApiKeySecret" type="string">
+Name of a workspace secret that holds your Cartesia key, as an alternative to `cartesiaApiKey`.
 </ParamField>
 
 </Expandable>
+</ParamField>
+
+<ParamField body="fallbackTtsModel" type="object">
+Optional second voice, used if the primary TTS provider fails during a call. Same fields as `ttsModel`.
+</ParamField>
+
+<ParamField body="sttProvider" type="object">
+Speech-to-text provider, as `{ "id": "...", "name": "...", "description": "..." }`. `id` is one of `deepgram-nova-2`, `deepgram-nova-3`, `deepgram-nova-3-medical`, `deepgram-flux`, `deepgram-flux-multi`, `speechmatics`, `speechmatics-medical`, `whisper`, `gladia`, `xai`, `google-chirp-3`, `elevenlabs-scribe`, `assemblyai-universal-pro`, `gemini-transcribe-live`.
+</ParamField>
+
+<ParamField body="fallbackSttProvider" type="object">
+Optional speech-to-text provider to fall back to. Same shape as `sttProvider`.
+</ParamField>
+
+<ParamField body="llmModel" type="string" default='platform-llm'>
+Language model the agent uses to generate responses.
+
+Defaults to `platform-llm`, the managed platform model. It is tuned for voice agents and kept current without any change to your configuration, and it is what agents created in the dashboard start on.
+
+To pin a specific model instead, pass its id, for example `gpt-4.1` or `gemini-2.5-flash`. The models on offer change over time, so call [List Available Models](/v1/api-reference/endpoints/agents/call/list-models) for the current set rather than hardcoding one. A model that isn't on offer, or the retired `trillet-llm`, fails with `400`.
+</ParamField>
+
+<ParamField body="fallbackLlmModel" type="string">
+Optional model to fall back to if the primary model fails. Checked the same way as `llmModel`.
 </ParamField>
 
 <ParamField body="smartCallback" type="boolean" default="false">
@@ -52,7 +104,7 @@ Maximum number of callback attempts when smart callback is enabled.
 </ParamField>
 
 <ParamField body="gapBetweenEachAttemptForSmartCallback" type="array">
-Array of time intervals between each callback attempt. Each item contains days and hours.
+Array of time intervals between each callback attempt. Each item contains days and hours. Defaults to five gaps of one day. An item outside the ranges below is reset to `{ "days": 1, "hours": 0 }`.
 
 <Expandable title="Array Item Properties">
 
@@ -67,43 +119,37 @@ Number of hours to wait before the next attempt.
 </Expandable>
 </ParamField>
 
-<ParamField body="phoneNumberIds" type="array">
-Array of phone number IDs to associate with the agent.
-</ParamField>
-
-<ParamField body="llmModel" type="string" default='platform-llm'>
-Language model the agent uses to generate responses.
-
-Defaults to `platform-llm`, the managed platform model. It is tuned for voice agents and kept current without any change to your configuration, and it is what agents created in the dashboard start on.
-
-To pin a specific model instead, pass its id, for example `gpt-4.1` or `gemini-2.5-flash`. The models on offer change over time, so call [List Available Models](/v1/api-reference/endpoints/agents/call/list-models) for the current set rather than hardcoding one.
+<ParamField body="type" type="string" default="voice">
+`voice` or `chat`.
 </ParamField>
 
 <ParamField body="settings" type="object">
-Additional settings for the agent.
+Voice and model tuning. Stored exactly as sent: the API applies no defaults, and if you leave it out it stays unset. The dashboard starts new agents on `{ "speed": 0, "volume": 1, "temperature": 0.3 }`.
 
 <Expandable title="properties">
 
-<ParamField body="speed" type="number" default="0.7">
-Value between 0 and 1 that determines how fast the TTS narrates text.
+<ParamField body="speed" type="number">
+Speaking speed. How the value is applied depends on the voice provider. `0`, or leaving it out, keeps the provider's normal speed. Tune it in the dashboard's voice settings if you need a specific pace.
 </ParamField>
 
-<ParamField body="volume" type="number" default="1">
-Value between 0 and 1 that adjusts the TTS volume.
+<ParamField body="volume" type="number">
+Volume of the voice. The dashboard uses `1`.
 </ParamField>
 
-<ParamField body="temperature" type="number" default="0.7">
-Value between 0 and 1 for controlling the creativity of the LLM.
+<ParamField body="temperature" type="number">
+Creativity of the language model, from 0 to 1. The dashboard uses `0.3`.
 </ParamField>
 
 </Expandable>
 </ParamField>
 
-<ParamField body="variables" type="object">
-Custom variables to store for the agent.
-</ParamField>
+<Warning>
+`phoneNumberIds` and `variables` are ignored on create. Attach numbers with [Assign Phone Number to Agent](/v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber).
+</Warning>
 
-## Response Fields
+## Response
+
+`200` with the saved agent.
 
 <ResponseField name="_id" type="string">
 Unique identifier for the newly created agent. Pass it as `agent` when you [create a call flow](/v1/api-reference/endpoints/flows/call-flows/create) to link the two. The agent then shows up inside that call flow and on the Phone Numbers page. An agent serves one call flow, so create a new agent for each flow.
@@ -122,28 +168,23 @@ Name of the agent.
 </ResponseField>
 
 <ResponseField name="ttsModel" type="object">
-Text-to-Speech configuration for the agent.
-
-<ResponseField name="provider" type="string">
-TTS provider used by the agent.
+Text-to-Speech configuration for the agent, as sent (`provider`, `voiceId`, `name`, `language`, `rimeModel`, `elevenLabsModel` and any BYO key fields).
 </ResponseField>
 
-<ResponseField name="voiceId" default="mistv2_Wildflower" type="string">
-Voice ID used for generating speech. (e.g., mistv2_Brook, mistv2_Violet, mistv2_Wildflower)
+<ResponseField name="fallbackTtsModel" type="object | null">
+Fallback voice, or `null`.
 </ResponseField>
 
-
-<ResponseField name="language" type="string">
-Language code of the TTS voice.
-</ResponseField>
-
-<ResponseField name="elevenLabsApiKey" type="string">
-Encrypted ElevenLabs API key (only present if provider is "11labs_byo").
-</ResponseField>
+<ResponseField name="sttProvider" type="object | null">
+Speech-to-text provider, or `null`.
 </ResponseField>
 
 <ResponseField name="llmModel" type="string">
-Language Model used by the agent to generate responses.
+Language model used by the agent. `platform-llm` if you didn't send one.
+</ResponseField>
+
+<ResponseField name="fallbackLlmModel" type="string | null">
+Fallback language model, or `null`.
 </ResponseField>
 
 <ResponseField name="smartCallback" type="boolean">
@@ -158,8 +199,12 @@ Maximum number of callback attempts.
 Array of time intervals between callback attempts.
 </ResponseField>
 
+<ResponseField name="type" type="string">
+`voice` or `chat`.
+</ResponseField>
+
 <ResponseField name="phoneNumberIds" type="array">
-Array of phone number IDs associated with the agent.
+Always empty on a new agent.
 </ResponseField>
 
 <ResponseField name="activeSessions" type="array">
@@ -167,19 +212,11 @@ Array of active sessions for the agent.
 </ResponseField>
 
 <ResponseField name="settings" type="object">
-Additional settings configured for the agent.
+Settings as sent, or absent if you didn't send any.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-Current status of the agent (pending, ready, or error).
-</ResponseField>
-
-<ResponseField name="currentNode" type="string">
-Current node or state within the agent's flow.
-</ResponseField>
-
-<ResponseField name="variables" type="object">
-Custom variables stored for the agent.
+`ready` for a new agent.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -190,18 +227,27 @@ Timestamp when the agent was created.
 Timestamp when the agent was last updated.
 </ResponseField>
 
-<ResponseExample>
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `400` | `{"message", "code": "TTS_MODEL_INVALID"}` | `ttsModel` is missing, or has no `provider` or `voiceId` |
+| `400` | `{"message", "code": "LLM_MODEL_INVALID"}` | `llmModel` or `fallbackLlmModel` isn't an available model, or is the retired `trillet-llm` |
+| `500` | `{"error": "..."}` | Anything else, including a `provider` or `sttProvider.id` outside the allowed list |
+
+<RequestExample>
 ```json
 {
   "name": "Customer Support Agent",
   "ttsModel": {
     "provider": "rime",
-    "voiceId": "mistv2_Wildflower",
-    "name": "Sophie",
+    "voiceId": "mistv3_wildflower",
+    "name": "Wildflower",
+    "rimeModel": "mistv3",
     "language": "en"
   },
   "llmModel": "platform-llm",
-  "type": "voice",
   "smartCallback": true,
   "maxAttemptsForSmartCallback": 3,
   "gapBetweenEachAttemptForSmartCallback": [
@@ -210,10 +256,50 @@ Timestamp when the agent was last updated.
     { "days": 3, "hours": 6 }
   ],
   "settings": {
-    "speed": 0.8,
+    "speed": 0,
     "volume": 1,
-    "temperature": 0.7
+    "temperature": 0.3
   }
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "_id": "6a1f0c2b9d4e8a0012ab34cd",
+  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "userId": "6612a0b1c2d3e4f5a6b7c8d9",
+  "name": "Customer Support Agent",
+  "ttsModel": {
+    "provider": "rime",
+    "voiceId": "mistv3_wildflower",
+    "name": "Wildflower",
+    "language": "en",
+    "rimeModel": "mistv3",
+    "elevenLabsModel": null,
+    "elevenLabsApiKeySecret": null,
+    "cartesiaApiKeySecret": null
+  },
+  "fallbackTtsModel": null,
+  "sttProvider": null,
+  "llmModel": "platform-llm",
+  "fallbackLlmModel": null,
+  "smartCallback": true,
+  "maxAttemptsForSmartCallback": 3,
+  "gapBetweenEachAttemptForSmartCallback": [
+    { "days": 1, "hours": 2 },
+    { "days": 2, "hours": 0 },
+    { "days": 3, "hours": 6 }
+  ],
+  "type": "voice",
+  "settings": { "speed": 0, "volume": 1, "temperature": 0.3 },
+  "fallbackSettings": null,
+  "status": "ready",
+  "phoneNumberIds": [],
+  "activeSessions": [],
+  "createdAt": "2026-10-29T10:00:00.000Z",
+  "updatedAt": "2026-10-29T10:00:00.000Z"
 }
 ```
 </ResponseExample>

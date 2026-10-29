@@ -1,8 +1,12 @@
 ---
 title: "Get WhatsApp Connection Status"
 api: "GET /v1/api/meta-whatsapp/status"
-description: "Check the current connection status of your Meta WhatsApp Business integration."
+description: "Check whether a WhatsApp Business Account is connected to your workspace."
 ---
+
+<Note>
+Your role needs the `workspace:view` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions", "requiredPermission": "workspace:view"}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -11,29 +15,76 @@ Workspace identifier for the API.
 
 ## Response Fields
 
-<ResponseField name="connected" type="boolean">
-Whether the WhatsApp Business Account is connected.
+<ResponseField name="metaWhatsApp" type="object">
+The workspace's WhatsApp connection. Every field except `isConnected` is `null` when nothing is connected.
+
+<Expandable title="properties">
+
+<ResponseField name="isConnected" type="boolean">
+Whether a WhatsApp Business Account is connected.
 </ResponseField>
 
 <ResponseField name="wabaId" type="string">
-The WhatsApp Business Account ID (if connected).
+The WhatsApp Business Account ID.
 </ResponseField>
 
 <ResponseField name="wabaName" type="string">
-The WhatsApp Business Account name (if connected).
+The WhatsApp Business Account name.
+</ResponseField>
+
+<ResponseField name="businessId" type="string">
+The Meta Business ID.
 </ResponseField>
 
 <ResponseField name="businessName" type="string">
-The Meta Business name (if connected).
+The Meta Business name.
 </ResponseField>
 
+<ResponseField name="connectedAt" type="string">
+When the account was connected (ISO 8601).
+</ResponseField>
+
+<ResponseField name="connectedBy" type="string">
+The `_id` of the user who connected it.
+</ResponseField>
+
+</Expandable>
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `403` | `{"error": "Insufficient permissions"}` | Your role lacks `workspace:view` |
+| `404` | `{"message": "Workspace not found"}` | The workspace doesn't exist |
+| `500` | `{"message": "Error fetching Meta WhatsApp workspace status"}` | Unexpected server error |
+
 <ResponseExample>
-```json
+```json Connected
 {
-  "connected": true,
-  "wabaId": "123456789",
-  "wabaName": "My Business WhatsApp",
-  "businessName": "My Company Inc."
+  "metaWhatsApp": {
+    "isConnected": true,
+    "wabaId": "123456789012345",
+    "wabaName": "My Business WhatsApp",
+    "businessId": "987654321098765",
+    "businessName": "My Company Inc.",
+    "connectedAt": "2026-10-01T08:45:00.000Z",
+    "connectedBy": "674e29976b6acbac106d2651"
+  }
+}
+```
+
+```json Not connected
+{
+  "metaWhatsApp": {
+    "isConnected": false,
+    "wabaId": null,
+    "wabaName": null,
+    "businessId": null,
+    "businessName": null,
+    "connectedAt": null,
+    "connectedBy": null
+  }
 }
 ```
 </ResponseExample>

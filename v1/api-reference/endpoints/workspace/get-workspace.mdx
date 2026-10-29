@@ -1,7 +1,7 @@
 ---
 title: "List User Workspaces"
 api: "GET /v1/api/workspaces"
-description: "Retrieve all workspaces associated with the authenticated user. If the user does not exist, a new user and default workspace may be automatically created."
+description: "Retrieve all workspaces the authenticated user owns or is a team member of."
 ---
 
 ### Headers
@@ -12,20 +12,16 @@ description: "Retrieve all workspaces associated with the authenticated user. If
 
 ### Description
 
-This endpoint returns a list of workspaces where the authenticated user is either:
-- The **owner** of the workspace,
+This endpoint returns every workspace where the authenticated user is:
+- The **owner**,
 - An **internal team member**, or
 - An **external team member**.
 
-If the user is signing in for the first time, the system will:
-1. Check for any pending invitations and join the user to an existing workspace if one exists.
-2. If no invitation exists, create a default workspace for the user.
+Owned and internal-member workspaces come first, followed by external ones. There is no other sorting.
 
-The response includes both direct workspaces and external workspaces, sorted in the following order:
-1. Owned workspaces,
-2. Team memberships,
-3. Guest workspaces.
+Before listing, any pending invitation for your email is accepted automatically. If you're a brand-new user with no workspaces and no invitation, a default workspace is created for you. No user is ever created by this endpoint: an unknown user gets `404 {"error": "User not found"}`.
 
+Each workspace object carries many more fields than listed below (billing, plan, white-label and feature settings).
 
 ### Response Fields
 

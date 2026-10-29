@@ -4,6 +4,10 @@ api: "POST /v1/api/agents/{agentId}/release/{phoneNumberId}"
 description: "Unassign a phone number from an agent's call flow. This removes the assignment and automatically cleans up associated SIP trunking."
 ---
 
+The number stays in your workspace, with no agent or call flow, until you [assign it](/v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber) again. To give the number up entirely, use [Release Phone Number](/v1/api-reference/endpoints/phone-numbers/release).
+
+Requires the `agent:edit` permission.
+
 ### Path Parameters
 
 <ParamField path="agentId" type="string" required>
@@ -11,7 +15,7 @@ description: "Unassign a phone number from an agent's call flow. This removes th
 </ParamField>
 
 <ParamField path="phoneNumberId" type="string" required>
-  The ID of the phone number to release from the agent.
+  The `_id` of the phone number to unassign. It must currently be assigned to this agent.
 </ParamField>
 
 ### Headers
@@ -22,25 +26,42 @@ description: "Unassign a phone number from an agent's call flow. This removes th
 
 ### Request Body
 
-<ParamField body="confirmation" type="boolean" optional>
-  Are you sure you want to unbind this?
-</ParamField>
+No request body is read. If you send `Content-Type: application/json`, send `{}` as the body.
 
-### Response Fields
+### Response
 
-<ResponseField name="agent" type="object">
-  The updated agent object after the phone number has been released.
-</ResponseField>
+`200` with the updated agent, in the same shape as [Get Call Agent](/v1/api-reference/endpoints/agents/call/get) except that `phoneNumberIds` holds IDs, not objects.
 
-### Request Body
+### Errors
 
-No request body is required for this endpoint.
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `403` | `{"error": "Insufficient permissions"}` | Your role doesn't have `agent:edit` |
+| `500` | `{"error": "Agent not found or does not belong to the workspace"}` | No agent with this ID in the workspace. This is currently a `500`, not a `404` |
+| `500` | `{"error": "Phone number not associated with this agent"}` | The number isn't assigned to this agent |
+| `500` | `{"error": "..."}` | Anything else |
 
 <ResponseExample>
 ```json
 {
-  "status": "success",
-  "message": "Call flow released from phone number successfully"
+  "_id": "6a1f0c2b9d4e8a0012ab34cd",
+  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "name": "Customer Support Agent",
+  "ttsModel": {
+    "provider": "rime",
+    "voiceId": "mistv3_wildflower",
+    "name": "Wildflower",
+    "language": "en",
+    "rimeModel": "mistv3"
+  },
+  "llmModel": "platform-llm",
+  "type": "voice",
+  "status": "ready",
+  "phoneNumberIds": [],
+  "activeSessions": [],
+  "createdAt": "2026-10-29T10:00:00.000Z",
+  "updatedAt": "2026-10-29T12:00:00.000Z"
 }
 ```
 </ResponseExample>

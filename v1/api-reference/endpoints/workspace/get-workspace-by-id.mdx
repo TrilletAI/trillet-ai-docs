@@ -6,7 +6,7 @@ description: "Retrieve detailed information about a specific workspace where the
 
 ### Headers
 <ParamField header="x-workspace-id" type="string" required>
-The unique identifier of the workspace being accessed (should match the path parameter `workspaceId`).
+A workspace where your role has `workspace:view`. Permissions are checked against this header, so it's normally the same workspace as `workspaceId`.
 </ParamField>
 
 ### Path Parameters
@@ -21,7 +21,7 @@ This endpoint returns the details of a specific workspace if the authenticated u
 - The **owner** of the workspace, or
 - A **team member** of the workspace (internal or external).
 
-If the workspace is not found or the user lacks permission, a `404 Not Found` is returned.
+If the workspace is not found or you aren't its owner or a member, `404 {"error": "Workspace not found"}` is returned. The response object carries many more fields than listed below (billing, plan, white-label and feature settings).
 
 ### Response Fields
 

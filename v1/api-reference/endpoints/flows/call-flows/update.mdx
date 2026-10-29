@@ -26,19 +26,15 @@ Updated description for the call flow (e.g., "Updated description for inbound ca
 </ParamField>
 
 <ParamField body="direction" type="string" enum={['outbound', 'bidirectional']}>
-The direction of the call flow. 'outbound' or 'bidirectional'
+The direction of the call flow: `outbound`, or `bidirectional` (answers inbound calls and can place outbound ones). Any value other than `outbound` is saved as `bidirectional`.
 </ParamField>
 
 <ParamField body="isActive" type="boolean">
 Whether the call flow is currently active.
 </ParamField>
 
-<ParamField body="isGlobal" type="boolean">
-Whether this is a global call flow (requires special permissions).
-</ParamField>
-
 <ParamField body="promptType" type="string">
-The type of prompt used in the call flow "simple".
+How the flow is authored. Use `simple`: one prompt drives the whole call.
 </ParamField>
 
 <ParamField body="prompt" type="string">
@@ -165,43 +161,16 @@ Configuration settings for the call flow.
     </Expandable>
   </ParamField>
   <ParamField body="customerLocation" type="string">
-    Default customer location (e.g., "new york").
+    Default customer location. Empty by default.
   </ParamField>
   <ParamField body="utilizePriorCallsContext" type="boolean">
     Whether to use context from previous calls.
   </ParamField>
 
-  <ParamField body="responseSettings" type="object">
-    <Expandable title="responseSettings">
-      <ParamField body="delay" type="number">
-        Delay (in seconds) before responding.
-      </ParamField>
-      <ParamField body="workingHours" type="object">
-        <Expandable title="workingHours">
-          <ParamField body="enabled" type="boolean">
-            Whether working hours logic is enabled.
-          </ParamField>
-          <ParamField body="start" type="string">
-            Start time for working hours, e.g., "08:00".
-          </ParamField>
-          <ParamField body="end" type="string">
-            End time for working hours, e.g., "20:00".
-          </ParamField>
-          <ParamField body="timezone" type="string">
-            Timezone for working hours, e.g., "America/New_York".
-          </ParamField>
-          <ParamField body="outOfHoursMessage" type="string">
-            Automated reply for out-of-hours calls.
-          </ParamField>
-        </Expandable>
-      </ParamField>
-    </Expandable>
-  </ParamField>
-
   <ParamField body="security" type="object">
     <Expandable title="security">
       <ParamField body="hipaaCompliance" type="boolean">
-        Whether HIPAA compliance is required. When enabled, automatically disables call recording.
+        Whether HIPAA compliance is required. When enabled, automatically disables call recording. On update this field is saved as sent. (On [Create Call Flow](/v1/api-reference/endpoints/flows/call-flows/create) it is set from `securityOptOut` instead.)
       </ParamField>
       <ParamField body="publicAccess" type="boolean">
         Whether public access is allowed.
@@ -210,24 +179,33 @@ Configuration settings for the call flow.
   </ParamField>
 
   <ParamField body="callSetting" type="object">
+    Call length and silence handling (Settings > Call Handling in the editor). Only the fields this request **changes** are checked; values already stored on the flow are not re-checked, so sending a Get Call Flow response back unchanged keeps working. If a changed value is not allowed, nothing is saved and the response is `400` with `{ "message", "errors" }`: `errors` has one readable sentence per problem and `message` joins them.
     <Expandable title="callSetting">
-      <ParamField body="maxCallDuration" type="number">
-        Maximum call duration (in seconds).
-      </ParamField>
       <ParamField body="endCallOnSilence" type="number">
-        Timeout (in seconds) for ending a call if no audio is detected.
+        "Check in after": how many seconds of caller silence before the agent checks in ("Are you still there?"). It does not end the call by itself. A whole number from 5 to 30. Default `10`.
       </ParamField>
-      <ParamField body="trilletVoiceGuard" type="boolean">
-        Whether to enable Trillet voice guard protection.
+      <ParamField body="silenceReminderRetries" type="number">
+        "Check-in attempts": how many times the agent checks in before ending a silent call. One of `0` (never), `1`, `2` or `3`. Default `1`.
+      </ParamField>
+      <ParamField body="endCallAfterReminder" type="number">
+        "Hang up after the last check-in": seconds the agent waits after the last check-in before ending the call. One of `10`, `20` or `30`. Default `10`.
+      </ParamField>
+      <ParamField body="maxCallDuration" type="number">
+        "Maximum call length": the longest a call can last, in seconds. A whole number from 10 to 1800. Default `1800`.
+      </ParamField>
+      <ParamField body="postCallAnalysisModel" type="string">
+        The model used for post-call analysis. One of `gemini-2.5-flash` (default), `gpt-4o`, `gpt-4o-mini` or `gpt-4.1`.
       </ParamField>
       <ParamField body="reminderMessages" type="array">
-        Array of reminder messages to be played during calls.
+        Messages the agent can use when it checks in on a silent caller.
       </ParamField>
     </Expandable>
+
+    The silence sequence must fit inside the call: `endCallOnSilence × max(silenceReminderRetries, 1) + endCallAfterReminder` must be no more than `maxCallDuration`. Numbers must be sent as numbers, not strings.
   </ParamField>
 
   <ParamField body="knowledgeBaseFiles" type="array">
-    Array of knowledge base files associated with the call flow.
+    Files uploaded with [Upload Call Flow Knowledge File](/v1/api-reference/endpoints/flows/call-flows/knowledgebase-upload). This array replaces the stored list, so include the files the flow already has.
     <Expandable title="knowledgeBaseFiles">
       <ParamField body="filename" type="string">
         Name of the knowledge base file.
@@ -253,7 +231,7 @@ Configuration settings for the call flow.
 </ParamField>
 
 <ParamField body="webhooks" type="array">
-List of webhooks to be added to the call flow. A new webhook will be created for each entry in the array, regardless of the name or if it already exists.
+The flow's in-call webhooks (In-Call APIs). **This array replaces the flow's whole webhook list**: any webhook you leave out is deleted, and `webhooks: []` removes them all. To add one webhook, get the flow with [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get), append the new entry to its `webhooks`, and send the full array back. Keep each existing entry's `_id` so it stays the same webhook.
 <Expandable title="webhooks">
   <ParamField body="name" type="string" required>
     The name of the webhook (e.g., "Booking").
@@ -264,11 +242,19 @@ List of webhooks to be added to the call flow. A new webhook will be created for
   <ParamField body="url" type="string" required>
     The URL to which the webhook will send data (e.g., "https://example.com/webhook/agent").
   </ParamField>
-  <ParamField body="method" type="string" enum={['GET', 'POST', 'PUT', 'DELETE']} default="POST">
+  <ParamField body="method" type="string" enum={['GET', 'POST', 'PUT', 'DELETE', 'PATCH']} default="POST">
     HTTP method for the webhook request.
   </ParamField>
-  <ParamField body="headers" type="object">
-    Headers to be included in the webhook request.
+  <ParamField body="headers" type="array">
+    Headers to send, as an array of `{ "name": "...", "value": "..." }` objects. Both fields are required. An object of key-value pairs (`{ "Authorization": "..." }`) is not accepted and the update fails with `500`.
+    <Expandable title="headers">
+      <ParamField body="name" type="string" required>
+        Header name, for example `Authorization`.
+      </ParamField>
+      <ParamField body="value" type="string" required>
+        Header value.
+      </ParamField>
+    </Expandable>
   </ParamField>
   <ParamField body="body" type="string">
     The webhook request body. Can include variable placeholders.
@@ -285,16 +271,16 @@ List of webhooks to be added to the call flow. A new webhook will be created for
     </Expandable>
   </ParamField>
   <ParamField body="responseVariables" type="array">
-    Variables to extract from the webhook response.
+    Values to pick out of the webhook response.
     <Expandable title="responseVariables">
-      <ParamField body="name" type="string">
-        Name of the response variable.
+      <ParamField body="key" type="string">
+        The name the value is saved under.
       </ParamField>
       <ParamField body="path" type="string">
-        JSON path to extract the value from the response.
+        Path to the value in the JSON response, for example `data.0.status`.
       </ParamField>
-      <ParamField body="description" type="string">
-        Description of the response variable.
+      <ParamField body="value" type="string">
+        A sample value captured when the variable was mapped.
       </ParamField>
     </Expandable>
   </ParamField>
@@ -310,8 +296,24 @@ List of webhooks to be added to the call flow. A new webhook will be created for
 </Expandable>
 </ParamField>
 
+<ParamField body="unset" type="array">
+Settings to remove, as dot paths that start with `settings.`, for example `["settings.callSetting.reminderMessages"]`. A merge cannot remove a key, so use this instead. A path in another form returns `400`.
+</ParamField>
+
+<ParamField body="expectedUpdatedAt" type="string">
+Optional concurrency check. Send the `updatedAt` you last read. If the flow has changed since then, the update is refused with `409` and nothing is saved.
+</ParamField>
+
+<ParamField body="forceUpdate" type="boolean">
+With `expectedUpdatedAt`, `true` saves even if the flow has changed since.
+</ParamField>
+
 <Note>
-These `endCallOnSilence` and `maxCallDuration` settings are recommended to be sent for optimal API performance, though they are not strictly required.
+`settings` is merged into the stored settings: objects merge key by key, and a key you leave out keeps its value. **Arrays are replaced, not merged**: this applies to the top-level `webhooks` and `dynamicVariableCollections`, and to arrays inside `settings` such as `transfers`, `knowledgeBases`, `knowledgeBaseFiles` and `callSetting.reminderMessages`. `null` values are ignored.
+</Note>
+
+<Note>
+If the flow has unpublished changes from the call flow editor, [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get) returns the draft merged over the live flow. This endpoint writes to the live flow.
 </Note>
 
 <Note>
@@ -320,30 +322,34 @@ A greeting set here is used from the flow's next call; nothing has to be publish
 Dashboard test calls also use the draft's greeting until the draft is published or discarded. Demo links marked Draft always use their draft's greeting. Calls received on the flow's phone number, calls the flow places and other Web SDK calls use the greeting set here.
 </Note>
 
+### Errors
+
+When a request is refused, nothing is changed.
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
+| `400` | `{"message", "errors"}` | A changed `settings.callSetting` value is outside the allowed values above, or the silence sequence is longer than `maxCallDuration` |
+| `400` | `{"message", "code", "field", "errors"}` | Greeting input is not valid (see `welcomeMessageConfig`) |
+| `400` | `{"message": "..."}` | Other settings rules: invalid transfers, custom tools, booking link, Google Calendar settings or speech-recognition keywords, or a knowledge base from another workspace |
+| `409` | `{"code": "FLOW_ARCHIVED", "message": "This flow is archived and is read-only. Restore it to make changes."}` | The flow is archived. Restore it in the dashboard first |
+| `409` | `{"message": "Flow has been updated by another user"}` | You sent `expectedUpdatedAt` and the flow changed since then |
+| `500` | `{"message": "Error updating flow"}` | No flow with that ID in this workspace, a malformed ID, or a body the flow cannot store (for example webhook `headers` sent as an object). This endpoint does not currently return `404` for an unknown flow |
+
 ### Response Fields
 
+The updated call flow, with one extra field, `numberSyncFailures`.
+
 <ResponseField name="_id" type="string">
-  The unique identifier for the newly created call flow.
+  The unique identifier of the call flow.
 </ResponseField>
 
 <ResponseField name="workspaceId" type="string">
-  The identifier of the workspace where the call flow has been created.
+  The identifier of the workspace the call flow belongs to.
 </ResponseField>
 
 <ResponseField name="folderId" type="string">
-  The identifier of the folder where the call flow is organized.
-</ResponseField>
-
-<ResponseField name="isGlobal" type="boolean">
-  Whether this is a global call flow.
-</ResponseField>
-
-<ResponseField name="isPreConfigured" type="boolean">
-  Whether this call flow is pre-configured.
-</ResponseField>
-
-<ResponseField name="preConfiguredWorkspaceId" type="string">
-  Workspace ID for pre-configured flows.
+  The folder the call flow is in, or `null`.
 </ResponseField>
 
 <ResponseField name="name" type="string">
@@ -351,7 +357,7 @@ Dashboard test calls also use the draft's greeting until the draft is published 
 </ResponseField>
 
 <ResponseField name="direction" type="string">
-  The direction configuration of the call flow; can be "inbound", "outbound", or "bidirectional".
+  `outbound` or `bidirectional`.
 </ResponseField>
 
 <ResponseField name="description" type="string">
@@ -363,7 +369,7 @@ Dashboard test calls also use the draft's greeting until the draft is published 
 </ResponseField>
 
 <ResponseField name="promptType" type="string">
-  Indicates whether the call flow uses "simple" or "flow" based configuration.
+  `simple`, `nodes` (a node-based flow) or `flow` (legacy).
 </ResponseField>
 
 <ResponseField name="flowData" type="object">
@@ -382,10 +388,6 @@ Dashboard test calls also use the draft's greeting until the draft is published 
 
 <ResponseField name="currentPromptId" type="string">
   ID of the current active prompt version.
-</ResponseField>
-
-<ResponseField name="gemini_prompt" type="string">
-  Sanitized version of the prompt for Gemini processing.
 </ResponseField>
 
 <ResponseField name="startNodeId" type="string">
@@ -417,7 +419,7 @@ Dashboard test calls also use the draft's greeting until the draft is published 
 </ResponseField>
 
 <ResponseField name="settings" type="object">
-  Configuration settings for various aspects of the call flow, including welcome messages, webhooks, knowledge bases, call settings, and security.
+  The flow's full settings, with the dashboard defaults filled in for anything not sent (about 40 keys; the example shows only some of them).
   <ResponseField name="welcomeMessageConfig" type="object">
     The greeting for each direction, with `selected`, `customMessage`, `aiGreetingPrompt`, `userFirstFallbackDelaySeconds` and `userFirstFallbackMessage`. Some flows can be missing a direction, a field, or the whole object; a missing `selected` means `aiFirst`.
     <ResponseField name="Inbound" type="object">
@@ -430,7 +432,7 @@ Dashboard test calls also use the draft's greeting until the draft is published 
   <ResponseField name="security" type="object">
     Security settings with processed values.
     <ResponseField name="hipaaCompliance" type="boolean">
-      HIPAA compliance status (processed from securityOptOut).
+      HIPAA compliance status.
     </ResponseField>
     <ResponseField name="publicAccess" type="boolean">
       Public access configuration.
@@ -444,6 +446,10 @@ Dashboard test calls also use the draft's greeting until the draft is published 
 
 <ResponseField name="updatedAt" type="string">
   Timestamp when the call flow was last updated.
+</ResponseField>
+
+<ResponseField name="numberSyncFailures" type="array">
+  Phone numbers bound to the flow whose telephony settings could not be updated after a `direction` change, as `{ phoneNumberId, phoneNumber }`. Empty when everything synced.
 </ResponseField>
 
 
@@ -489,11 +495,8 @@ Dashboard test calls also use the draft's greeting until the draft is published 
   "_id": "676b8e123456789012345678",
   "workspaceId": "6764d172953253138a3a70f4",
   "folderId": null,
-  "isGlobal": false,
-  "isPreConfigured": false,
-  "preConfiguredWorkspaceId": null,
   "name": "Customer Support Flow",
-  "direction": "inbound",
+  "direction": "bidirectional",
   "description": "Handles inbound support calls",
   "agent": "676b8e123456789012345679",
   "promptType": "simple",
@@ -523,7 +526,6 @@ Dashboard test calls also use the draft's greeting until the draft is published 
       "updatedAt": "2025-01-15T15:00:00.000Z"
     }
   ],
-  "gemini_prompt": "Keep the conversation short and friendly.",
   "startNodeId": null,
   "isActive": true,
   "agentWebhookUrl": "",
@@ -554,12 +556,16 @@ Dashboard test calls also use the draft's greeting until the draft is published 
       "agent": "",
       "inbound": ""
     },
-    "customerLocation": "new york",
+    "customerLocation": "",
     "transfers": [],
     "knowledgeBases": [],
     "utilizePriorCallsContext": false,
     "callSetting": {
-      "trilletVoiceGuard": true,
+      "endCallOnSilence": 10,
+      "silenceReminderRetries": 1,
+      "endCallAfterReminder": 10,
+      "maxCallDuration": 1800,
+      "postCallAnalysisModel": "gemini-2.5-flash",
       "reminderMessages": []
     },
     "security": {
@@ -568,7 +574,17 @@ Dashboard test calls also use the draft's greeting until the draft is published 
     }
   },
   "createdAt": "2025-01-15T15:00:00.000Z",
-  "updatedAt": "2025-01-15T15:00:00.000Z"
+  "updatedAt": "2025-01-15T15:00:00.000Z",
+  "numberSyncFailures": []
+}
+```
+
+```json 400 Call setting error
+{
+  "message": "\"Check in after\" must be between 5 and 30 seconds.",
+  "errors": [
+    "\"Check in after\" must be between 5 and 30 seconds."
+  ]
 }
 ```
 </ResponseExample>

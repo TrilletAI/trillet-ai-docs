@@ -22,7 +22,7 @@ description: "Create a new call flow with full settings."
 </ParamField>
 
 <ParamField body="direction" type="string" required>
-  Direction of the flow. Possible values: "outbound", "bidirectional". Any other value, including "inbound", is saved as "bidirectional".
+  Direction of the flow: `outbound`, or `bidirectional` (answers inbound calls and can place outbound ones). `inbound` is also accepted and saved as `bidirectional`. Any other value returns `422` and the flow is not created.
 </ParamField>
 
 <ParamField body="description" type="string">
@@ -42,23 +42,11 @@ description: "Create a new call flow with full settings."
 </ParamField>
 
 <ParamField body="promptType" default="simple" type="string" required>
-  Only "simple" type of prompt configuration is allowed now.
+  How the flow is authored. Send `simple`: one prompt drives the whole call.
 </ParamField>
 
 <ParamField body="folderId" type="string">
   ID of the folder to organize this call flow.
-</ParamField>
-
-<ParamField body="isGlobal" type="boolean">
-  Whether this is a global call flow. Only specific workspaces can create global flows.
-</ParamField>
-
-<ParamField body="isPreConfigured" type="boolean">
-  Whether this call flow is pre-configured. Defaults to false.
-</ParamField>
-
-<ParamField body="preConfiguredWorkspaceId" type="string">
-  Workspace ID for pre-configured flows.
 </ParamField>
 
 <ParamField body="welcomeMessage" type="string">
@@ -147,10 +135,10 @@ description: "Create a new call flow with full settings."
       Webhook URL endpoint.
     </ParamField>
     <ParamField body="method" type="string">
-      HTTP method. Possible values: "GET", "POST", "PUT", "DELETE". Defaults to "POST".
+      HTTP method: `GET`, `POST`, `PUT`, `DELETE` or `PATCH`. Defaults to `POST`.
     </ParamField>
-    <ParamField body="headers" type="object">
-      Key-value pairs for HTTP headers.
+    <ParamField body="headers" type="array">
+      Headers to send, as an array of `{ "name": "...", "value": "..." }` objects (both required), for example `[{ "name": "Authorization", "value": "Bearer abc" }]`. An object of key-value pairs is not accepted: the flow is not created and the response is `422`.
     </ParamField>
     <ParamField body="body" type="string">
       Request body content.
@@ -168,15 +156,15 @@ description: "Create a new call flow with full settings."
       </ParamField>
     </ParamField>
     <ParamField body="responseVariables" type="array">
-      Variables extracted from webhook responses.
-      <ParamField body="name" type="string">
-        Response variable name.
+      Values to pick out of the webhook response.
+      <ParamField body="key" type="string">
+        The name the value is saved under.
       </ParamField>
       <ParamField body="path" type="string">
-        JSON path to extract the variable value.
+        Path to the value in the JSON response, for example `data.0.status`.
       </ParamField>
-      <ParamField body="description" type="string">
-        Response variable description.
+      <ParamField body="value" type="string">
+        A sample value captured when the variable was mapped.
       </ParamField>
     </ParamField>
     <ParamField body="isTesting" type="boolean">
@@ -275,7 +263,7 @@ description: "Create a new call flow with full settings."
       </ParamField>
     </ParamField>
     <ParamField body="customerLocation" type="string">
-      Customer location for the call flow. Defaults to "new york".
+      Customer location for the call flow. Defaults to `""` (empty).
     </ParamField>
     <ParamField body="transfers" type="array">
       Array of transfer configurations.
@@ -287,18 +275,37 @@ description: "Create a new call flow with full settings."
       Whether to utilize context from prior calls. Defaults to false.
     </ParamField>
     <ParamField body="callSetting" type="object">
-      Call-specific settings.
-      <ParamField body="trilletVoiceGuard" type="boolean">
-        Enable Trillet voice guard. Defaults to true.
+      Call length and silence handling.
+
+      <Warning>
+        Create does not check these values; [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) does. A flow created with a value outside the limits below is stored as sent, and a later update that changes any of these values is refused until they are all valid. Stay within the limits on create too.
+      </Warning>
+
+      <ParamField body="endCallOnSilence" type="number">
+        "Check in after": seconds of caller silence before the agent checks in. It does not end the call by itself. A whole number from 5 to 30. Defaults to `10`.
+      </ParamField>
+      <ParamField body="silenceReminderRetries" type="number">
+        How many times the agent checks in before ending a silent call: `0`, `1`, `2` or `3`. Defaults to `1`.
+      </ParamField>
+      <ParamField body="endCallAfterReminder" type="number">
+        Seconds the agent waits after the last check-in before ending the call: `10`, `20` or `30`. Defaults to `10`.
+      </ParamField>
+      <ParamField body="maxCallDuration" type="number">
+        The longest a call can last, in seconds. A whole number from 10 to 1800. Defaults to `1800`.
+      </ParamField>
+      <ParamField body="postCallAnalysisModel" type="string">
+        `gemini-2.5-flash` (default), `gpt-4o`, `gpt-4o-mini` or `gpt-4.1`.
       </ParamField>
       <ParamField body="reminderMessages" type="array">
-        Array of reminder message strings.
+        Messages the agent can use when it checks in on a silent caller.
       </ParamField>
+
+      `endCallOnSilence × max(silenceReminderRetries, 1) + endCallAfterReminder` must be no more than `maxCallDuration`.
     </ParamField>
     <ParamField body="security" type="object">
       Security configuration settings.
       <ParamField body="securityOptOut" type="boolean">
-        Whether to opt out of security features (affects HIPAA compliance).
+        Despite its name, `true` turns HIPAA mode **on**: the flow is created with `settings.security.hipaaCompliance: true`. Leave it out or send `false` for HIPAA mode off. On create, a `hipaaCompliance` you send is ignored and replaced by this value. To change HIPAA mode later, send `settings.security.hipaaCompliance` to [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update).
       </ParamField>
       <ParamField body="publicAccess" type="boolean">
         Whether to allow public access to the call flow.
@@ -307,7 +314,23 @@ description: "Create a new call flow with full settings."
   </Expandable>
 </ParamField>
 
+### Errors
+
+When a request is refused, the flow is not created.
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
+| `400` | `{"message": "Missing required field(s): ..."}` | `name`, `direction` or `promptType` is missing |
+| `400` | `{"message", "code", ...}` | Greeting input is not valid (see `welcomeMessageConfig`), or an `agent` error listed under `agent` |
+| `403` | `{"message": "workspaceId in the request body does not match x-workspace-id."}` | A body `workspaceId` names a workspace other than the header one (or one of its client workspaces you hold a role in) |
+| `409` | `{"message", "code": "AGENT_IN_USE"}` | Another call flow already uses that agent |
+| `422` | `{"message": "..."}` | The flow failed validation, for example an unknown `direction` or webhook `headers` sent as an object |
+| `500` | `{"message": "Error creating flow"}` | Anything else |
+
 ### Response Fields
+
+`201 Created` with the new call flow.
 
 <ResponseField name="_id" type="string">
   The unique identifier for the newly created call flow.
@@ -319,18 +342,6 @@ description: "Create a new call flow with full settings."
 
 <ResponseField name="folderId" type="string">
   The identifier of the folder where the call flow is organized.
-</ResponseField>
-
-<ResponseField name="isGlobal" type="boolean">
-  Whether this is a global call flow.
-</ResponseField>
-
-<ResponseField name="isPreConfigured" type="boolean">
-  Whether this call flow is pre-configured.
-</ResponseField>
-
-<ResponseField name="preConfiguredWorkspaceId" type="string">
-  Workspace ID for pre-configured flows.
 </ResponseField>
 
 <ResponseField name="name" type="string">
@@ -350,7 +361,7 @@ description: "Create a new call flow with full settings."
 </ResponseField>
 
 <ResponseField name="promptType" default="simple" type="string">
-  Only "simple" prompt types allowed now.
+  How the flow is authored, normally `simple`.
 </ResponseField>
 
 <ResponseField name="flowData" type="object">
@@ -387,10 +398,6 @@ description: "Create a new call flow with full settings."
   </ResponseField>
 </ResponseField>
 
-<ResponseField name="gemini_prompt" type="string">
-  Sanitized version of the prompt for Gemini processing.
-</ResponseField>
-
 <ResponseField name="isActive" type="boolean">
   Indicates whether the call flow is currently active or inactive.
 </ResponseField>
@@ -416,7 +423,7 @@ description: "Create a new call flow with full settings."
 </ResponseField>
 
 <ResponseField name="settings" type="object">
-  Configuration settings for various aspects of the call flow, including welcome messages, webhooks, knowledge bases, call settings, and security.
+  The flow's full settings, with the dashboard defaults filled in for anything not sent (about 40 keys; the example shows only some of them).
   <ResponseField name="welcomeMessageConfig" type="object">
     The greeting for each direction. Both directions have all five fields, `selected`, `customMessage`, `aiGreetingPrompt`, `userFirstFallbackDelaySeconds` and `userFirstFallbackMessage`, with the default for any field you did not send.
     <ResponseField name="Inbound" type="object">
@@ -429,7 +436,7 @@ description: "Create a new call flow with full settings."
   <ResponseField name="security" type="object">
     Security settings with processed values.
     <ResponseField name="hipaaCompliance" type="boolean">
-      HIPAA compliance status (processed from securityOptOut).
+      HIPAA compliance status, set from `securityOptOut` on create.
     </ResponseField>
     <ResponseField name="publicAccess" type="boolean">
       Public access configuration.
@@ -484,9 +491,6 @@ description: "Create a new call flow with full settings."
   "_id": "676b8e123456789012345678",
   "workspaceId": "6764d172953253138a3a70f4",
   "folderId": null,
-  "isGlobal": false,
-  "isPreConfigured": false,
-  "preConfiguredWorkspaceId": null,
   "name": "Customer Support Flow",
   "direction": "bidirectional",
   "description": "Handles inbound support calls",
@@ -518,7 +522,6 @@ description: "Create a new call flow with full settings."
       "updatedAt": "2025-01-15T15:00:00.000Z"
     }
   ],
-  "gemini_prompt": "Keep the conversation short and friendly.",
   "startNodeId": null,
   "isActive": true,
   "agentWebhookUrl": "",
@@ -549,12 +552,16 @@ description: "Create a new call flow with full settings."
       "agent": "",
       "inbound": ""
     },
-    "customerLocation": "new york",
+    "customerLocation": "",
     "transfers": [],
     "knowledgeBases": [],
     "utilizePriorCallsContext": false,
     "callSetting": {
-      "trilletVoiceGuard": true,
+      "endCallOnSilence": 10,
+      "silenceReminderRetries": 1,
+      "endCallAfterReminder": 10,
+      "maxCallDuration": 1800,
+      "postCallAnalysisModel": "gemini-2.5-flash",
       "reminderMessages": []
     },
     "security": {

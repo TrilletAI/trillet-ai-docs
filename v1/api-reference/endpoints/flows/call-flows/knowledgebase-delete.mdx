@@ -1,8 +1,14 @@
 ---
 title: "Delete Call Flow Knowledge File"
 api: "DELETE /v1/api/call-flows/knowledge-base/{fileKey}"
-description: "Delete a knowledge file uploaded for call flows."
+description: "Delete a stored call flow knowledge file by its storage key."
 ---
+
+<Warning>
+  Passing the `key` returned by [Upload Call Flow Knowledge File](/v1/api-reference/endpoints/flows/call-flows/knowledgebase-upload) does **not** delete the file. The file is stored under a different key than the one the upload returns, so the request answers `200` with `"File deleted successfully"` but the stored file is left in place. This is a known issue. Until it is fixed, don't rely on this endpoint to remove uploaded files; contact Trillet support if a file must be deleted.
+
+  The endpoint also does not touch any call flow. To stop a flow using a file, remove it from the flow's `settings.knowledgeBaseFiles` with [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update).
+</Warning>
 
 ### Headers
 
@@ -13,6 +19,16 @@ description: "Delete a knowledge file uploaded for call flows."
 ### Path Parameters
 
 <ParamField path="fileKey" type="string" required>
-  File key returned when the knowledge file was uploaded. The path does not
-  include a call flow id.
+  The storage key of the file. Keys contain `/`, so URL-encode the whole key (`/` becomes `%2F`). Only keys under your own workspace are accepted. The path does not include a call flow ID.
 </ParamField>
+
+### Response Fields
+
+`200 OK` with `{ "success": true, "message": "File deleted successfully", "fileKey": "...", "result": true }`. `success` only means that no file is stored under the key you sent after the call; see the warning above.
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `404` | `{"message": "File not found"}` | The key does not belong to this workspace |
+| `500` | `{"message": "..."}` | The storage request failed |

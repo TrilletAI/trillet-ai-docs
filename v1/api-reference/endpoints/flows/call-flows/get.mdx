@@ -16,6 +16,15 @@ description: "Retrieve a specific call flow by its ID."
   The unique ID of the call flow.
 </ParamField>
 
+If the flow has unpublished changes from the call flow editor (an active draft), the response is that draft merged over the live flow, for every setting, not only the greeting. Calls received on the flow's number keep using the live version until the draft is published.
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
+| `500` | `{"message": "Error fetching flow"}` | No flow with that ID in this workspace, or a malformed ID. This endpoint does not currently return `404` |
+
 ### Response Fields
 
 <ResponseField name="_id" type="string">
@@ -31,19 +40,27 @@ description: "Retrieve a specific call flow by its ID."
 </ResponseField>
 
 <ResponseField name="direction" type="string">
-  Indicates the direction of the call flow, such as "inbound".
+  `outbound` or `bidirectional` (answers inbound calls and can place outbound ones).
 </ResponseField>
 
 <ResponseField name="description" type="string">
   A brief description of what the call flow is designed to handle.
 </ResponseField>
 
-<ResponseField name="agent" type="string">
-  The ID of the agent associated with this call flow.
+<ResponseField name="agent" type="object">
+  The agent the flow uses, as a full agent object (`_id`, `name`, `ttsModel`, `llmModel`, `sttProvider`, `phoneNumberIds` and so on). Use `agent._id` for the agent's ID. It is `null` if the flow has no agent.
+</ResponseField>
+
+<ResponseField name="folderId" type="object">
+  The folder the flow is in, as `{ _id, name, icon, color }`, or `null`.
+</ResponseField>
+
+<ResponseField name="archivedAt" type="string">
+  When the flow was archived, or `null`. An archived flow is read-only: [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) returns `409` until it is restored in the dashboard.
 </ResponseField>
 
 <ResponseField name="promptType" type="string">
-  The type of prompt used in the call flow, such as "simple".
+  `simple` (one prompt drives the call), `nodes` (a node-based flow) or `flow` (legacy).
 </ResponseField>
 
 <ResponseField name="flowData" type="object">
@@ -65,15 +82,9 @@ description: "Retrieve a specific call flow by its ID."
 </ResponseField>
 
 <ResponseField name="settings" type="object">
-  The configuration settings for the call flow, including details on knowledge bases, response settings, security measures, and call settings.
+  The configuration settings for the call flow, including knowledge bases, security and call settings. [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) describes each one.
   <ResponseField name="knowledgeBases" type="array">
     An array of references to knowledge bases included in the call flow.
-  </ResponseField>
-  <ResponseField name="responseSettings" type="object">
-    Settings related to response timing within the call flow.
-    <ResponseField name="delay" type="number">
-      The delay before a response is issued, measured in seconds.
-    </ResponseField>
   </ResponseField>
   <ResponseField name="security" type="object">
     Security settings relevant to the call flow.
@@ -82,12 +93,12 @@ description: "Retrieve a specific call flow by its ID."
     </ResponseField>
   </ResponseField>
   <ResponseField name="callSetting" type="object">
-    Call-related settings for managing the call duration and handling silence.
+    Call length and silence handling.
     <ResponseField name="maxCallDuration" type="number">
-      The maximum duration for the call, measured in seconds.
+      The longest a call can last, in seconds.
     </ResponseField>
     <ResponseField name="endCallOnSilence" type="number">
-      The duration of silence that triggers the end of the call, measured in seconds.
+      Seconds of caller silence before the agent checks in ("Check in after" in the editor). It does not end the call by itself; see `silenceReminderRetries` and `endCallAfterReminder` on [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update).
     </ResponseField>
   </ResponseField>
   <ResponseField name="welcomeMessageConfig" type="object">
@@ -117,12 +128,18 @@ description: "Retrieve a specific call flow by its ID."
 
 ```json
 {
-  "_id": "exampleId",
-  "workspaceId": "workspacePlaceholder",
+  "_id": "676b8e123456789012345678",
+  "workspaceId": "6764d172953253138a3a70f4",
   "name": "Customer Support Flow",
-  "direction": "inbound",
+  "direction": "bidirectional",
   "description": "Handles inbound support calls",
-  "agent": "agentPlaceholder",
+  "agent": {
+    "_id": "676b8e123456789012345679",
+    "name": "Customer Support Flow",
+    "phoneNumberIds": []
+  },
+  "folderId": null,
+  "archivedAt": null,
   "promptType": "simple",
   "flowData": {
     "nodes": [],
@@ -132,9 +149,13 @@ description: "Retrieve a specific call flow by its ID."
   "isActive": true,
   "settings": {
     "knowledgeBases": [],
-    "responseSettings": { "delay": 0 },
     "security": { "hipaaCompliance": false },
-    "callSetting": { "maxCallDuration": 600, "endCallOnSilence": 10 },
+    "callSetting": {
+      "maxCallDuration": 600,
+      "endCallOnSilence": 10,
+      "silenceReminderRetries": 1,
+      "endCallAfterReminder": 10
+    },
     "welcomeMessageConfig": {
       "Inbound": {
         "aiGreetingPrompt": "",

@@ -1,124 +1,166 @@
 ---
 title: 'Get Conversation By ID'
 api: 'GET /v1/api/conversations/{conversationId}'
-description: 'Fetch the message history and details for a specific conversation.'
+description: 'Fetch the message history and details for one conversation.'
 ---
 
-### Headers  
+### Headers
 <ParamField header="x-workspace-id" type="string" required>
   Workspace identifier for the API.
 </ParamField>
 
 ### Path Parameters
 <ParamField path="conversationId" type="string" required>
-  The unique identifier of the conversation.
+  The conversation's `_id`.
 </ParamField>
 
-
-
-### Response Fields
+### Response
 
 <ResponseField name="_id" type="string">
-  The unique identifier for the conversation.
+  The conversation's unique identifier.
 </ResponseField>
 
-<ResponseField name="userId" type="string">
-  The unique identifier for the user associated with the conversation.
+<ResponseField name="workspaceId" type="string">
+  The workspace the conversation belongs to.
 </ResponseField>
 
 <ResponseField name="pathwayId" type="string">
-  The unique identifier for the flow associated with the conversation.
+  The message flow the conversation belongs to. Absent for an inbound SMS that arrived on a number with no message flow.
 </ResponseField>
 
 <ResponseField name="agentId" type="string">
-  The unique identifier for the agent handling the conversation.
+  The message flow agent handling the conversation. Absent in the same case as `pathwayId`.
+</ResponseField>
+
+<ResponseField name="sessionId" type="string">
+  Internal session identifier for the conversation.
+</ResponseField>
+
+<ResponseField name="sender" type="string">
+  The sender identifier for the conversation, when set.
 </ResponseField>
 
 <ResponseField name="customer" type="object">
-  Customer details associated with the conversation.
-  <ResponseField name="customer.name" type="string">
-    The name of the customer.
-  </ResponseField>
-  <ResponseField name="customer.email" type="string">
-    The email address of the customer.
-  </ResponseField>
-  <ResponseField name="customer.phone" type="string">
-    The phone number of the customer.
-  </ResponseField>
-</ResponseField>
-
-<ResponseField name="messages" type="array">
-  An array of messages exchanged in the conversation.
-  <Expandable title="Message Details">
-    <ResponseField name="direction" type="string">
-      The direction of the message (e.g., "outbound" or "inbound").
+  The customer in the conversation.
+  <Expandable title="properties">
+    <ResponseField name="name" type="string">
+      The customer's name (`"Unknown"` if never given).
     </ResponseField>
-    <ResponseField name="sent" type="boolean">
-      Indicates whether the message was sent successfully.
+    <ResponseField name="email" type="string">
+      The customer's email address (`"Unknown"` for SMS conversations).
     </ResponseField>
-    <ResponseField name="message" type="string">
-      The content of the message.
+    <ResponseField name="phone" type="string">
+      The customer's phone number (`"Unknown"` for email conversations).
     </ResponseField>
-    <ResponseField name="status" type="string">
-      The status of the message (e.g., "approved", "received").
+    <ResponseField name="receiverId" type="string">
+      Channel-specific receiver identifier, when set.
     </ResponseField>
-    <ResponseField name="_id" type="string">
-      The unique identifier for the message.
-    </ResponseField>
-    <ResponseField name="createdAt" type="string">
-      Timestamp when the message was created.
-    </ResponseField>
-    <ResponseField name="updatedAt" type="string">
-      Timestamp when the message was last updated.
+    <ResponseField name="senderId" type="string">
+      Channel-specific sender identifier, when set.
     </ResponseField>
   </Expandable>
 </ResponseField>
 
+<ResponseField name="messages" type="array">
+  The messages in the conversation, oldest first.
+  <Expandable title="Message properties">
+    <ResponseField name="_id" type="string">
+      The message's unique identifier.
+    </ResponseField>
+    <ResponseField name="direction" type="string">
+      `inbound`, `outbound` or `replied`.
+    </ResponseField>
+    <ResponseField name="sent" type="boolean">
+      Whether the message was sent.
+    </ResponseField>
+    <ResponseField name="subject" type="string">
+      Email subject (email conversations only).
+    </ResponseField>
+    <ResponseField name="message" type="string">
+      The message text.
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      `pending`, `auto-approved`, `approved`, `rejected`, `received` or `sent`.
+    </ResponseField>
+    <ResponseField name="additional_kwargs" type="object">
+      Extra data attached to the message. Usually `{}`.
+    </ResponseField>
+    <ResponseField name="createdAt" type="string">
+      When the message was created.
+    </ResponseField>
+    <ResponseField name="updatedAt" type="string">
+      When the message was last updated.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `open` or `completed`.
+</ResponseField>
+
+<ResponseField name="completedAt" type="string">
+  When the conversation was completed, if it has been.
+</ResponseField>
+
+<ResponseField name="lastActivity" type="string">
+  When the conversation last had activity, when tracked.
+</ResponseField>
+
 <ResponseField name="createdAt" type="string">
-  Timestamp when the conversation was created.
+  When the conversation was created.
 </ResponseField>
 
 <ResponseField name="updatedAt" type="string">
-  Timestamp when the conversation was last updated.
+  When the conversation was last updated.
 </ResponseField>
 
-### Response Example
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `500` | `{"error": "Conversation not found or wrong user/workspace"}` | No conversation with that ID, or it belongs to another workspace. A not-found conversation currently returns `500`, not `404` |
+| `500` | `{"error": "..."}` | `conversationId` isn't a valid ID, or another server error |
 
 <ResponseExample>
 ```json
 {
-  "_id": "112ec528bf7946a12ab0fs21",
-  "userId": "60d9e3c2f42e4d03800e01a5",
-  "pathwayId": "pw12345",
-  "agentId": "ag67890",
+  "_id": "675c8e368824aa5f130b94d6",
+  "workspaceId": "674a3edc2d89622daa9fcfd1",
+  "pathwayId": "674e75bbe1456b11a194f091",
+  "agentId": "674e7579e1456b11a194f08b",
+  "sessionId": "674e7579e1456b11a194f08b:+14155550123",
   "customer": {
-      "name": "Test Customer Name",
-      "email": "customer@example.com",
-      "phone": "+123456789"
-    },
+    "name": "Sam",
+    "email": "Unknown",
+    "phone": "+14155550123"
+  },
   "messages": [
-      {
-        "direction": "outbound",
-        "sent": true,
-        "message": "Thank you for your feedback!",
-        "status": "approved",
-        "_id": "675c8e368824aa5f130b94d3",
-        "createdAt": "2024-12-01T08:45:00Z",
-        "updatedAt": "2024-12-01T09:00:00Z"
-      },
     {
-        "direction": "inbound",
-        "sent": true,
-        "message": "No worries!",
-        "status": "received",
-        "_id": "675c8e368824aa5f130b94d3",
-        "createdAt": "2024-12-01T08:55:00Z",
-        "updatedAt": "2024-12-01T09:00:00Z"
-      }
+      "_id": "675c8e368824aa5f130b94d3",
+      "direction": "outbound",
+      "sent": true,
+      "message": "Hi Sam, your appointment is confirmed for tomorrow at 3 PM.",
+      "status": "auto-approved",
+      "additional_kwargs": {},
+      "createdAt": "2026-10-01T08:45:00.000Z",
+      "updatedAt": "2026-10-01T08:45:00.000Z"
+    },
+    {
+      "_id": "675c8e9a8824aa5f130b94e1",
+      "direction": "inbound",
+      "sent": true,
+      "message": "Thanks, see you then!",
+      "status": "received",
+      "additional_kwargs": {},
+      "createdAt": "2026-10-01T08:55:00.000Z",
+      "updatedAt": "2026-10-01T08:55:00.000Z"
+    }
   ],
-  "createdAt": "2024-12-01T08:45:00Z",
-  "updatedAt": "2024-12-03T12:30:00Z"
+  "status": "open",
+  "createdAt": "2026-10-01T08:45:00.000Z",
+  "updatedAt": "2026-10-01T08:55:00.000Z"
 }
 ```
-
 </ResponseExample>

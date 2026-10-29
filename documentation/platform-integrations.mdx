@@ -89,11 +89,11 @@ import { TrilletAgent } from '@trillet-ai/web-sdk';
 ```
 
 #### Via CDN (No Build Tools Required)
-Include the SDK script in your HTML:
+Include the SDK script in your HTML. Pin a version in the URL so a future release can't change your page without you knowing:
 
 ```html
 <script type="module">
-  const module = await import("https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm");
+  const module = await import("https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk@1.14.1/+esm");
   const TrilletAgent = module.TrilletAgent;
   // Use TrilletAgent here
 </script>
@@ -115,8 +115,8 @@ const agent = new TrilletAgent({
 
 ### Usage
 1. **Start a Call:**
-   - Use `startPublicCall()` for public (workspace-based) integrations.
-   - Use `startCall()` for API key authenticated calls.
+   - Use `startPublicCall()` in the browser. It needs only `workspaceId` and `agentId`, and the call flow must have **Public Access** on (see the note below).
+   - `startCall()` sends your API key with the request, so it is **server-side only**. Never call it from browser code: anyone could copy the key from the page.
 
 ```typescript
 try {
@@ -125,6 +125,26 @@ try {
 } catch (error) {
   console.error('Failed to start call:', error);
 }
+```
+
+   **Using an API key without exposing it.** If you don't want to turn on Public Access, start the call on your own server with `createCall` from `@trillet-ai/web-sdk/server`, send the result to the browser, and join it there with `joinRoom()`. The browser never sees your API key.
+
+```typescript
+// On your server (Node.js)
+import { createCall } from '@trillet-ai/web-sdk/server';
+
+const roomDetails = await createCall({
+  apiKey: process.env.TRILLET_API_KEY,
+  agentId: 'your-agent-id',
+  mode: 'voice',
+});
+// Return roomDetails to your frontend
+```
+
+```typescript
+// In the browser
+const agent = new TrilletAgent({ agentId: 'your-agent-id', mode: 'voice' });
+await agent.joinRoom(roomDetails);
 ```
 
 2. **End a Call:**
@@ -144,7 +164,8 @@ agent.toggleMicrophone(true); // Enable microphone
 
 ```typescript
 agent.on('connected', (details) => {
-  console.log('Connected:', details.callId, details.agent.name);
+  // details: { callId, roomName, display: { agent_name, call_flow_name, workspace_name } }
+  console.log('Connected:', details.callId, details.display?.agent_name);
 });
 
 agent.on('disconnected', () => {
@@ -173,7 +194,7 @@ const current = agent.getCurrentTranscript(); // Partial transcripts
 />
 
 <Note>
-  **Important:** Make sure to enable public access in your call flow settings before testing the SDK integration. You can find this option in the call flow settings panel.
+  **Important:** `startPublicCall()` only works when the call flow has **Public Access** turned on and that change is published. The quickest way: open the call flow, click **Website widget** in the header, then **Get embed code**, and use **Turn on Public Access** and **Publish changes** in that dialog. The same switch is also under **Settings > Advanced Settings > Security & Privacy > HIPAA & Compliance**. Without it the call is refused with 403 `Public access not allowed for this agent`.
 </Note>
 
 ### Examples
@@ -250,7 +271,7 @@ Embed a button that starts/stops a voice call with your agent:
 </button> 
 
 <script type="module">
-  const { TrilletAgent } = await import("https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm");
+  const { TrilletAgent } = await import("https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk@1.14.1/+esm");
 
   const workspaceId = "your-workspace-id"; // Replace with your workspace ID
   const agentId = "your-agent-id"; // Replace with your agent ID

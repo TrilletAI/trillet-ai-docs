@@ -1,7 +1,7 @@
 ---
 title: "List Call Flows"
 api: "GET /v1/api/call-flows"
-description: "Retrieve a list of all call flows in the workspace."
+description: "Retrieve every call flow in the workspace, including archived ones."
 ---
 
 ### Headers  
@@ -10,9 +10,13 @@ description: "Retrieve a list of all call flows in the workspace."
   Workspace identifier for the API.
 </ParamField>
 
-### Response Fields
+The response is a plain array with one full call flow document per item, the same document [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get) returns (settings, prompt versions and so on). There is no pagination or filtering.
 
-Each object in the response array represents a call flow within the workspace, containing the following fields:
+<Note>
+  Archived call flows are included. An archived flow has a non-null `archivedAt`; filter on it if you only want flows that can take calls.
+</Note>
+
+### Response Fields
 
 <ResponseField name="_id" type="string">
   The unique identifier for the call flow.
@@ -27,55 +31,87 @@ Each object in the response array represents a call flow within the workspace, c
 </ResponseField>
 
 <ResponseField name="direction" type="string">
-  Indicates the direction of the call flow, such as "inbound" or "bidirectional".
+  `outbound` or `bidirectional` (answers inbound calls and can place outbound ones).
 </ResponseField>
 
-<ResponseField name="agent" type="string">
-  The identifier of the agent associated with the call flow.
+<ResponseField name="agent" type="object">
+  The agent the flow uses, as a full agent object (`_id`, `name`, `ttsModel`, `llmModel`, `sttProvider`, `phoneNumberIds` and so on), with its `phoneNumberIds` populated as phone number objects. Use `agent._id` for the agent's ID. It is `null` if the flow has no agent.
+</ResponseField>
+
+<ResponseField name="folderId" type="object">
+  The folder the flow is in, as `{ _id, name, icon, color }`, or `null`.
 </ResponseField>
 
 <ResponseField name="isActive" type="boolean">
-  A boolean indicating whether the call flow is currently active.
+  Whether the call flow is active.
+</ResponseField>
+
+<ResponseField name="archivedAt" type="string">
+  When the flow was archived, or `null` if it is not archived. Archived flows are read-only and do not take calls.
 </ResponseField>
 
 <ResponseField name="promptType" type="string">
-  The type of prompt used in the call flow, either "simple" or "flow".
+  `simple` (one prompt drives the call), `nodes` (a node-based flow) or `flow` (legacy).
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+  The flow's settings. See [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update).
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
-  Timestamp when the call flow was updated.
+  Timestamp when the call flow was created.
 </ResponseField>
 
 <ResponseField name="updatedAt" type="string">
   Timestamp when the call flow was last updated.
 </ResponseField>
 
+In the example, the agent objects and `settings` are shortened.
 
 <ResponseExample>
 
 ```json
 [
   {
-    "_id": "flowId1",
-    "workspaceId": "workspaceIdExample1",
+    "_id": "676b8e123456789012345678",
+    "workspaceId": "6764d172953253138a3a70f4",
     "name": "Customer Support Flow",
-    "direction": "inbound",
-    "agent": "agentIdExample1",
+    "direction": "bidirectional",
+    "agent": {
+      "_id": "676b8e123456789012345679",
+      "name": "Customer Support Flow",
+      "phoneNumberIds": []
+    },
+    "folderId": null,
     "isActive": true,
+    "archivedAt": null,
     "promptType": "simple",
-    "createdAt": "2025-01-02T09:00:00Z",
-    "updatedAt": "2025-01-02T09:30:00Z"
+    "settings": {},
+    "createdAt": "2025-01-02T09:00:00.000Z",
+    "updatedAt": "2025-01-02T09:30:00.000Z"
   },
   {
-    "_id": "flowId2",
-    "workspaceId": "workspaceIdExample2",
-    "name": "Sales Inquiry Flow",
-    "direction": "bidirectional",
-    "agent": "agentIdExample2",
-    "isActive": false,
-    "promptType": "flow",
-    "createdAt": "2025-01-05T09:00:00Z",
-    "updatedAt": "2025-01-06T12:00:00Z"
+    "_id": "676b8e123456789012345690",
+    "workspaceId": "6764d172953253138a3a70f4",
+    "name": "Old Sales Flow",
+    "direction": "outbound",
+    "agent": {
+      "_id": "676b8e123456789012345691",
+      "name": "Old Sales Flow",
+      "phoneNumberIds": []
+    },
+    "folderId": {
+      "_id": "676b8e123456789012345699",
+      "name": "Sales",
+      "icon": "folder",
+      "color": "#3B82F6"
+    },
+    "isActive": true,
+    "archivedAt": "2025-03-01T10:00:00.000Z",
+    "promptType": "simple",
+    "settings": {},
+    "createdAt": "2025-01-05T09:00:00.000Z",
+    "updatedAt": "2025-03-01T10:00:00.000Z"
   }
 ]
 ```

@@ -1,25 +1,40 @@
 ---
 title: "Delete API Key"
 api: "DELETE /v1/api/keys/{id}"
-description: "Delete an API key. The key will immediately stop working for authentication."
+description: "Delete an API key. The key stops working for authentication immediately."
 ---
+
+You can only delete keys that belong to you. Another user's key, or a workspace service key, returns `404`.
+
+<Note>
+Your role needs the `api_keys:delete` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions", ...}`. Connected apps (OAuth tokens) get `403 {"error": "API keys cannot be managed by connected apps."}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-The unique identifier of the workspace being accessed.
+The workspace used for the permission check.
 </ParamField>
 
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-The unique identifier of the API key to delete.
+The key record's `_id` (not the key itself).
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="success" type="boolean">
-Whether the deletion was successful.
+`true` when the key was deleted.
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `403` | `{"error": "Insufficient permissions", ...}` | Your role lacks `api_keys:delete` |
+| `403` | `{"error": "API keys cannot be managed by connected apps."}` | The request used an OAuth (connected app) token |
+| `404` | `{"error": "API key not found"}` | No key with that ID belongs to you |
+| `500` | `{"error": "Internal server error", "message": "..."}` | `id` isn't a valid ID, or another server error |
 
 <ResponseExample>
 ```json
