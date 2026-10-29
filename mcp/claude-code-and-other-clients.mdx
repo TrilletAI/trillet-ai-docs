@@ -11,9 +11,19 @@ ChatGPT and Claude.ai sign in to Trillet with your login. Developer tools such a
 | **How** | Your client connects to `https://mcp.trillet.ai/mcp` | Your client runs `npx -y @trillet-ai/mcp@latest` on your computer |
 | **Needs** | A client that supports remote MCP servers and custom headers | Node.js 18 or later |
 | **Good for** | Claude Code, and any client that speaks Streamable HTTP | Cursor, Windsurf, and any client that runs local (stdio) servers |
-| **Updates** | Always current | Fetched each time the client starts |
+| **Version** | 0.10.0, always the current release | The latest version on npm, currently 0.8.1 |
 
-Both routes act on the same Trillet account and offer the same tools. Workspace switching by name (`trillet_list_workspaces`, `trillet_switch_workspace`) is available on the hosted server.
+Both routes act on the same Trillet account, but they don't offer the same features yet. The npm package is behind the hosted server:
+
+| | Hosted server (0.10.0) | npm package (0.8.1) |
+|---|---|---|
+| Tools | All 85 in the [tool reference](/mcp/tools/index) | 83: no `trillet_list_workspaces` or `trillet_switch_workspace` |
+| `workspace_id` | Workspace id or name | Workspace id only |
+| Text test calls | `trillet_say` and `trillet_end_text_call` take `text_call_id` | They take `session_id` instead |
+| [Prompts, resources, confirmation forms, progress, structured results](/mcp/prompts-and-resources) | Yes | No |
+| Uploading a file from your computer to a knowledge base (`file_path`) | No | Yes |
+
+Use the hosted server if you want everything in these docs. The tool reference describes the hosted server.
 
 ## Before you start
 
@@ -33,7 +43,7 @@ You need two values from the [Trillet dashboard](https://app.trillet.ai).
 </Note>
 
 <Warning>
-  An API key gives full access to its workspace. Keep it out of shared chats, screenshots, and source control. You can revoke a key and create a new one at any time on the same settings page.
+  An API key acts as you, with your role, in every workspace you belong to, not just the one you set here. Keep it out of shared chats, screenshots, and source control. You can revoke a key and create a new one at any time on the same settings page.
 </Warning>
 
 ## Claude Code
@@ -115,7 +125,7 @@ Use this section to connect a client that is not listed above.
 POST https://mcp.trillet.ai/mcp
 ```
 
-The server uses Streamable HTTP. Clients that support OAuth can sign in with a Trillet login, as ChatGPT and Claude do. Clients that send headers can use an API key:
+The server uses Streamable HTTP. ChatGPT, Claude.ai, and Claude Desktop sign in with a Trillet login over OAuth. Another client can use OAuth only if it receives the sign-in on a loopback address (`localhost`, `127.0.0.1`, or `[::1]`). Trillet refuses other redirect addresses, including custom schemes such as `cursor://`, so use an API key with Cursor and with any client whose sign-in doesn't come back to a loopback address. Clients that send headers can use an API key:
 
 <ParamField header="Authorization" type="string" required>
   `Bearer <your Trillet API key>`

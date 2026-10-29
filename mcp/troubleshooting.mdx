@@ -48,8 +48,10 @@ description: "Fixes for common problems connecting ChatGPT, Claude, and other MC
   <Accordion title="My changes don't show up on test calls">
     The call flow probably has an active draft from the dashboard editor. A draft overrides the live version for test calls. Ask the assistant to "check whether this call flow has an active draft", then either publish the draft or deactivate it.
   </Accordion>
-  <Accordion title="A new Trillet tool isn't available in ChatGPT">
-    ChatGPT keeps a snapshot of a connector's tools. Refresh the Trillet connector from its details page in ChatGPT's app settings. On Business, Enterprise, and Edu workspaces, an admin needs to refresh and publish the update.
+  <Accordion title="A Trillet tool isn't available in ChatGPT">
+    ChatGPT gets 24 of Trillet's tools. Tools for calls, text test calls, phone numbers, workflows, secrets, usage, publishing, and deleting are not offered in ChatGPT at all. See [What ChatGPT can do](/mcp/chatgpt#what-chatgpt-can-do).
+
+    For a tool on that list, ChatGPT keeps a snapshot of a connector's tools. Refresh the Trillet connector from its details page in ChatGPT's app settings. On Business, Enterprise, and Edu workspaces, an admin needs to refresh and publish the update.
   </Accordion>
   <Accordion title="Uploading a file to a knowledge base fails">
     The hosted server can't read files from your computer. Give the assistant a public link to the file (for example `https://harbourdental.example/price-list.pdf`), or paste the text into the chat and ask it to add the text to the knowledge base.
@@ -68,7 +70,10 @@ description: "Fixes for common problems connecting ChatGPT, Claude, and other MC
     - **Reinstall the extension.** Get the latest `trillet.mcpb` from Trillet support and install it again. Claude Desktop never updates extensions on its own. Check your version in **Settings > Extensions**.
   </Accordion>
   <Accordion title="A text call won't start because too many are running">
-    You can run two text test calls at the same time. Ask the assistant to end the calls you have finished with, then start a new one.
+    There are two limits:
+
+    - **Your own calls.** You can run two text test calls at the same time per workspace. The error says `You already have 2 active text calls`. Ask the assistant to end the calls you have finished with, then start a new one.
+    - **The hosted server.** The hosted server runs a limited number of text calls across all users. The error says `The platform is at its text-call capacity right now. Try again in a minute.` Wait a minute and try again.
   </Accordion>
   <Accordion title="A text call created a booking or sent a webhook">
     Text test calls are real calls. Anything the agent does during the call, such as booking an appointment or calling a webhook, happens for real. Use test calendars and endpoints while you build, and cancel any test bookings afterwards.
@@ -78,11 +83,26 @@ description: "Fixes for common problems connecting ChatGPT, Claude, and other MC
 ## API key and local setups
 
 <AccordionGroup>
-  <Accordion title="Missing Trillet API key">
-    The `Authorization` header is missing or malformed. It must be `Authorization: Bearer YOUR_API_KEY`: the word `Bearer`, one space, then the key.
+  <Accordion title="Authentication required">
+    The full message is `Authentication required. Connect with OAuth, or send Authorization: Bearer <Trillet API key>.` The hosted server returned `401` because the `Authorization` header is missing or malformed. It must be `Authorization: Bearer YOUR_API_KEY`: the word `Bearer`, one space, then the key.
   </Accordion>
   <Accordion title="Missing Trillet workspace">
-    The `X-Trillet-Workspace-Id` header is missing. Add it, or add `?workspace=YOUR_WORKSPACE_ID` to the server URL if your client can set only one header.
+    The full message is `Missing Trillet workspace. Send X-Trillet-Workspace-Id or ?workspace=<id>.` The `X-Trillet-Workspace-Id` header is missing. Add it, or add `?workspace=YOUR_WORKSPACE_ID` to the server URL if your client can set only one header.
+  </Accordion>
+  <Accordion title="Session not found or expired. Start a new session.">
+    The hosted server closes a session after 15 minutes without requests, and when it restarts. Reconnect your client, or send a new `initialize` request without an `Mcp-Session-Id` header.
+  </Accordion>
+  <Accordion title="Send an initialize request first, without an Mcp-Session-Id header.">
+    The first request of a session must be `initialize`, sent without an `Mcp-Session-Id` header. Use the session id from its response on every later request.
+  </Accordion>
+  <Accordion title="This session belongs to a different user or API key">
+    A session is tied to the key or login that opened it. The `403` means a later request used a different key or account, or a different app's sign-in (`This session belongs to a different client`). Start a new session with the credentials you want to use.
+  </Accordion>
+  <Accordion title="Too many open sessions. Try again shortly.">
+    The hosted server has reached its limit of open sessions (`503`). Wait a moment and reconnect. Close sessions your client no longer uses.
+  </Accordion>
+  <Accordion title="Could not verify the access token right now">
+    A `503` from the hosted server while it checks a ChatGPT or Claude sign-in. Your connection is still valid; wait a few seconds and try again.
   </Accordion>
   <Accordion title="npx can't find or start the package">
     You need Node.js 18 or later. Run `node --version` to check, then run `npx -y @trillet-ai/mcp@latest` in a terminal to see the full error.

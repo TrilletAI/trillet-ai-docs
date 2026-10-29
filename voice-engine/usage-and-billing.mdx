@@ -150,6 +150,12 @@ When month-to-date usage reaches 80% of a cap, and again at 100%, a `usage.thres
 
 `scope` is `tenant` or `partner`. For the account cap, `tenant` is `null`.
 
+Caps are not checked on a schedule. Trillet checks a cap, and sends these alerts, only when one of the paid actions listed under [At 100%](#at-100) is about to run. So:
+
+- A tenant with only inbound calls gets no alert, even though its inbound usage counts towards its month-to-date spend. The alert comes with its next paid action.
+- If usage goes from under 80% to over 100% between two checks, only the 100% alert is sent.
+- With a cap of `0`, the 100% alert is sent on the tenant's first paid action.
+
 ### At 100%
 
 Once a tenant reaches its cap, or your account reaches the account cap, these are refused for the rest of the month, as if the account had no funds:

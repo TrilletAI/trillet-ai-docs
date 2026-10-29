@@ -34,7 +34,12 @@ The event log keeps events for 30 days.
 - Each tenant is a separate workspace. A partner key can reach only its own tenants, and a key can be restricted further to a list of tenants.
 - Requests naming another partner's tenant return `404`.
 - Partner keys are stored as hashes. Webhook signing secrets are stored encrypted.
-- Tenant and phone number changes made through Trillet OEM are written to the tenant's audit log with the ID of the key that made them.
+- Tenant lifecycle changes (create, update, suspend, resume, delete, restore) and phone number purchases, registrations and releases made through Trillet OEM are written to the tenant's audit log with the ID of the key that made them. Writing the audit entry is best effort: if it fails, the change still goes ahead. Call flow settings changes, webhook endpoint changes, and changes made through [standard endpoints](/voice-engine/authentication#calling-standard-endpoints-for-a-tenant) are not written to the tenant's audit log.
+
+## Trillet staff access
+
+- Trillet's support account is an administrator of your partner account's own workspace.
+- It is not a member of your tenants by default. When Trillet support needs to work in a tenant, Trillet staff give the support account administrator access to that one tenant, and can remove it again. Each grant and removal is written to that tenant's audit log, with the staff member who made it.
 
 ## Branding
 

@@ -12,6 +12,7 @@ description: "Idempotency, errors, pagination and versioning for Trillet OEM."
 - **Format:** JSON request and response bodies, UTF-8. Timestamps are ISO 8601 UTC, except `created` on events, which is Unix seconds.
 - **IDs:** Tenant, number, call flow, endpoint and key IDs are 24-character hexadecimal strings. Event IDs start with `evt_`. Store all IDs as strings.
 - **Objects:** Every response object has an `object` field, for example `tenant`, `phone_number`, `call_flow_settings`, `event` or `list`.
+- **Unknown fields:** On every `/partner/v1` endpoint except [call flow settings](/voice-engine/call-flow-settings), the server drops body fields it doesn't know instead of refusing them, and converts values where it can (`"500"` becomes `500`). A misspelled field is ignored and the request still succeeds: `{"limits":{"monthlySpendcap":500}}` creates a tenant with no spend cap. Check the response to confirm what was saved.
 
 ## Idempotency
 
@@ -40,6 +41,7 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
 | Same key while the first request is still running | `409` `idempotency_key_in_use`. Retry after `Retry-After`. |
 | No key on an endpoint that requires one | `400` `idempotency_key_required` |
 | The first request failed with a `5xx`, `401`, `403`, `409` or `429` | Not stored. A retry runs again. |
+| The first request failed with any other `4xx`, for example `402` `insufficient_funds`, `400` `number_purchase_failed` or `404` | Stored and replayed for 24 hours like a success. After you fix the cause (add funds, add the regulatory bundle, correct the field), retry with a **new** key. A body that fails the endpoint's schema is refused before the key is checked, so that `400` is not stored. |
 
 - Keys are 1 to 255 printable ASCII characters, with no spaces, and are scoped to your partner account. A UUID, or your own operation ID, works well. A key that does not fit returns `400` `idempotency_key_invalid`.
 - "The same request" means the same method, path, query string and JSON body. Key order in the body does not matter.
