@@ -4,7 +4,7 @@
     "title": "Trillet OEM API",
     "version": "2026-10-28",
     "summary": "White-label voice AI API for software platforms.",
-    "description": "The Trillet OEM API (also called the Partner API) lets a software platform run Trillet voice\nagents for each of its own customers, under its own brand.\n\nEach of your customers is a **tenant**: an isolated workspace with its own agents, phone\nnumbers, call history and usage. This specification covers the `/partner/v1` endpoints:\npartner key, tenants, phone numbers, call flow settings, webhook endpoints, events,\nrecordings and usage.\n\nAgents, node flows, calls and other resources inside a tenant are managed with the standard\nTrillet API, using the same partner key and the tenant ID in `x-workspace-id`. See\n[Authentication](https://docs.trillet.ai/voice-engine/authentication#calling-standard-endpoints-for-a-tenant).\n\nTrillet OEM is in early access. Details may change before general release. Within `/partner/v1`\nchanges are additive: ignore fields and event types you do not recognise.\n",
+    "description": "The Trillet OEM API (also called the Partner API) lets a software platform run Trillet voice\nagents for each of its own customers, under its own brand.\n\nEach of your customers is a **tenant**: an isolated workspace with its own agents, phone\nnumbers, call history and usage. This specification covers the `/partner/v1` endpoints:\npartner key, tenants, phone numbers, call flow settings, webhook endpoints, events,\nrecordings and usage.\n\nAgents, node flows, calls and other resources inside a tenant are managed with the standard\nTrillet API, using the same partner key and the tenant ID in `x-workspace-id`. See\n[Authentication](https://docs.trillet.ai/voice-engine/authentication#calling-standard-endpoints-for-a-tenant).\n\nTrillet OEM is in early access. Details may change before general release. Within `/partner/v1`\nchanges are additive: ignore fields and event types you do not recognise.\n\nRequest bodies marked `additionalProperties: false` list every field the server uses. Except on\ncall flow settings, the server does not refuse other fields: it drops them, and converts values\nwhere it can (`\"500\"` becomes `500`). A misspelled field is ignored and the request still\nsucceeds, so check the response. Call flow settings refuses unknown fields and unconverted\nvalues with `400`.\n\nAny endpoint can also return `500` `api_error`. Repeated invalid keys from one IP address return\n`429` `rate_limited`.\n",
     "contact": {
       "name": "Trillet",
       "url": "https://docs.trillet.ai/voice-engine/overview"
@@ -579,7 +579,7 @@
         ],
         "operationId": "buyTenantNumber",
         "summary": "Buy a number",
-        "description": "Buys a number for the tenant, billed to your partner account at the standard Trillet number\nprice. The first month is charged when you buy, then the number renews monthly.\nFind numbers first with `GET /v1/api/twilio/available-numbers` and the tenant ID in\n`x-workspace-id`. Needs `numbers:write`. `Idempotency-Key` is required.\n",
+        "description": "Buys a number for the tenant, billed to your partner account at $4.99 per month whatever the\ncountry and type, or at the price agreed for your account. The first month is charged when\nyou buy, then the number renews monthly. If the first month's charge fails after the\ncarrier purchase, the response is still `201`, with `billing.status: past_due`.\nFind numbers first with `GET /v1/api/twilio/available-numbers` and the tenant ID in\n`x-workspace-id`. Needs `numbers:write`. `Idempotency-Key` is required.\n",
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKeyRequired"
@@ -697,7 +697,11 @@
                       "username": "trillet",
                       "password": "YOUR_SIP_PASSWORD",
                       "ipAddresses": [
-                        "203.0.113.10"
+                        {
+                          "id": "carrier-1",
+                          "ip": "203.0.113.10",
+                          "subnetMask": "32"
+                        }
                       ]
                     }
                   }
@@ -868,7 +872,7 @@
         ],
         "operationId": "getCallFlowSettings",
         "summary": "Get call flow settings",
-        "description": "Needs `resources:read`. A setting the call flow has never stored is returned as `null`.",
+        "description": "Needs `resources:read`. A setting the call flow has never stored is returned as `null`.\nValues are returned as stored, so an older call flow can hold values outside the ranges a\nchange accepts.\n",
         "responses": {
           "200": {
             "description": "The settings.",
@@ -1873,7 +1877,7 @@
         "name": "Idempotency-Key",
         "in": "header",
         "required": true,
-        "description": "1 to 255 printable ASCII characters, no spaces. A retry with the same key and request\nreturns the stored response for 24 hours instead of running again.\n",
+        "description": "1 to 255 printable ASCII characters, no spaces. A retry with the same key and request\nreturns the stored response for 24 hours instead of running again. Failed responses are\nstored too, except `5xx`, `401`, `403`, `409` and `429`: after fixing the cause of a `4xx`\nsuch as `402` `insufficient_funds`, retry with a new key.\n",
         "schema": {
           "type": "string",
           "minLength": 1,
@@ -1940,11 +1944,26 @@
         }
       },
       "Unauthorized": {
-        "description": "The partner key is missing, malformed, unknown or revoked (`partner_key_required`, `invalid_api_key`, `partner_not_enabled`).",
+        "description": "Authentication failed. A correctly prefixed key that is unknown or revoked returns\n`invalid_api_key`, an account without Trillet OEM returns `partner_not_enabled`, and a user\nsession or user API key returns `partner_key_required`, all in the `Error` shape. Some\nfailures return a body without `error.code` instead: no `Authorization` header\n(`{\"error\": \"Missing or invalid Authorization header\"}`), a bearer token without the\n`tpk_live_` or `tpk_sandbox_` prefix (`{\"error\": \"Invalid token\"}`), or a partner key in\n`x-api-key`. Handle a `401` by status, not only by `error.code`.\n",
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Error"
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Error"
+                },
+                {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
             }
           }
         }
@@ -2052,7 +2071,7 @@
           "error": {
             "type": "conflict_error",
             "code": "tenant_exists",
-            "message": "A tenant with this externalId already exists.",
+            "message": "Tenant 6a9622d2c1e8f3a4b5d6e7f8 already has this externalId.",
             "requestId": "req-1a2b"
           }
         }
@@ -2080,7 +2099,8 @@
             "enum": [
               "live",
               "sandbox"
-            ]
+            ],
+            "description": "Informational only. A `sandbox` key currently acts exactly like a `live` key: on your real tenants, with real charges."
           },
           "scopes": {
             "type": "array",
@@ -2532,7 +2552,7 @@
           "credentials": {
             "type": "object",
             "additionalProperties": true,
-            "description": "For `sip`: `sipUri` (where Trillet sends outbound calls), optional `username` and\n`password`, and optional `ipAddresses` your carrier sends calls from.\nFor `twilio`: `accountSid` and `authToken`.\n"
+            "description": "For `sip`: `sipUri` (where Trillet sends outbound calls), optional `username` and\n`password`, and optional `ipAddresses` your carrier sends calls from. Each entry in\n`ipAddresses` is an object: `id` (required, any string you choose, unique in the list),\n`ip`, and `subnetMask` (the prefix length as a string, for example `\"32\"`). A plain list\nof IP strings is refused with `400` `number_registration_failed`.\nFor `twilio`: `accountSid` and `authToken`.\n"
           }
         }
       },
@@ -2601,9 +2621,7 @@
                 "type": [
                   "number",
                   "null"
-                ],
-                "minimum": 0,
-                "maximum": 5
+                ]
               }
             }
           },
@@ -2614,17 +2632,13 @@
                 "type": [
                   "number",
                   "null"
-                ],
-                "minimum": 1,
-                "maximum": 10
+                ]
               },
               "interruptionSensitivity": {
                 "type": [
                   "number",
                   "null"
-                ],
-                "minimum": 1,
-                "maximum": 10
+                ]
               }
             }
           },
@@ -2641,50 +2655,30 @@
           },
           "callHandling": {
             "type": "object",
+            "description": "Values are returned as stored. Older call flows can hold values outside the ranges\n`CallFlowSettingsUpdate` accepts, including fractions of a second.\n",
             "properties": {
               "maxCallDurationSeconds": {
                 "type": [
-                  "integer",
+                  "number",
                   "null"
-                ],
-                "minimum": 10,
-                "maximum": 1800
+                ]
               },
               "checkInAfterSeconds": {
                 "type": [
-                  "integer",
+                  "number",
                   "null"
-                ],
-                "enum": [
-                  10,
-                  20,
-                  30,
-                  null
                 ]
               },
               "checkInAttempts": {
                 "type": [
-                  "integer",
+                  "number",
                   "null"
-                ],
-                "enum": [
-                  0,
-                  1,
-                  2,
-                  3,
-                  null
                 ]
               },
               "hangUpAfterCheckInSeconds": {
                 "type": [
-                  "integer",
+                  "number",
                   "null"
-                ],
-                "enum": [
-                  10,
-                  20,
-                  30,
-                  null
                 ]
               }
             }
@@ -2756,11 +2750,9 @@
               },
               "checkInAfterSeconds": {
                 "type": "integer",
-                "enum": [
-                  10,
-                  20,
-                  30
-                ]
+                "minimum": 5,
+                "maximum": 30,
+                "description": "Whole seconds of caller silence before the agent checks in."
               },
               "checkInAttempts": {
                 "type": "integer",
@@ -3136,7 +3128,11 @@
             "$ref": "#/components/schemas/ObjectId"
           },
           "tenantId": {
-            "$ref": "#/components/schemas/ObjectId"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The tenant ID."
           },
           "callId": {
             "type": [
@@ -3157,10 +3153,16 @@
             "format": "date-time"
           },
           "billedSeconds": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "ratePerMinute": {
-            "type": "number"
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "amount": {
             "type": "number",

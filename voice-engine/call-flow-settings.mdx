@@ -56,7 +56,7 @@ The agent's voice, language and model are set on the agent with `PUT /v1/api/age
 }
 ```
 
-A setting the call flow has never stored is returned as `null`.
+A setting the call flow has never stored is returned as `null`. Values are returned as stored. Older call flows can hold values outside the ranges below, for example a check-in under 5 seconds or a maximum call length of 3600. The ranges apply only to values you change.
 
 | Field | Type | Values |
 |---|---|---|
@@ -68,7 +68,7 @@ A setting the call flow has never stored is returned as `null`.
 | `speech.interruptionSensitivity` | number | How easily the caller can interrupt the agent, 1 to 10 |
 | `recording.enabled` | boolean | Record calls on this flow |
 | `callHandling.maxCallDurationSeconds` | integer | Longest call allowed, 10 to 1800 |
-| `callHandling.checkInAfterSeconds` | integer | Silence before the agent checks the caller is still there: `10`, `20` or `30` |
+| `callHandling.checkInAfterSeconds` | integer | Silence before the agent checks the caller is still there: whole seconds from `5` to `30` |
 | `callHandling.checkInAttempts` | integer | Check-ins before the agent ends the call: `0` (never), `1`, `2` or `3` |
 | `callHandling.hangUpAfterCheckInSeconds` | integer | Wait after the last check-in before hanging up: `10`, `20` or `30` |
 
@@ -123,7 +123,7 @@ The change is written to the live call flow. If the flow has an active draft, wh
 | `404` | `tenant_not_found` | The tenant does not exist, is deleted, is not yours, or the key is restricted to other tenants |
 | `404` | `call_flow_not_found` | The call flow does not exist in this tenant |
 | `409` | `call_flow_archived` | The call flow is archived and read-only. Restore it with `PATCH /v1/api/call-flows/{id}/restore` first. |
-| `409` | `hipaa_recording_conflict` | `recording.enabled: true` on a call flow in HIPAA mode, which keeps recording off. `error.param` is `recording.enabled`. |
+| `409` | `hipaa_recording_conflict` | The call flow is in HIPAA mode, which keeps recording off, and recording would be on after the change: either the request sets `recording.enabled: true`, or the flow still stores recording as on and the request doesn't turn it off. Send `"recording": { "enabled": false }` with your change. `error.param` is `recording.enabled`. |
 
 ```json
 {

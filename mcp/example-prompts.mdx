@@ -6,7 +6,7 @@ description: "Example prompts for building, testing, and reviewing Trillet agent
 
 Talk to the assistant the way you would brief a colleague. Say which agent or workspace you mean, what you want changed, and what a good result looks like. The assistant reads your current setup before it changes anything.
 
-These prompts work in ChatGPT, Claude, Claude Code, and any other client connected to Trillet.
+These prompts work in Claude, Claude Code, and any other client connected to Trillet. In ChatGPT, only the prompts that build and edit agents, call flows, and text knowledge bases work: ChatGPT can't run text test calls, read calls, manage phone numbers or workflows, or check usage. See [What ChatGPT can do](/mcp/chatgpt#what-chatgpt-can-do).
 
 ## Build an agent
 
@@ -22,9 +22,11 @@ this is Mia. How can I help?" and make it slightly more patient with interruptio
 ```
 
 ```
-Create a knowledge base called "Harbour Dental FAQ" from https://harbourdental.example/faq
+Create a knowledge base called "Harbour Dental FAQ" from https://harbourdental.example/faq.pdf
 and attach it to the Reception agent.
 ```
+
+The link must point to a file (PDF, DOCX, TXT, MD, CSV, or JSON, up to 20 MB), not a web page. Each knowledge base holds one file, and uploading another replaces it. You can also paste text and ask the assistant to add it.
 
 ## Test it with a text call
 
@@ -100,11 +102,11 @@ How much have we spent on calls this month, and what is my wallet balance?
 - **Name things.** "The Reception agent in Harbour Dental" is faster and safer than "my agent".
 - **Ask it to look first.** "Show me the current prompt, then suggest changes" lets you review before anything changes.
 - **Test after every change.** End a build request with "then run a text test call as a new patient".
-- **Keep real-world actions explicit.** The assistant asks before it calls a phone, buys a number, runs a workflow, or deletes something. Read the details before you confirm.
+- **Keep real-world actions explicit.** The assistant is told to ask before it calls a phone, buys a number, runs a workflow, or deletes something. Text test calls and turning on a workflow don't need a confirmation, so say so if you want to approve those first. Read the details before you confirm.
 
 ## Full tool list
 
-The hosted server at `https://mcp.trillet.ai/mcp` offers 85 tools. You don't need to name them; the assistant picks the right one. They are listed here for reference. The [tool reference](/mcp/tools/index) has every parameter and what each tool returns.
+The hosted server at `https://mcp.trillet.ai/mcp` offers 85 tools (24 in [ChatGPT](/mcp/chatgpt#what-chatgpt-can-do)). You don't need to name them; the assistant picks the right one. They are listed here for reference. The [tool reference](/mcp/tools/index) has every parameter and what each tool returns.
 
 <AccordionGroup>
   <Accordion title="Workspaces (2 tools)">
