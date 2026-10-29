@@ -1,80 +1,89 @@
 ---
 title: "Remove Flow from Folder"
 api: "DELETE /v1/api/flow-folders/{folderId}/flows/{pathwayId}"
-description: "Remove a specific flow from a folder identified by its folderId and flowId."
+description: "Take a flow out of a folder. The flow itself is not deleted."
 ---
 
 ### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
-  The unique identifier of the workspace being accessed.
+  The workspace the folder belongs to. Folders and flows in other workspaces are treated as not found.
 </ParamField>
 
 ### Path Parameters
 
 <ParamField path="folderId" type="string" required>
-  The ID of the folder from which the flow will be removed.
+  The `_id` of the folder.
 </ParamField>
 
 <ParamField path="pathwayId" type="string" required>
-  The ID of the flow to remove from the folder.
+  The `_id` of the flow to remove from the folder.
 </ParamField>
 
-### Response Fields
+### Response
+
+The updated folder:
 
 <ResponseField name="_id" type="string">
-  The unique identifier of the folder.
+  The folder's unique identifier.
 </ResponseField>
 
 <ResponseField name="workspaceId" type="string">
-  The identifier of the workspace where the folder belongs.
+  The workspace the folder belongs to.
 </ResponseField>
 
 <ResponseField name="name" type="string">
-  The name of the folder.
+  The folder name.
 </ResponseField>
 
 <ResponseField name="color" type="string">
-  The color of the folder, represented as a hex code.
+  The folder color, stored exactly as sent (default `#3498db`).
 </ResponseField>
 
 <ResponseField name="icon" type="string">
-  The icon identifier for the folder.
+  The folder icon, stored exactly as sent (default `folder`).
 </ResponseField>
 
 <ResponseField name="flowType" type="string">
-  The type of flow, either "call" or "message".
+  `call` or `message`.
 </ResponseField>
 
 <ResponseField name="pathwayModel" type="string">
-  The model type for flows, derived from `flowType`.
+  `Pathway` for call folders, `MessagePathway` for message folders. Set by the server from `flowType`.
 </ResponseField>
 
 <ResponseField name="pathways" type="array">
-  An updated array of flow IDs associated with the folder after removal.
+  The `_id`s of the flows in the folder.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
-  Timestamp when the folder was created (ISO 8601 format).
+  When the folder was created (ISO 8601). Folders have no `updatedAt`.
 </ResponseField>
 
-<ResponseField name="updatedAt" type="string">
-  Timestamp when the folder was last updated (ISO 8601 format).
-</ResponseField>
+### Errors
+
+All folder errors use a `message` field, not `error`.
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "x-workspace-id header is required"}` | `x-workspace-id` missing or not a valid ID |
+| `400` | `{"message": "Pathway does not exist in the folder"}` | The flow isn't in this folder |
+| `404` | `{"message": "Folder not found"}` | No folder with that ID in this workspace |
+| `500` | `{"message": "..."}` | Unexpected server error |
 
 <ResponseExample>
 ```json
 {
-  "_id": "folder123",
-  "workspaceId": "workspace456",
-  "name": "My Workflow Folder",
-  "color": "#FF0000",
-  "icon": "folder-icon",
+  "_id": "6720b3c4d5e6f7a8b9c0d1e2",
+  "workspaceId": "674a3edc2d89622daa9fcfd1",
+  "name": "Inbound Flows",
+  "color": "#3B82F6",
+  "icon": "folder",
   "flowType": "call",
-  "pathwayModel": "Flow",
   "pathways": [],
-  "createdAt": "2023-10-15T09:30:00Z",
-  "updatedAt": "2023-10-15T11:00:00Z"
+  "pathwayModel": "Pathway",
+  "createdAt": "2026-10-15T09:30:00.000Z",
+  "__v": 0
 }
 ```
 </ResponseExample>

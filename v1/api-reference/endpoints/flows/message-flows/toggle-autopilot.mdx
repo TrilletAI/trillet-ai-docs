@@ -16,9 +16,17 @@ description: "Toggle the autopilot mode of an existing message flow."
   The unique ID of the message flow where autopilot will be toggled.
 </ParamField>
 
-<ParamField type="string" body="" default="s" optional hidden>
-  An optional, empty object as the default body.
-</ParamField>
+### Request Body
+
+No fields are read; each call flips `autopilot` to the opposite of its current value. If you send `Content-Type: application/json`, send an empty object `{}` as the body: a JSON content type with no body at all is rejected with `400`. Alternatively, send no body and no `Content-Type` header.
+
+```bash
+curl -X PUT "https://api.trillet.ai/v1/api/message-flows/{id}/toggle-autopilot" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
 
 ### Response Fields
 
@@ -59,7 +67,7 @@ description: "Toggle the autopilot mode of an existing message flow."
 </ResponseField>
 
 <ResponseField name="messageChannel" type="string">
-  The type of communication channel used by the message flow, such as "SMS".
+  The channel, for example `Twilio-SMS`.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -83,7 +91,7 @@ description: "Toggle the autopilot mode of an existing message flow."
   "initiationMessage": "Hello!",
   "isActive": true,
   "autopilot": true,
-  "messageChannel": "SMS",
+  "messageChannel": "Twilio-SMS",
   "createdAt": "2025-01-01T12:00:00.000Z",
   "updatedAt": "2025-01-15T08:30:00.000Z"
 }

@@ -1,25 +1,42 @@
 ---
 title: "Disconnect GoHighLevel"
 api: "DELETE /v1/api/crm/disconnect"
-description: "Disconnect GoHighLevel CRM integration from a call flow."
+description: "Disconnect the GoHighLevel CRM integration from a call flow."
 ---
+
+Removes the stored GoHighLevel tokens from the call flow and turns the integration off. It also turns off GoHighLevel calendar booking and clears the selected calendar, so reconnecting later means setting booking up again.
+
+<Note>
+If the call flow has an unpublished draft open in the editor, the change is saved to the draft only. Live calls keep the old setting until the draft is published.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+Workspace identifier for the API. The call flow must belong to this workspace (or one of its sub-workspaces).
 </ParamField>
 
 ## Query Parameters
 
 <ParamField query="pathwayId" type="string" required>
-The call flow pathway ID to disconnect GoHighLevel from.
+The `_id` of the call flow to disconnect GoHighLevel from.
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="success" type="boolean">
-Whether the disconnection was successful.
+`true` when the integration was disconnected.
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "pathwayId query parameter is required"}` | No `pathwayId` |
+| `400` | `{"error": "Invalid pathwayId"}` | `pathwayId` isn't a valid ID |
+| `403` | `{"error": "You do not have access to this workspace."}` | You aren't a member of the `x-workspace-id` workspace |
+| `403` | `{"error": "Pathway does not belong to this workspace."}` | The flow belongs to another workspace |
+| `404` | `{"error": "Pathway not found"}` | No call flow with that ID |
+| `500` | `{"error": "..."}` | The disconnect failed |
 
 <ResponseExample>
 ```json

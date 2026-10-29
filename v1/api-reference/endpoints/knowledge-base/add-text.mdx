@@ -1,8 +1,14 @@
 ---
 title: "Add Text to Knowledge Base"
 api: "POST /v1/api/knowledgebase/{id}/text"
-description: "Add plain text content to an existing knowledge base."
+description: "Set or replace the plain text content of a knowledge base."
 ---
+
+A knowledge base holds one text entry, alongside any uploaded files. Each call **replaces** the previous text: the old text and its search index are removed, and uploaded files are left as they are. To keep existing text, send it again together with the new content.
+
+The text entry counts toward the limit of 5 files per knowledge base. Replacing existing text never hits the limit; adding text to a knowledge base that already holds 5 files does.
+
+Requires the `knowledge_base:create` and `knowledge_base:edit` permissions.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -18,23 +24,65 @@ The unique identifier of the knowledge base.
 ## Request Body
 
 <ParamField body="text" type="string" required>
-The plain text content to add to the knowledge base.
+The full text content of the knowledge base. Must not be empty.
 </ParamField>
 
-<ParamField body="name" type="string">
-Optional name for the text entry.
+<ParamField body="name" type="string" default="Plain Text">
+Label for the text entry, shown as its `filename`.
 </ParamField>
 
-## Response Fields
+## Response
 
-<ResponseField name="success" type="boolean">
-Whether the text was added successfully.
+`201` with the text entry as it now appears in the knowledge base's `files`.
+
+<ResponseField name="filename" type="string">
+The entry's label (`name`, or `Plain Text`).
 </ResponseField>
+
+<ResponseField name="key" type="string">
+Internal key for the entry. A new key is minted on every call.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+Always empty: text is not stored as a file.
+</ResponseField>
+
+<ResponseField name="mimetype" type="string">
+Always `text/plain`.
+</ResponseField>
+
+<ResponseField name="size" type="number">
+Length of the text in characters.
+</ResponseField>
+
+<ResponseField name="isText" type="boolean">
+Always `true`. Marks this entry as the text entry rather than an uploaded file.
+</ResponseField>
+
+<ResponseField name="uploadedAt" type="string">
+When the text was saved.
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "Workspace ID header is required"}` | No `x-workspace-id` |
+| `400` | `{"message": "Text content is required"}` | `text` is missing or blank |
+| `409` | `{"message", "code": "KB_FILE_LIMIT_REACHED", "details": {"limit", "current"}}` | The knowledge base has no text yet and already holds 5 files |
+| `500` | `{"message": "Knowledge base not found or not accessible in this workspace."}` | No knowledge base with this ID in the workspace. This is currently a `500`, not a `404` |
+| `500` | `{"message": "..."}` | Anything else |
 
 <ResponseExample>
 ```json
 {
-  "success": true
+  "filename": "Opening hours",
+  "key": "workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/text-1761735600000.txt",
+  "url": "",
+  "mimetype": "text/plain",
+  "size": 412,
+  "isText": true,
+  "uploadedAt": "2026-10-29T10:00:00.000Z"
 }
 ```
 </ResponseExample>

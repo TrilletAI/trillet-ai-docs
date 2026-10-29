@@ -38,8 +38,12 @@ description: "Retrieve a specific message flow."
   A brief description of what the message flow is designed to handle.
 </ResponseField>
 
-<ResponseField name="agent" type="string">
-  The identifier of the agent associated with this message flow.
+<ResponseField name="agent" type="object">
+  The message agent the flow uses, as a full agent object (use `agent._id` for its ID), or `null`.
+</ResponseField>
+
+<ResponseField name="folderId" type="object">
+  The folder the flow is in, as `{ _id, name, icon, color }`, or `null`.
 </ResponseField>
 
 <ResponseField name="settings" type="object">
@@ -61,11 +65,11 @@ description: "Retrieve a specific message flow."
 </ResponseField>
 
 <ResponseField name="autopilot" type="boolean">
-  Specifies whether autopilot is enabled, allowing the message flow to operate automatically.
+  Whether replies are sent automatically without approval. Separate from `isActive`.
 </ResponseField>
 
 <ResponseField name="messageChannel" type="string">
-  The type of communication channel used by the message flow, such as "SMS".
+  The channel: `Twilio-SMS`, `Telnyx-SMS`, `Twilio-Email`, `Meta-Whatsapp`, `Meta-Facebook`, `Infobip-Whatsapp` or `Infobip-Facebook`.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -84,7 +88,8 @@ description: "Retrieve a specific message flow."
   "name": "My-SMS-Flow",
   "direction": "bidirectional",
   "description": "Example message flow for SMS marketing",
-  "agent": "exampleAgentId1",
+  "agent": { "_id": "6874de297dc4243af17334c0", "name": "SMS Agent" },
+  "folderId": null,
   "settings": {
     "knowledgeBases": [],
     "security": {}
@@ -92,7 +97,7 @@ description: "Retrieve a specific message flow."
   "prompt": "You are an AI that handles inbound messages.",
   "isActive": true,
   "autopilot": false,
-  "messageChannel": "SMS",
+  "messageChannel": "Twilio-SMS",
   "createdAt": "2025-01-02T10:15:00Z",
   "updatedAt": "2025-01-02T10:30:00Z"
 }

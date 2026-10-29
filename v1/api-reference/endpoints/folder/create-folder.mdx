@@ -1,101 +1,104 @@
 ---
 title: "Create Flow Folder"
 api: "POST /v1/api/flow-folders"
-description: "Create a new flow folder in the specified workspace."
+description: "Create a folder for call flows or message flows in a workspace."
 ---
 
 ### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
-  The ID of the workspace to create the folder in.
+  The workspace the folder belongs to. Folders and flows in other workspaces are treated as not found.
 </ParamField>
 
 ### Request Body
 
 <ParamField body="name" type="string" required>
-  The name of the folder (e.g., "My Workflow Folder").
-</ParamField>
-
-<ParamField body="color" type="string" required>
-  The color of the folder, specified as one of the following color names with their corresponding hex codes: blue (#3B82F6), green (#10B981), teal (#14B8A6), purple (#8B5CF6), orange (#F97316), red (#EF4444).
-</ParamField>
-
-<ParamField body="icon" type="string" required>
-  The icon identifier for the folder, specified as one of the following: folder, file, phone, headphone, voice, message.
+  The folder name (for example `"Inbound Flows"`).
 </ParamField>
 
 <ParamField body="flowType" type="string" required>
-  The type of flow. Possible values: "call" or "message".
+  What the folder holds: `call` (call flows) or `message` (message flows). Can't be changed later.
 </ParamField>
 
-### Response Fields
+<ParamField body="color" type="string">
+  Any string. It is stored and returned exactly as sent, with no validation or conversion, so send a hex color such as `#3B82F6`. Defaults to `#3498db`.
+</ParamField>
+
+<ParamField body="icon" type="string">
+  Any string, stored as sent. The portal uses `folder`, `file`, `phone`, `headphone`, `voice` and `message`. Defaults to `folder`.
+</ParamField>
+
+### Response (201 Created)
 
 <ResponseField name="_id" type="string">
-  The unique identifier for the newly created folder.
+  The folder's unique identifier.
 </ResponseField>
 
 <ResponseField name="workspaceId" type="string">
-  The identifier of the workspace where the folder has been created.
+  The workspace the folder belongs to.
 </ResponseField>
 
 <ResponseField name="name" type="string">
-  The name given to the folder.
+  The folder name.
 </ResponseField>
 
 <ResponseField name="color" type="string">
-  The color of the folder, as a hex code (e.g., "#3B82F6" for blue).
+  The folder color, stored exactly as sent (default `#3498db`).
 </ResponseField>
 
 <ResponseField name="icon" type="string">
-  The icon identifier for the folder (e.g., "folder").
+  The folder icon, stored exactly as sent (default `folder`).
 </ResponseField>
 
 <ResponseField name="flowType" type="string">
-  The type of flow, either "call" or "message".
+  `call` or `message`.
 </ResponseField>
 
 <ResponseField name="pathwayModel" type="string">
-  The model type for flows, derived from `flowType`.
+  `Pathway` for call folders, `MessagePathway` for message folders. Set by the server from `flowType`.
 </ResponseField>
 
 <ResponseField name="pathways" type="array">
-  An array of flows associated with the folder (initially empty).
+  An empty array for a new folder.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
-  Timestamp when the folder was created (ISO 8601 format).
+  When the folder was created (ISO 8601). Folders have no `updatedAt`.
 </ResponseField>
 
-<ResponseField name="updatedAt" type="string">
-  Timestamp when the folder was last updated (ISO 8601 format).
-</ResponseField>
+### Errors
 
-### Example Request
+All folder errors use a `message` field, not `error`.
 
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "x-workspace-id header is required"}` | `x-workspace-id` missing or not a valid ID |
+| `500` | `{"message": "FlowFolder validation failed: ..."}` | `name` or `flowType` missing, or `flowType` isn't `call` or `message`. These validation errors currently return `500`, not `400` |
+
+<RequestExample>
 ```json
 {
-  "name": "My Workflow Folder",
-  "color": "blue",
-  "icon": "folder",
-  "flowType": "call"
+  "name": "Inbound Flows",
+  "flowType": "call",
+  "color": "#3B82F6",
+  "icon": "folder"
 }
 ```
-
-### Example Response (201 Created)
+</RequestExample>
 
 <ResponseExample>
-```json
+```json 201
 {
-  "_id": "folder123",
-  "workspaceId": "workspace456",
-  "name": "My Workflow Folder",
+  "_id": "6720b3c4d5e6f7a8b9c0d1e2",
+  "workspaceId": "674a3edc2d89622daa9fcfd1",
+  "name": "Inbound Flows",
   "color": "#3B82F6",
   "icon": "folder",
   "flowType": "call",
-  "pathwayModel": "Flow",
   "pathways": [],
-  "createdAt": "2023-10-15T09:30:00Z",
-  "updatedAt": "2023-10-15T09:30:00Z"
+  "pathwayModel": "Pathway",
+  "createdAt": "2026-10-15T09:30:00.000Z",
+  "__v": 0
 }
 ```
 </ResponseExample>

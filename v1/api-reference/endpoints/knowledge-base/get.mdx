@@ -15,7 +15,7 @@ Workspace identifier for the API.
 The unique identifier of the knowledge base.
 </ParamField>
 
-## Response Fields
+## Response
 
 <ResponseField name="_id" type="string">
 Unique identifier for the knowledge base.
@@ -26,15 +26,63 @@ Name of the knowledge base.
 </ResponseField>
 
 <ResponseField name="description" type="string">
-Description of the knowledge base.
+Description of the knowledge base, if one was given.
 </ResponseField>
 
 <ResponseField name="workspaceId" type="string">
 Workspace ID associated with the knowledge base.
 </ResponseField>
 
+<ResponseField name="isSMB" type="boolean">
+`true` for a Basic knowledge base (the agent reads its text in full rather than searching an index), `false` for a standard one.
+</ResponseField>
+
 <ResponseField name="files" type="array">
-Array of files uploaded to the knowledge base.
+Uploaded files plus, if set, the text entry. At most 5 entries.
+
+<Expandable title="properties">
+
+<ResponseField name="_id" type="string">
+ID of the entry.
+</ResponseField>
+
+<ResponseField name="filename" type="string">
+File name, or the label of the text entry.
+</ResponseField>
+
+<ResponseField name="key" type="string">
+Storage key of the file.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+Storage location of the file. Empty for the text entry.
+</ResponseField>
+
+<ResponseField name="mimetype" type="string">
+MIME type. May be empty on older entries.
+</ResponseField>
+
+<ResponseField name="size" type="number">
+Size in bytes (characters for the text entry). `0` on older entries.
+</ResponseField>
+
+<ResponseField name="isText" type="boolean">
+`true` for the text entry set with [Add Text](/v1/api-reference/endpoints/knowledge-base/add-text).
+</ResponseField>
+
+<ResponseField name="uploadedAt" type="string">
+When the entry was added.
+</ResponseField>
+
+</Expandable>
+</ResponseField>
+
+<ResponseField name="textContent" type="string">
+The knowledge base's text, if any was set with Add Text.
+</ResponseField>
+
+<ResponseField name="usedInPathways" type="array">
+Legacy field, usually empty. Use [Get Knowledge Base Usage](/v1/api-reference/endpoints/knowledge-base/get-usage) to see which flows use the knowledge base.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -45,23 +93,36 @@ Timestamp when the knowledge base was created.
 Timestamp when the knowledge base was last updated.
 </ResponseField>
 
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `404` | `{"message": "Knowledge base not found"}` | No knowledge base with this ID in the workspace |
+| `500` | `{"message": "Failed to retrieve knowledge base"}` | Anything else, including a malformed ID |
+
 <ResponseExample>
 ```json
 {
   "_id": "665a1b2c3d4e5f6a7b8c9d0e",
   "name": "Product Documentation",
   "description": "All product-related documentation and FAQs",
-  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "isSMB": false,
   "files": [
     {
-      "name": "product-guide.pdf",
+      "_id": "665a1c0d3d4e5f6a7b8c9d11",
+      "filename": "product-guide.pdf",
+      "key": "workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/1761735600000-product-guide.pdf",
+      "url": "https://example-bucket.s3.amazonaws.com/workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/1761735600000-product-guide.pdf",
+      "mimetype": "application/pdf",
       "size": 1048576,
-      "type": "application/pdf",
-      "uploadedAt": "2024-06-01T10:00:00.000Z"
+      "isText": false,
+      "uploadedAt": "2026-10-29T10:00:00.000Z"
     }
   ],
-  "createdAt": "2024-06-01T09:00:00.000Z",
-  "updatedAt": "2024-06-01T10:00:00.000Z"
+  "usedInPathways": [],
+  "createdAt": "2026-10-29T09:00:00.000Z",
+  "updatedAt": "2026-10-29T10:00:00.000Z"
 }
 ```
 </ResponseExample>

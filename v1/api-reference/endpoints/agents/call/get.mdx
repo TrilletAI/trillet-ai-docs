@@ -22,8 +22,8 @@ description: "Retrieve the details of a single call agent based on its unique id
   "ttsModel": {
     "language": "en",
     "provider": "openai",
-    "voiceId": "example-voice-id-1",
-    "name": "ExampleVoice"
+    "voiceId": "alloy",
+    "name": "Alloy"
   },
   "_id": "example-agent-id-1",
   "workspaceId": "example-workspace-id-1",
@@ -32,9 +32,9 @@ description: "Retrieve the details of a single call agent based on its unique id
   "llmModel": "gpt-4o-mini",
   "type": "voice",
   "settings": {
-    "speed": 0.7,
+    "speed": 0,
     "volume": 1,
-    "temperature": 0.7
+    "temperature": 0.3
   },
   "status": "ready",
   "activeSessions": [],
@@ -95,19 +95,39 @@ description: "Retrieve the details of a single call agent based on its unique id
 </ResponseField>
 
 <ResponseField name="settings.speed" type="number">
-  Speed value for TTS narration (0 to 1).
+  Speaking speed. How it is applied depends on the voice provider; `0` means the provider's normal speed.
 </ResponseField>
 
 <ResponseField name="settings.volume" type="number">
-  Volume level for TTS (0 to 1).
+  Volume of the voice.
 </ResponseField>
 
 <ResponseField name="settings.temperature" type="number">
-  Temperature for LLM creativity (0 to 1).
+  Creativity of the language model, from 0 to 1.
 </ResponseField>
 
 <ResponseField name="status" type="string">
   The current status of the agent (e.g., `ready`).
+</ResponseField>
+
+<ResponseField name="phoneNumberIds" type="array">
+  The agent's phone numbers as full phone number objects (not IDs). A number that belongs to another workspace is cut down to its basic fields (`_id`, `phoneNumber`, `country`, `type`, `status`, `label`, `provider`, `isExternal`).
+</ResponseField>
+
+<ResponseField name="fallbackTtsModel" type="object | null">
+  Fallback voice, if one is set.
+</ResponseField>
+
+<ResponseField name="sttProvider" type="object | null">
+  Speech-to-text provider (`id`, `name`, `description`), if one is set.
+</ResponseField>
+
+<ResponseField name="fallbackSttProvider" type="object | null">
+  Fallback speech-to-text provider, if one is set.
+</ResponseField>
+
+<ResponseField name="fallbackLlmModel" type="string | null">
+  Fallback language model, if one is set.
 </ResponseField>
 
 <ResponseField name="activeSessions" type="array">
@@ -122,3 +142,10 @@ description: "Retrieve the details of a single call agent based on its unique id
   The timestamp when the agent was last updated.
 </ResponseField>
 
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `404` | `{"error": "Agent not found"}` | No agent with this ID in the workspace |
+| `500` | `{"error": "..."}` | Anything else, including a malformed `agentId` |

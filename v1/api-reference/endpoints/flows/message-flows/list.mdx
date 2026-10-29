@@ -34,8 +34,12 @@ Each object in the response array represents a message flow, containing the foll
   A brief description of what the message flow is designed to handle.
 </ResponseField>
 
-<ResponseField name="agent" type="string">
-  The identifier of the agent associated with this message flow.
+<ResponseField name="agent" type="object">
+  The message agent the flow uses, as a full agent object (use `agent._id` for its ID), or `null`.
+</ResponseField>
+
+<ResponseField name="folderId" type="object">
+  The folder the flow is in, as `{ _id, name, icon, color }`, or `null`.
 </ResponseField>
 
 <ResponseField name="settings" type="object">
@@ -51,11 +55,11 @@ Each object in the response array represents a message flow, containing the foll
 </ResponseField>
 
 <ResponseField name="autopilot" type="boolean">
-  Specifies whether autopilot is enabled, allowing the message flow to operate automatically.
+  Whether replies are sent automatically without approval. Separate from `isActive`.
 </ResponseField>
 
 <ResponseField name="messageChannel" type="string">
-  The type of communication channel used by the message flow, such as "SMS" or "Email".
+  The channel: `Twilio-SMS`, `Telnyx-SMS`, `Twilio-Email`, `Meta-Whatsapp`, `Meta-Facebook`, `Infobip-Whatsapp` or `Infobip-Facebook`.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -75,12 +79,13 @@ Each object in the response array represents a message flow, containing the foll
     "name": "SMS Flow #1",
     "direction": "bidirectional",
     "description": "Example #1",
-    "agent": "exampleAgentId1",
+    "agent": { "_id": "6874de297dc4243af17334c0", "name": "SMS Agent" },
+    "folderId": null,
     "settings": {},
     "prompt": "Short prompt for AI",
     "isActive": true,
     "autopilot": false,
-    "messageChannel": "SMS",
+    "messageChannel": "Twilio-SMS",
     "createdAt": "2025-01-02T10:15:00Z",
     "updatedAt": "2025-01-02T10:30:00Z"
   },
@@ -90,12 +95,13 @@ Each object in the response array represents a message flow, containing the foll
     "name": "Email Nurture Flow",
     "direction": "outbound",
     "description": "Send follow-up emails to leads",
-    "agent": "exampleAgentId2",
+    "agent": { "_id": "6874de297dc4243af17334c0", "name": "SMS Agent" },
+    "folderId": null,
     "settings": {},
     "prompt": "You are an email follow-up AI.",
     "isActive": false,
     "autopilot": false,
-    "messageChannel": "Email",
+    "messageChannel": "Twilio-Email",
     "createdAt": "2025-01-03T11:00:00Z",
     "updatedAt": "2025-01-03T11:15:00Z"
   }

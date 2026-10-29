@@ -4,6 +4,8 @@ api: "PUT /v1/api/agents/{agentId}"
 description: "Update an existing agent"
 ---
 
+Send only the fields you want to change. Objects such as `ttsModel` and `settings` are merged into what is stored; arrays such as `gapBetweenEachAttemptForSmartCallback` and `phoneNumberIds` replace the stored array.
+
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
@@ -33,14 +35,11 @@ Text-to-Speech configuration updates.
 <Expandable title="Voice Settings">
 
 <ParamField body="provider" type="string" required>
-The text-to-speech provider. Must be one of: openai, rime, elevenlabs, 11labs_byo, google.
+The text-to-speech provider. One of `rime`, `openai`, `openai-live`, `elevenlabs`, `11labs_byo`, `cartesia`, `cartesia_byo`, `google`, `gemini-3.8-flash`, `gemini-3.8-flash-lite`, `azure`, `hume`, `xai`, `grok`, `deepgram`, `fish`. Custom voices from the [Voices API](/v1/api-reference/endpoints/voices/create) use `cartesia`. See [Create Call Agent](/v1/api-reference/endpoints/agents/call/create) for the other `ttsModel` fields (`rimeModel`, `elevenLabsModel`, BYO key and secret-name fields) and for `fallbackTtsModel`, `sttProvider`, `fallbackSttProvider` and `fallbackLlmModel`, which can also be updated.
 </ParamField>
 
 <ParamField body="voiceId" type="string">
-The voice ID used for generating speech. e.g for Trillet Voices,
-"mistv2_Wildflower" - Alt Female, Smart
-"mistv2_Brook" - Male, Friendly
-"mistv2_Violet" - Female, Professional
+The voice to speak with. Take it from the `voiceId` field of [Search Voices](/v1/api-reference/endpoints/voices/search) rather than hardcoding one. Trillet Voices (provider `rime`) look like `mistv3_wildflower`, `mistv3_brook` or `mistv3_violet`; send the matching `rimeModel` (for example `mistv3`) with them.
 </ParamField>
 
 <ParamField body="language" type="string">
@@ -79,7 +78,7 @@ Number of hours to wait before the next attempt.
 </ParamField>
 
 <ParamField body="phoneNumberIds" type="array">
-Array of phone number IDs to associate with the agent.
+Replaces the agent's list of phone number IDs. Every new ID must be a number in this workspace, otherwise the request fails with `400`. This only edits the list: it doesn't route calls or set up the number. To put a number on the agent, use [Assign Phone Number to Agent](/v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber) and [Unassign Phone Number from Agent](/v1/api-reference/endpoints/telephony/unbind-call-to-phoneNumber) instead.
 </ParamField>
 
 <ParamField body="settings" type="object">
@@ -88,15 +87,15 @@ Additional settings for the agent.
 <Expandable title="properties">
 
 <ParamField body="speed" type="number">
-Value between 0 and 1 that determines how fast the TTS narrates text.
+Speaking speed. How the value is applied depends on the voice provider. `0` keeps the provider's normal speed.
 </ParamField>
 
 <ParamField body="volume" type="number">
-Value between 0 and 1 that adjusts the TTS volume.
+Volume of the voice. The dashboard uses `1`.
 </ParamField>
 
 <ParamField body="temperature" type="number">
-Value between 0 and 1 for controlling the creativity of the LLM.
+Creativity of the language model, from 0 to 1. The dashboard uses `0.3`.
 </ParamField>
 
 </Expandable>
@@ -204,33 +203,70 @@ Timestamp when the agent was created.
 Timestamp when the agent was last updated.
 </ResponseField>
 
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `400` | `{"message", "code": "LLM_MODEL_INVALID"}` | A changed `llmModel` or `fallbackLlmModel` isn't an available model, or is the retired `trillet-llm` |
+| `400` | `{"error", "code"}` | `phoneNumberIds` names a number from another workspace |
+| `500` | `{"error": "Agent not found or does not belong to the workspace"}` | No agent with this ID in the workspace. This is currently a `500`, not a `404` |
+| `500` | `{"error": "..."}` | Anything else, including a `provider` outside the allowed list |
+
+<RequestExample>
+```json
+{
+  "name": "Updated Customer Support Agent",
+  "llmModel": "platform-llm",
+  "ttsModel": {
+    "provider": "rime",
+    "voiceId": "mistv3_brook",
+    "name": "Brook",
+    "rimeModel": "mistv3"
+  },
+  "smartCallback": true,
+  "gapBetweenEachAttemptForSmartCallback": [
+    { "days": 1, "hours": 0 },
+    { "days": 1, "hours": 12 },
+    { "days": 2, "hours": 0 }
+  ],
+  "settings": {
+    "temperature": 0.4
+  }
+}
+```
+</RequestExample>
+
 <ResponseExample>
 
 ```json
 {
+  "_id": "6a1f0c2b9d4e8a0012ab34cd",
+  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "userId": "6612a0b1c2d3e4f5a6b7c8d9",
   "name": "Updated Customer Support Agent",
-  "llmModel": "claude-haiku-4-5",
   "ttsModel": {
-    "provider": "11labs_byo",
-    "voiceId": "21m00Tcm4TlvDq8ikWAM",
-    "name": "Premium Voice",
+    "provider": "rime",
+    "voiceId": "mistv3_brook",
+    "name": "Brook",
     "language": "en",
-    "elevenLabsApiKey": "your-new-elevenlabs-api-key"
+    "rimeModel": "mistv3"
   },
+  "llmModel": "platform-llm",
   "smartCallback": true,
   "maxAttemptsForSmartCallback": 5,
   "gapBetweenEachAttemptForSmartCallback": [
     { "days": 1, "hours": 0 },
     { "days": 1, "hours": 12 },
-    { "days": 2, "hours": 0 },
-    { "days": 3, "hours": 0 },
-    { "days": 7, "hours": 0 }
+    { "days": 2, "hours": 0 }
   ],
-  "settings": {
-    "speed": 0.9,
-    "volume": 0.8,
-    "temperature": 0.6
-  }
+  "type": "voice",
+  "settings": { "speed": 0, "volume": 1, "temperature": 0.4 },
+  "status": "ready",
+  "phoneNumberIds": [],
+  "activeSessions": [],
+  "createdAt": "2026-10-29T10:00:00.000Z",
+  "updatedAt": "2026-10-29T11:30:00.000Z"
 }
 ```
 </ResponseExample>
