@@ -4,7 +4,7 @@ sidebarTitle: "Inbound call webhook"
 description: "Use the inbound call webhook to look up the caller before your AI agent answers and pass details such as their name or order status into the prompt."
 ---
 
-The inbound call webhook lets your system look up the caller before your AI agent answers. When a call comes in, Trillet sends a `GET` request to your URL with the caller's phone number, and the `variables` your endpoint returns are filled into the agent's prompt and welcome message. In the call flow settings it is labelled **Pre Call Webhook URL (Inbound Call Webhook URL)**. Web calls to the same call flow use it too.
+The inbound call webhook lets your system look up the caller before your AI agent answers. When a call comes in, Trillet sends a `GET` request to your URL with the caller's phone number, and the `variables` your endpoint returns are filled into the agent's prompt and welcome message. In the call flow editor it is the **Pre-call webhook**, under **Settings > Advanced Settings > Data & Events > Webhooks**. Web calls to the same call flow use it too.
 
 ## How the request is sent
 
@@ -19,7 +19,7 @@ Before you begin, make sure you have:
 
 
 ## Configure Webhook Settings
-To get started, set up your webhook URL, headers, and query parameters.
+To get started, open your call flow, go to **Settings > Advanced Settings > Data & Events > Webhooks**, expand **Pre-call webhook**, and set up your webhook URL, headers, and query parameters. Publish the call flow afterwards: live calls use the published version.
 - Enter your webhook URL
 - Add your API authentication details, such as bearer tokens or API keys.
 - Include any dynamic parameters you wish to pass, such as customer_name and order_status.

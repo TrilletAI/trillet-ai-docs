@@ -16,47 +16,70 @@ description: "Create a new message flow with full settings."
   The name of this message flow (e.g., "New Years Sale").
 </ParamField>
 
-<ParamField body="direction" type="string" required>
-  Direction of the flow. Possible values: "inbound" "outbound" "bidirectional".
+<ParamField body="direction" type="string">
+  Direction of the flow: `inbound`, `outbound` or `bidirectional`. Defaults to `bidirectional`.
 </ParamField>
 
 <ParamField body="description" type="string">
   Short description (e.g., "Handles customer support inquiries via SMS").
 </ParamField>
 
-<ParamField body="agent" type="string" required>
-  ID of the OmniFlowAgent to associate with this flow.
+<ParamField body="messageChannel" type="string" required>
+  The channel the flow sends and receives on. One of:
+
+  - `Twilio-SMS`
+  - `Telnyx-SMS`
+  - `Twilio-Email`
+  - `Meta-Whatsapp`
+  - `Meta-Facebook`
+  - `Infobip-Whatsapp`
+  - `Infobip-Facebook`
+
+  The value is case-sensitive. Any other value, including `"SMS"` or `"Email"`, fails validation and the response is `500` `{"message": "Error creating pathway"}`.
 </ParamField>
 
-<ParamField body="settings" type="object">
-  Full configuration object. This can include:
+<ParamField body="agent" type="string">
+  ID of the message agent (omni-flow agent) the flow uses. Message agents are created in the dashboard; there is no public API page for them yet.
+</ParamField>
+
+<ParamField body="settings" type="object" required>
+  The flow's settings. **Required**: leave it out and the request fails with `500`. Send `{}` for none.
+
+  The object you send is stored as the flow's settings; it is not merged with defaults, so send every setting you want the flow to have.
   <Expandable title="settings">
     <ParamField body="responseSettings" type="object">
       <Expandable title="responseSettings">
         <ParamField body="delay" type="number">
           Delay (in seconds) before responding.
         </ParamField>
-        <ParamField body="enabled" type="boolean">
-          Whether working hours logic is enabled.
+        <ParamField body="allowUnknownReplies" type="boolean">
+          Whether the flow replies to someone who messages it without an existing conversation. When `false`, the message is recorded in a new conversation but not answered.
         </ParamField>
-        <ParamField body="start" type="string">
-          Start time for working hours (e.g., "09:00").
-        </ParamField>
-        <ParamField body="end" type="string">
-          End time for working hours (e.g., "17:00").
-        </ParamField>
-        <ParamField body="timezone" type="string">
-          Timezone (e.g., "UTC").
-        </ParamField>
-        <ParamField body="outOfHoursMessage" type="string">
-          Automated reply for out-of-hours messages.
+        <ParamField body="workingHours" type="object">
+          <Expandable title="workingHours">
+            <ParamField body="enabled" type="boolean">
+              Whether working hours are enforced.
+            </ParamField>
+            <ParamField body="start" type="string">
+              Start time, as `HHMM` (e.g., `"0900"`).
+            </ParamField>
+            <ParamField body="end" type="string">
+              End time, as `HHMM` (e.g., `"1700"`).
+            </ParamField>
+            <ParamField body="timezone" type="string">
+              Timezone (e.g., `"UTC"`).
+            </ParamField>
+            <ParamField body="outOfHoursMessage" type="string">
+              Automated reply for out-of-hours messages.
+            </ParamField>
+          </Expandable>
         </ParamField>
       </Expandable>
     </ParamField>
     <ParamField body="security" type="object">
       <Expandable title="security">
-        <ParamField body="hipaaCompliance" type="boolean">
-          Whether HIPAA compliance is required.
+        <ParamField body="securityOptOut" type="boolean">
+          Sets HIPAA mode. Despite its name, `true` turns HIPAA mode **on** (`settings.security.hipaaCompliance: true`); leave it out or send `false` for off. A `hipaaCompliance` you send here is ignored and replaced by this value.
         </ParamField>
       </Expandable>
     </ParamField>
@@ -70,31 +93,31 @@ description: "Create a new message flow with full settings."
         </ParamField>
       </Expandable>
     </ParamField>
+    <ParamField body="knowledgeBases" type="array">
+      IDs of knowledge bases the flow can use.
+    </ParamField>
   </Expandable>
 </ParamField>
 
-<ParamField body="initiationMessage" type="string" required>
-  The first message that triggers the message flow. This field is essential for
-  the generateMessage functionality.
+<ParamField body="initiationMessage" type="string">
+  The first message the flow sends when it starts a conversation, used by Generate Message.
 </ParamField>
 
-<ParamField body="prompt" type="string" required>
+<ParamField body="prompt" type="string">
   A system prompt or instructions for the AI agent.
 </ParamField>
 
 <ParamField body="isActive" type="boolean">
-  Enable or disable autopilot for this flow (default false).
+  Whether the flow is active. Defaults to `true`.
 </ParamField>
 
 <ParamField body="autopilot" type="boolean">
-  Enable or disable autopilot for this flow (default false).
-</ParamField>
-
-<ParamField body="messageChannel" type="string" required>
-  Channel type: "SMS" or "Email".
+  Whether replies are sent automatically without approval. Defaults to `false`.
 </ParamField>
 
 ### Response Fields
+
+`201 Created` with the new message flow.
 
 <ResponseField name="_id" type="string">
   The unique identifier for the newly created message flow.
@@ -109,7 +132,7 @@ description: "Create a new message flow with full settings."
 </ResponseField>
 
 <ResponseField name="direction" type="string">
-  The direction of the message flow; possible values include "inbound", "outbound", or "bidirectional".
+  `inbound`, `outbound` or `bidirectional`.
 </ResponseField>
 
 <ResponseField name="description" type="string">
@@ -117,7 +140,7 @@ description: "Create a new message flow with full settings."
 </ResponseField>
 
 <ResponseField name="agent" type="string">
-  The identifier of the agent associated with this message flow.
+  The ID of the message agent associated with this message flow, or absent.
 </ResponseField>
 
 <ResponseField name="settings" type="object">
@@ -145,10 +168,11 @@ description: "Create a new message flow with full settings."
         The message delivered outside of working hours.
       </ResponseField>
     </ResponseField>
-    <ResponseField name="security" type="object">
+  </ResponseField>
+  <ResponseField name="security" type="object">
       Security settings for the message flow.
       <ResponseField name="hipaaCompliance" type="boolean">
-        Indicates if HIPAA compliance is enforced.
+        Whether HIPAA mode is on, set from `securityOptOut`.
       </ResponseField>
     </ResponseField>
     <ResponseField name="emailSettings" type="object">
@@ -160,7 +184,6 @@ description: "Create a new message flow with full settings."
         The signature appended to email messages.
       </ResponseField>
     </ResponseField>
-  </ResponseField>
 </ResponseField>
 
 <ResponseField name="prompt" type="string">
@@ -180,7 +203,7 @@ description: "Create a new message flow with full settings."
 </ResponseField>
 
 <ResponseField name="messageChannel" type="string">
-  The communication channel used by the message flow, such as "SMS" or "Email".
+  The channel, for example `Twilio-SMS`.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -192,22 +215,49 @@ description: "Create a new message flow with full settings."
 </ResponseField>
 
 
-<ResponseExample>
+<RequestExample>
 ```json
 {
-  "_id": "messageFlowId",
-  "workspaceId": "workspaceIdExample",
   "name": "Customer Engagement Campaign",
   "direction": "bidirectional",
-  "description": "Manages interactions for promotional events via SMS",
-  "agent": "agentUniqueId",
+  "messageChannel": "Twilio-SMS",
+  "agent": "6874de297dc4243af17334c0",
+  "prompt": "You are a supportive assistant managing event inquiries.",
+  "initiationMessage": "Welcome to our service! How can we assist you today?",
+  "autopilot": true,
   "settings": {
     "responseSettings": {
       "delay": 0,
       "workingHours": {
         "enabled": false,
-        "start": "09:00",
-        "end": "17:00",
+        "start": "0900",
+        "end": "1700",
+        "timezone": "UTC",
+        "outOfHoursMessage": ""
+      }
+    },
+    "security": { "securityOptOut": false }
+  }
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "_id": "6874de297dc4243af17334cb",
+  "workspaceId": "6764d172953253138a3a70f4",
+  "name": "Customer Engagement Campaign",
+  "direction": "bidirectional",
+  "description": "Manages interactions for promotional events via SMS",
+  "agent": "6874de297dc4243af17334c0",
+  "settings": {
+    "responseSettings": {
+      "delay": 0,
+      "workingHours": {
+        "enabled": false,
+        "start": "0900",
+        "end": "1700",
         "timezone": "UTC",
         "outOfHoursMessage": ""
       }
@@ -224,7 +274,7 @@ description: "Create a new message flow with full settings."
   "initiationMessage": "Welcome to our service! How can we assist you today?",
   "isActive": true,
   "autopilot": true,
-  "messageChannel": "SMS",
+  "messageChannel": "Twilio-SMS",
   "createdAt": "2025-01-02T10:15:00Z",
   "updatedAt": "2025-01-02T10:15:00Z"
 }

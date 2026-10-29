@@ -1,8 +1,14 @@
 ---
 title: "Delete Knowledge Base"
 api: "DELETE /v1/api/knowledgebase/{id}"
-description: "Delete a knowledge base and all its associated files."
+description: "Delete a knowledge base and detach it from every flow that uses it."
 ---
+
+The knowledge base is soft-deleted: it disappears from the API and the dashboard straight away, and it is removed from the settings of every call flow and message flow that used it, so agents stop searching it.
+
+<Warning>
+Deleting a knowledge base does **not** erase its uploaded files or search index. They are kept so support can restore the knowledge base. If you need the content itself removed, contact support.
+</Warning>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -15,21 +21,14 @@ Workspace identifier for the API.
 The unique identifier of the knowledge base to delete.
 </ParamField>
 
-## Response Fields
+## Response
 
-<ResponseField name="success" type="boolean">
-Whether the deletion was successful.
-</ResponseField>
+`204 No Content`, with no body.
 
-<ResponseField name="message" type="string">
-Confirmation message.
-</ResponseField>
+## Errors
 
-<ResponseExample>
-```json
-{
-  "success": true,
-  "message": "Knowledge base deleted successfully"
-}
-```
-</ResponseExample>
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "X-Workspace-ID header is required"}` | No `x-workspace-id` |
+| `500` | `{"message": "Knowledge base not found or not accessible in this workspace."}` | No knowledge base with this ID in the workspace, including one already deleted. This is currently a `500`, not a `404` |
+| `500` | `{"message": "..."}` | Anything else |

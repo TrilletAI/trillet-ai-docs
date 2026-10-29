@@ -4,6 +4,8 @@ api: "POST /v1/api/knowledgebase"
 description: "Create a new knowledge base in your workspace."
 ---
 
+Creates an empty knowledge base. Add content with [Upload File](/v1/api-reference/endpoints/knowledge-base/upload-file) or [Add Text](/v1/api-reference/endpoints/knowledge-base/add-text), then attach it to a call flow through the flow's `settings.knowledgeBases`.
+
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
@@ -19,27 +21,21 @@ Name of the knowledge base.
 Description of the knowledge base.
 </ParamField>
 
-## Response Fields
+<ParamField body="isSMB" type="boolean" default="false">
+`true` creates a Basic knowledge base, meant for text set with Add Text. The agent reads that text in full instead of searching an index. A call flow can have at most one Basic knowledge base attached; attaching a second fails with `400` on the call flow update.
+</ParamField>
 
-<ResponseField name="_id" type="string">
-Unique identifier for the newly created knowledge base.
-</ResponseField>
+## Response
 
-<ResponseField name="name" type="string">
-Name of the knowledge base.
-</ResponseField>
+`201` with the new knowledge base, in the same shape as [Get Knowledge Base](/v1/api-reference/endpoints/knowledge-base/get). `files` is empty.
 
-<ResponseField name="description" type="string">
-Description of the knowledge base.
-</ResponseField>
+## Errors
 
-<ResponseField name="workspaceId" type="string">
-Workspace ID associated with the knowledge base.
-</ResponseField>
-
-<ResponseField name="createdAt" type="string">
-Timestamp when the knowledge base was created.
-</ResponseField>
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "X-Workspace-ID header is required"}` | No `x-workspace-id` |
+| `400` | `{"message": "Knowledge base name is required."}` | `name` is missing or empty |
+| `500` | `{"message": "..."}` | Anything else |
 
 <ResponseExample>
 ```json
@@ -47,10 +43,12 @@ Timestamp when the knowledge base was created.
   "_id": "665a1b2c3d4e5f6a7b8c9d0e",
   "name": "Product Documentation",
   "description": "All product-related documentation and FAQs",
-  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "isSMB": false,
   "files": [],
-  "createdAt": "2024-06-01T09:00:00.000Z",
-  "updatedAt": "2024-06-01T09:00:00.000Z"
+  "usedInPathways": [],
+  "createdAt": "2026-10-29T09:00:00.000Z",
+  "updatedAt": "2026-10-29T09:00:00.000Z"
 }
 ```
 </ResponseExample>

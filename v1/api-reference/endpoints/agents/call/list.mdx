@@ -4,6 +4,8 @@ api: "GET /v1/api/agents"
 description: "Retrieve a list of all call agents with all their details."
 ---
 
+Returns a plain array of every agent in the workspace, newest first, including agents whose call flow is archived. There is no pagination. Each item also carries a summary of the call flow that uses it (`flowName`, `pathway`, `flowIsLive` and so on), so filter on `flowIsLive` to find agents that can take calls.
+
 ### Headers  
 
 <ParamField header="x-workspace-id" type="string" required>
@@ -17,8 +19,8 @@ description: "Retrieve a list of all call agents with all their details."
     "ttsModel": {
       "language": "en",
       "provider": "openai",
-      "voiceId": "example-voice-id-1",
-      "name": "ExampleVoice"
+      "voiceId": "alloy",
+      "name": "Alloy"
     },
     "_id": "example-agent-id-1",
     "workspaceId": "example-workspace-id-1",
@@ -27,9 +29,9 @@ description: "Retrieve a list of all call agents with all their details."
     "llmModel": "gpt-4o-mini",
     "type": "voice",
     "settings": {
-      "speed": 0.7,
+      "speed": 0,
       "volume": 1,
-      "temperature": 0.7
+      "temperature": 0.3
     },
     "status": "ready",
     "activeSessions": [],
@@ -127,19 +129,63 @@ description: "Retrieve a list of all call agents with all their details."
 </ResponseField>
 
 <ResponseField name="settings.speed" type="number">
-  Speed value for TTS narration (0 to 1).
+  Speaking speed. How it is applied depends on the voice provider; `0` means the provider's normal speed.
 </ResponseField>
 
 <ResponseField name="settings.volume" type="number">
-  Volume level for TTS (0 to 1).
+  Volume of the voice.
 </ResponseField>
 
 <ResponseField name="settings.temperature" type="number">
-  Temperature for LLM creativity (0 to 1).
+  Creativity of the language model, from 0 to 1.
 </ResponseField>
 
 <ResponseField name="status" type="string">
   The current status of the agent (e.g., `ready`).
+</ResponseField>
+
+<ResponseField name="phoneNumberIds" type="array">
+  The agent's phone numbers as full phone number objects (not IDs). A number that belongs to another workspace is cut down to its basic fields (`_id`, `phoneNumber`, `country`, `type`, `status`, `label`, `provider`, `isExternal`).
+</ResponseField>
+
+<ResponseField name="fallbackTtsModel" type="object | null">
+  Fallback voice, if one is set.
+</ResponseField>
+
+<ResponseField name="sttProvider" type="object | null">
+  Speech-to-text provider (`id`, `name`, `description`), if one is set.
+</ResponseField>
+
+<ResponseField name="fallbackSttProvider" type="object | null">
+  Fallback speech-to-text provider, if one is set.
+</ResponseField>
+
+<ResponseField name="fallbackLlmModel" type="string | null">
+  Fallback language model, if one is set.
+</ResponseField>
+
+<ResponseField name="flowName" type="string | null">
+  Name of the call flow that uses this agent, or `null` if none does.
+</ResponseField>
+
+<ResponseField name="pathway" type="string | null">
+  ID of that call flow.
+</ResponseField>
+
+<ResponseField name="flowDirection" type="string | null">
+  Direction of that call flow: `outbound` or `bidirectional`.
+</ResponseField>
+
+<ResponseField name="flowIsLive" type="boolean">
+  Whether a number given to this agent would take calls. `false` when the agent has no call flow, or its flow is archived or inactive.
+</ResponseField>
+
+<ResponseField name="flowArchivedAt" type="string | null">
+  When the call flow was archived, or `null`.
+</ResponseField>
+
+<ResponseField name="hipaaCompliance" type="boolean">
+  Whether the agent's call flow has HIPAA mode on.
 </ResponseField>
 
 <ResponseField name="activeSessions" type="array">

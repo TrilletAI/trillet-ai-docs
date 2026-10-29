@@ -1,41 +1,49 @@
 ---
 title: "Delete Conversation"
 api: "DELETE /v1/api/conversations/{conversationId}"
-description: "Delete a conversation from the database."
+description: "Permanently delete a conversation and its messages."
 ---
 
+The conversation is hard-deleted and can't be recovered. Only conversations whose message flow is in this workspace can be deleted.
 
-### Headers  
-
+### Headers
 <ParamField header="x-workspace-id" type="string" required>
   Workspace identifier for the API.
 </ParamField>
 
 ### Path Parameters
 <ParamField path="conversationId" type="string" required>
-  The Conversation ID of the conversation you want to delete.
+  The `_id` of the conversation to delete.
 </ParamField>
 
 ### Response Fields
 
 <ResponseField name="status" type="string">
-  The status of the call.
+  `success`.
 </ResponseField>
 
 <ResponseField name="message" type="string">
-  A message to describe the result.
+  A description of the result.
 </ResponseField>
 
 <ResponseField name="conversationId" type="string">
-  The deleted conversationId.
+  The ID of the deleted conversation.
 </ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `500` | `{"error": "Conversation not found"}` | No conversation with that ID. This currently returns `500`, not `404` |
+| `500` | `{"error": "Message flow not found in this workspace"}` | The conversation's message flow is in another workspace |
 
 <ResponseExample>
 ```json
 {
-"status": "success",
-"message": `Conversation with ID abc1234aa deleted successfully.`,
-"conversationId": abc1234aa,
+  "status": "success",
+  "message": "Conversation with ID 675c8e368824aa5f130b94d6 deleted successfully.",
+  "conversationId": "675c8e368824aa5f130b94d6"
 }
 ```
 </ResponseExample>

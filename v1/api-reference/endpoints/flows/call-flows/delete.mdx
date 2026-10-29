@@ -1,7 +1,7 @@
 ---
 title: "Delete Call Flow"
 api: "DELETE /v1/api/call-flows/{id}"
-description: "Permanently remove a call flow."
+description: "Delete a call flow and its agent, and free its phone numbers."
 ---
 
 ### Headers  
@@ -15,6 +15,24 @@ description: "Permanently remove a call flow."
 <ParamField path="id" type="string" required>
   The unique ID of the call flow to delete.
 </ParamField>
+
+### What happens
+
+In one step, the endpoint:
+
+- marks the call flow as deleted, so it no longer appears in the API or the dashboard;
+- marks the flow's agent as deleted too;
+- unassigns every phone number the flow held. The numbers stay in your workspace (they are not released or cancelled), but their per-flow configuration (recording, office hours, transfer caller ID) is reset, and they take no calls until you assign them to another agent.
+
+The flow and agent are soft-deleted: the records are kept and can be recovered by Trillet support. To take a flow out of service without deleting it, archive it in the dashboard instead.
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
+| `404` | `{"message": "Flow not found"}` | No flow with that ID in this workspace |
+| `500` | `{"message": "Error deleting flow"}` | Anything else, including a malformed ID |
 
 <ResponseExample>
 ```json 

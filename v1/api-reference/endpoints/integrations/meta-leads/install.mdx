@@ -1,24 +1,42 @@
 ---
 title: "Install Meta Lead Ads"
 api: "GET /v1/api/meta-lead/auth/install"
-description: "Get the Meta OAuth authorization URL to connect Meta Lead Ads for automatic lead calling."
+description: "Get the Meta OAuth authorization URL to connect Meta Lead Ads to a call flow for automatic lead calling."
 ---
+
+Open the returned URL in a browser and approve access. Meta then redirects back to Trillet, which saves the Facebook user token on the call flow. After that, call [Configure Meta Lead Ads](/v1/api-reference/endpoints/integrations/meta-leads/configure) to choose which pages and lead forms trigger calls.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+Workspace identifier for the API. The call flow must belong to this workspace (or one of its sub-workspaces).
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="pathwayId" type="string" required>
+The `_id` of a saved call flow to connect Meta Lead Ads to.
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="url" type="string">
-The Meta OAuth authorization URL. Redirect the user to this URL to authorize the Meta Lead Ads connection.
+The Meta OAuth authorization URL (Graph API v21.0). Redirect the user to this URL to authorize the connection.
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "pathwayId is required"}` | No `pathwayId` |
+| `400` | `{"error": "Flow must be saved before connecting Meta. Please save your flow first."}` | `pathwayId` isn't a valid ID |
+| `403` | `{"error": "You do not have access to this workspace."}` | You aren't a member of the `x-workspace-id` workspace |
+| `403` | `{"error": "Pathway does not belong to this workspace."}` | The flow belongs to another workspace |
+| `404` | `{"error": "Pathway not found"}` | No call flow with that ID |
 
 <ResponseExample>
 ```json
 {
-  "url": "https://www.facebook.com/v18.0/dialog/oauth?client_id=...&redirect_uri=...&scope=...&state=..."
+  "url": "https://www.facebook.com/v21.0/dialog/oauth?client_id=...&redirect_uri=...&scope=...&state=..."
 }
 ```
 </ResponseExample>

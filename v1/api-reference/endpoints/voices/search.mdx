@@ -36,69 +36,95 @@ Filter by use case (e.g., "conversational", "narration").
 </ParamField>
 
 <ParamField query="provider" type="string">
-Filter by provider (e.g., "rime", "elevenlabs", "hume", "cartesia").
+Only search one provider, for example `rime`, `elevenlabs`, `openai`, `openai-live`, `hume`, `cartesia` or `fish`. Aliases are accepted: `trillet` for `rime`, `11labs` for `elevenlabs`, `gpt-live` for `openai-live`. Without it, every provider's catalog is searched, which is slower because most catalogs are fetched live.
 </ParamField>
 
-## Response Fields
+All filters are optional and case-insensitive. `name` also matches a voice's exact `id`; the other text filters match part of the value.
 
-<ResponseField name="voices" type="array">
-Array of matching voice objects.
+## Response
 
-<ResponseField name="_id" type="string">
-Unique identifier for the voice.
+A plain array of matching voices. Fields vary by provider; these are the ones every result has, plus what Rime (Trillet Voices) returns.
+
+<ResponseField name="voiceId" type="string">
+The value to store as `ttsModel.voiceId` on a [call agent](/v1/api-reference/endpoints/agents/call/create). Same as `id`.
+</ResponseField>
+
+<ResponseField name="id" type="string">
+The provider's voice ID.
 </ResponseField>
 
 <ResponseField name="name" type="string">
 Display name of the voice.
 </ResponseField>
 
-<ResponseField name="voiceId" type="string">
-Voice ID used in TTS configuration.
-</ResponseField>
-
 <ResponseField name="provider" type="string">
-TTS provider for this voice.
+TTS provider for this voice. Use it as `ttsModel.provider`.
 </ResponseField>
 
 <ResponseField name="gender" type="string">
-Gender of the voice.
+Gender of the voice, where the provider reports one.
 </ResponseField>
 
 <ResponseField name="accent" type="string">
-Accent of the voice.
+Accent of the voice, where the provider reports one.
+</ResponseField>
+
+<ResponseField name="language" type="string">
+Language code of the voice.
 </ResponseField>
 
 <ResponseField name="description" type="string">
 Description of the voice characteristics.
 </ResponseField>
 
-<ResponseField name="previewUrl" type="string">
-URL to a voice preview audio sample.
+<ResponseField name="tags" type="string[]">
+Descriptive tags (Rime).
 </ResponseField>
 
+<ResponseField name="rimeModel" type="string">
+Rime only. The model to store as `ttsModel.rimeModel` together with this `voiceId`.
+</ResponseField>
+
+<ResponseField name="compatibleModels" type="string[]">
+Rime only. Every Rime model this voice runs on.
+</ResponseField>
+
+<ResponseField name="settings" type="object">
+Rime only. Suggested `speed`, `volume` and `temperature` for the voice.
 </ResponseField>
 
 <ResponseExample>
 ```json
 [
   {
-    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+    "id": "mistv3_wildflower",
+    "voiceId": "mistv3_wildflower",
     "name": "Wildflower",
-    "voiceId": "mistv2_Wildflower",
     "provider": "rime",
-    "gender": "female",
-    "accent": "american",
     "description": "Alt Female, Smart",
-    "previewUrl": "https://example.com/preview.mp3"
+    "language": "en",
+    "gender": "Female",
+    "accent": "american",
+    "tags": ["smart"],
+    "model": "mistv3",
+    "compatibleModels": ["mistv3"],
+    "rimeModel": "mistv3",
+    "settings": { "speed": 1.06, "volume": 1, "temperature": 0.7 }
   },
   {
-    "_id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "id": "mistv3_brook",
+    "voiceId": "mistv3_brook",
     "name": "Brook",
-    "voiceId": "mistv2_Brook",
     "provider": "rime",
-    "gender": "male",
+    "description": "Male, Friendly",
+    "language": "en",
+    "gender": "Male",
     "accent": "american",
-    "description": "Male, Friendly"
+    "tags": ["confident", "soothing"],
+    "model": "mistv3",
+    "compatibleModels": ["mistv3"],
+    "rimeModel": "mistv3",
+    "settings": { "speed": 0.98, "volume": 1, "temperature": 0.7 }
   }
 ]
 ```

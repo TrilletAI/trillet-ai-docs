@@ -1,8 +1,12 @@
 ---
 title: "Assign Phone Number to Agent"
 api: "POST /v1/api/agents/{agentId}/bind/{phoneNumberId}"
-description: "Assign a specific phone number to an agent's call flow, configure recording options, office hours, metadata, and automatically update SIP trunks."
+description: "Assign a phone number to an agent's call flow, set recording, office hours and metadata, and configure the SIP trunks."
 ---
+
+This is how a number gets attached to an agent: [Create Call Agent](/v1/api-reference/endpoints/agents/call/create) ignores `phoneNumberIds`. The agent must already belong to a live call flow. If the number was on another agent, it is moved to this one.
+
+Requires the `agent:edit` permission.
 
 ### Path Parameters
 
@@ -11,7 +15,7 @@ description: "Assign a specific phone number to an agent's call flow, configure 
 </ParamField>
 
 <ParamField path="phoneNumberId" type="string" required>
-  The ID of the phone number to bind.
+  The `_id` of the phone number to bind, from [List Phone Numbers](/v1/api-reference/endpoints/phone-numbers/list). It must belong to this workspace.
 </ParamField>
 
 ### Headers
@@ -22,24 +26,38 @@ description: "Assign a specific phone number to an agent's call flow, configure 
 
 ### Request Body
 
+A JSON body is required. Send `{}` if you don't want to set anything.
+
 <ParamField body="recordCalls" type="boolean" optional>
-  Whether calls should be recorded. When enabled, updates Twilio trunk recording settings (`record-from-ringing`).  
-  Default: `false`.
+  Whether calls on this number are recorded. Left out, the current setting is kept.
 </ParamField>
 
 <ParamField body="recordingPublic" type="boolean" optional>
-  Whether recordings are publicly accessible.  
-  Default: `false`.
+  Whether recordings are publicly accessible. Left out, the current setting is kept.
 </ParamField>
 
 <ParamField body="officeHours" type="object" optional>
-  Custom office hours configuration for the phone number (stored with the binding).  
-  Example: `{ "monday": ["09:00-17:00"], "tuesday": [] }`.
+  Office hours for the number, in the same shape as [Update Phone Number Configuration](/v1/api-reference/endpoints/phone-numbers/update-config): `enabled`, `start` and `end` (`HH:MM`), `timezone` (IANA), `allowedDays` (`Mon` to `Sun`) and `blockedDates`. Left out, the stored office hours are kept.
 </ParamField>
 
 <ParamField body="metadataTags" type="object" optional>
-  Arbitrary metadata key/value tags to store with the phone number.  
-  Example: `{ "department": "sales", "priority": "high" }`.
+  Key/value tags to store with the number, as an object of strings, for example `{ "department": "sales", "priority": "high" }`.
+
+  <Warning>
+  The tags you send replace all existing tags, and **leaving `metadataTags` out clears them**. Send the current tags again to keep them.
+  </Warning>
+</ParamField>
+
+<ParamField body="label" type="string" optional>
+  A label for the number. Left out, the current label is kept.
+</ParamField>
+
+<ParamField body="transferCallerIdMode" type="string" optional>
+  Caller ID shown on transferred calls: `from-transferee` (default, the original caller's number) or `from-transferor` (your Trillet number).
+</ParamField>
+
+<ParamField body="secretBindings" type="object" optional>
+  Map of alias to workspace secret name, for example `{ "crm_key": "acme-crm" }`. Every name must be an existing secret in this workspace. Replaces all existing bindings; left out, they are kept.
 </ParamField>
 
 ### Response Fields
@@ -57,32 +75,76 @@ description: "Assign a specific phone number to an agent's call flow, configure 
 </ResponseField>
 
 <ResponseField name="direction" type="string">
-  The direction of the call flow (`inbound`, `outbound`, or `bidirectional`).
+  The direction of the call flow (`outbound` or `bidirectional`).
 </ResponseField>
 
-<ResponseExample>
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `400` | `{"error": "..."}` | `secretBindings` is malformed or names a secret that doesn't exist |
+| `403` | `{"error": "Insufficient permissions"}` | Your role doesn't have `agent:edit` |
+| `404` | `{"message", "code": "AGENT_NOT_FOUND", "error"}` | No agent with this ID in the workspace |
+| `404` | `{"message", "code": "PHONE_NUMBER_NOT_FOUND", "error"}` | No number with this ID in the workspace |
+| `409` | `{"message", "code": "CALL_FLOW_ARCHIVED", "error"}` | Every call flow of the agent is archived or inactive. Restore or turn one on first |
+| `409` | `{"message", "code": "AGENT_HAS_NO_CALL_FLOW", "error"}` | The agent isn't used by any call flow |
+| `500` | `{"error": "..."}` | Anything else, including a request with no body |
+
+When a request is refused, nothing is changed.
+
+<RequestExample>
+```json
+{
+  "recordCalls": true,
+  "recordingPublic": false,
+  "officeHours": {
+    "enabled": true,
+    "start": "09:00",
+    "end": "17:00",
+    "timezone": "America/New_York",
+    "allowedDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    "blockedDates": []
+  },
+  "metadataTags": {
+    "department": "support",
+    "priority": "high"
+  }
+}
 ```
+</RequestExample>
+
+<ResponseExample>
+```json
 {
   "agent": {
-    "_id": "64f9b12a",
+    "_id": "6a1f0c2b9d4e8a0012ab34cd",
     "status": "ready",
-    "phoneNumberIds": ["750cd920"]
+    "phoneNumberIds": ["6a1f0d7e9d4e8a0012ab35ef"]
   },
   "phoneNumber": {
-    "_id": "750cd920",
-    "agentId": "64f9b12a",
+    "_id": "6a1f0d7e9d4e8a0012ab35ef",
+    "agentId": "6a1f0c2b9d4e8a0012ab34cd",
+    "pathwayId": "6a1f0b119d4e8a0012ab3301",
+    "flowType": "call",
+    "status": "active",
     "recordingEnabled": true,
     "recordingPublic": false,
     "officeHours": {
-      "monday": ["09:00-17:00"],
-      "tuesday": []
+      "enabled": true,
+      "start": "09:00",
+      "end": "17:00",
+      "timezone": "America/New_York",
+      "allowedDays": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+      "blockedDates": []
     },
     "metadataTags": {
       "department": "support",
       "priority": "high"
-    }
+    },
+    "transferCallerIdMode": "from-transferee"
   },
-  "pathwayId": "pwy_abc123",
+  "pathwayId": "6a1f0b119d4e8a0012ab3301",
   "direction": "bidirectional"
 }
 ```

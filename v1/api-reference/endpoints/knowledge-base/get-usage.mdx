@@ -1,7 +1,7 @@
 ---
 title: "Get Knowledge Base Usage"
 api: "GET /v1/api/knowledgebase/{id}/usage"
-description: "Retrieve usage information for a knowledge base, including which call flows are using it."
+description: "See which call flows and message flows use a knowledge base."
 ---
 
 ## Headers
@@ -18,14 +18,14 @@ The unique identifier of the knowledge base.
 ## Response Fields
 
 <ResponseField name="pathways" type="array">
-Array of call flows that are using this knowledge base.
+Every call flow and message flow in the workspace that has this knowledge base attached. Call flows come first, then message flows; the items don't say which kind each one is. Empty if nothing uses it.
 
 <ResponseField name="_id" type="string">
-Unique identifier of the call flow.
+ID of the call flow or message flow.
 </ResponseField>
 
 <ResponseField name="name" type="string">
-Name of the call flow.
+Name of the flow.
 </ResponseField>
 
 </ResponseField>

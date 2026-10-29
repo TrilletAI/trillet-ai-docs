@@ -4,6 +4,12 @@ api: "DELETE /v1/api/agents/{agentId}"
 description: "Delete an existing agent"
 ---
 
+The agent is soft-deleted: it disappears from the API and the dashboard, and support can recover it.
+
+<Warning>
+Deleting an agent does not touch the call flow that uses it. That flow keeps pointing at the deleted agent and stops working. To remove a flow and its agent together, [delete the call flow](/v1/api-reference/endpoints/flows/call-flows/delete) instead.
+</Warning>
+
 ### Headers  
 
 <ParamField header="x-workspace-id" type="string" required>
@@ -16,22 +22,39 @@ description: "Delete an existing agent"
   The unique identifier of the agent to delete
 </ParamField>
 
-### Response Fields
+### Response
 
-<ResponseField name="success" type="string">
-  Boolean value indicating if it was a successful operation.
-</ResponseField>
+`200` with the agent as it was just before it was deleted, in the same shape as [Get Call Agent](/v1/api-reference/endpoints/agents/call/get).
 
-<ResponseField name="message" type="string">
-  A message confirming the successful deletion of the agent.
-</ResponseField>
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `404` | `{"error": "Agent not found or does not belong to the workspace"}` | No agent with this ID in the workspace, including one already deleted |
+| `500` | `{"error": "..."}` | Anything else, including a malformed `agentId` |
 
 <ResponseExample>
 
 ```json
 {
-  "success": true,
-  "message": "Agent successfully deleted"
+  "_id": "6a1f0c2b9d4e8a0012ab34cd",
+  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "name": "Customer Support Agent",
+  "ttsModel": {
+    "provider": "rime",
+    "voiceId": "mistv3_wildflower",
+    "name": "Wildflower",
+    "language": "en",
+    "rimeModel": "mistv3"
+  },
+  "llmModel": "platform-llm",
+  "type": "voice",
+  "status": "ready",
+  "phoneNumberIds": [],
+  "activeSessions": [],
+  "createdAt": "2026-10-29T10:00:00.000Z",
+  "updatedAt": "2026-10-29T10:00:00.000Z"
 }
 ```
 

@@ -1,8 +1,16 @@
 ---
 title: 'Generate Message'
 api: 'POST /v1/api/conversations/message/generate'
-description: 'Send an AI-generated message through either SMS or email to a specified recipient with optional metadata and dynamic configurations.'
+description: "Send a message flow's opening message to a recipient and start (or continue) a conversation with them."
 ---
+
+The message sent is always the message flow's `initiationMessage`. It is recorded as an outbound message on the conversation between the flow and the recipient. If a conversation with that recipient already exists for the flow, the message is added to it.
+
+What actually gets delivered depends on the flow's `messageChannel`:
+
+- **`Twilio-SMS` and `Telnyx-SMS`**: the SMS is sent **immediately**, from the phone number bound to the flow's agent. `autopilot` has no effect and no flow delay is applied.
+- **`Twilio-Email`**: the message is recorded on the conversation, but **no email is sent**. Email sending is not implemented yet.
+- **Any other channel** (WhatsApp, Facebook): not supported by this endpoint. The request fails with `500`.
 
 ### Headers  
 <ParamField header="x-workspace-id" type="string" required>
@@ -12,68 +20,98 @@ description: 'Send an AI-generated message through either SMS or email to a spec
 ### Request Body
 
 <ParamField body="flowId" type="string" required>  
-Unique identifier for the message flow sending the message. Ensure the Message Flow ID belongs to an active flow.  
+The `_id` of the message flow sending the message. The flow must be in this workspace and active (`isActive: true`).
 </ParamField>  
 
 <ParamField body="to" type="string" required>
-Recipient's contact information. Use <b>E.164</b> format for SMS (e.g., `+1234567890`) and a valid email address format for Email (e.g., `user@example.com`).
-<Note>
-Ensure the contact format matches the <b>messageChannel</b> type: SMS for phone numbers and Email for email addresses. Using an incorrect format or type will result in an error.
-</Note>
+The recipient. For SMS flows use E.164 format (for example `+14155550123`). The recipient must be in the **same country** as the flow's sending number.
 </ParamField>
-  
 
-
-<ParamField body="metadata" type="object" optional>  
+<ParamField body="metadata" type="object">  
   <Expandable title="properties">  
-    <ParamField body="customerDetails" type="object" optional>  
-      Details about the customer in key-value format. This field can contain the following:  
+    <ParamField body="customerDetails" type="object">  
+      Details about the customer.
       <Expandable title="properties">  
-        <ParamField body="name" type="string" optional>  
-          The name of the customer. Example: `"Sam"`.
+        <ParamField body="name" type="string">  
+          The customer's name, for example `"Sam"`. Saved on the conversation (and updated on an existing one). Defaults to `"Unknown"` on a new conversation.
         </ParamField>
       </Expandable>  
     </ParamField>  
   </Expandable>  
 </ParamField>  
 
-
-
-<ParamField body="autopilot" type="boolean" required>  
-Enable automatically sending the generated message to the intended recipient. If your flow has a `delay` enabled, the message will be sent after that delay. Defaults to `false`.  
+<ParamField body="autopilot" type="boolean" default="false">  
+Accepted but has no effect today: SMS is always sent immediately, and email is not sent.
 </ParamField>  
 
-<ParamField body="dynamic" type="object" optional>  
-Dynamic inputs for AI-generated messages.  
+<ParamField body="dynamic" type="object">  
+Accepted but not used.
 </ParamField>  
 
+### Requirements
+
+- The flow must have an agent, and that agent must have a phone number bound to it (for SMS flows).
+- The workspace needs a wallet balance of at least 1 to send an SMS.
 
 ### Response Fields
 
 <ResponseField name="status" type="string">  
-Indicates (`success`) if the request was successful.  
+`success`.
 </ResponseField>  
 
 <ResponseField name="conversation_id" type="string">  
-Unique identifier for the newly created or fetched existing conversation.  
+The `_id` of the new or existing conversation.
 </ResponseField>  
 
 <ResponseField name="message_id" type="string">  
-Unique identifier for the newly created message within the conversation.  
+The `_id` of the new message within the conversation.
 </ResponseField>  
 
 <ResponseField name="message" type="string">  
-Content of the message sent. This will always be the corresponding message flow's `initiationMessage`.  
+The text sent. Always the message flow's `initiationMessage`.
 </ResponseField>  
 
+<ResponseField name="channel" type="string">  
+The flow's `messageChannel`, for example `Twilio-SMS`.
+</ResponseField>  
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `400` | `{"error": "flowId and 'to' are required!"}` | `flowId` or `to` missing |
+| `400` | `{"error": "Invalid configuration", "details": "No active message flow found in workspace."}` | The flow isn't in this workspace, or isn't active |
+| `400` | `{"error": "OmniFlowAgent not found"}` | The flow has no agent |
+| `400` | `{"error": "'to' must be a valid phone number for SMS pathways"}` | `to` isn't a phone number (SMS flows) |
+| `400` | `{"error": "Phone number associated with the message flow not found."}` | No phone number is bound to the flow's agent |
+| `400` | `{"error": "Country code mismatch: ..."}` | Sender and recipient are in different countries |
+| `403` | `{"error": "..."}` | The workspace's service has ended, or its traffic is suspended |
+| `500` | `{"error": "Insufficient balance to send this message. Please top up your account."}` | Wallet balance below 1 |
+| `500` | `{"error": "..."}` | `flowId` isn't a valid ID, the flow has no `initiationMessage`, the channel isn't supported, or the provider rejected the SMS |
+
+<RequestExample>
+```json
+{
+  "flowId": "674e75bbe1456b11a194f091",
+  "to": "+14155550123",
+  "metadata": {
+    "customerDetails": {
+      "name": "Sam"
+    }
+  }
+}
+```
+</RequestExample>
 
 <ResponseExample>  
 ```json  
 {  
   "status": "success",  
-  "conversation_id": "63e63b2a-8b6d-4ea4-ae84-abc123",  
-  "message_id": "56f3459b-c23d-46a4-8a2d-bcd456",  
-  "message": "Your appointment is confirmed for tomorrow at 3 PM."  
+  "conversation_id": "675c8e368824aa5f130b94d6",  
+  "message_id": "675c8e368824aa5f130b94d3",  
+  "message": "Hi Sam, your appointment is confirmed for tomorrow at 3 PM.",
+  "channel": "Twilio-SMS"
 }  
 ```  
 </ResponseExample>  

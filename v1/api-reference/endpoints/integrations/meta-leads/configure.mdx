@@ -1,40 +1,36 @@
 ---
 title: "Configure Meta Lead Ads"
 api: "POST /v1/api/meta-lead/configure/{flowId}"
-description: "Configure Meta Lead Ads integration for a specific call flow. When a new lead is received, it automatically triggers a call."
+description: "Choose the Facebook pages and lead forms that trigger calls from a call flow, and register the Meta webhook."
 ---
+
+When a lead is submitted on one of the configured forms, Meta notifies Trillet and the call flow calls the lead (after `callDelaySeconds`).
+
+Before configuring, connect Meta with [Install Meta Lead Ads](/v1/api-reference/endpoints/integrations/meta-leads/install). The Facebook user token saved by that step is the one used here.
+
+<Warning>
+Each entry in `forms` must be an **object** with `formId` (and `formName`), not a plain form ID string. Leads are matched to a flow by `formId`. String IDs are saved without an error, but leads from those forms never trigger a call.
+</Warning>
+
+<Note>
+If the call flow has an unpublished draft open in the editor, the configuration is saved to the draft only. Leads won't trigger calls with the new settings until the draft is published.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+Workspace identifier for the API. The call flow must belong to this workspace (or one of its sub-workspaces).
 </ParamField>
 
 ## Path Parameters
 
 <ParamField path="flowId" type="string" required>
-The call flow ID to configure Meta Lead Ads for.
+The `_id` of the call flow. The flow must be active.
 </ParamField>
 
 ## Request Body
 
-<ParamField body="clientId" type="string" required>
-Meta App client ID.
-</ParamField>
-
-<ParamField body="clientSecret" type="string" required>
-Meta App client secret.
-</ParamField>
-
-<ParamField body="userAccessToken" type="string" required>
-Meta user access token from the OAuth flow.
-</ParamField>
-
-<ParamField body="callDelaySeconds" type="number" default="0">
-Delay in seconds before calling a new lead.
-</ParamField>
-
 <ParamField body="selectedPages" type="array" required>
-Array of Facebook pages and lead forms to monitor.
+The Facebook pages and lead forms to monitor. At least one page is required. This replaces any pages configured before.
 
 <Expandable title="properties">
 
@@ -42,28 +38,130 @@ Array of Facebook pages and lead forms to monitor.
 Facebook page ID.
 </ParamField>
 
-<ParamField body="forms" type="array" required>
-Array of lead form IDs to monitor on this page.
+<ParamField body="pageName" type="string">
+Facebook page name, for display.
+</ParamField>
+
+<ParamField body="forms" type="object[]" required>
+The lead forms on this page that should trigger calls.
+
+<Expandable title="properties">
+
+<ParamField body="formId" type="string" required>
+The Meta lead form ID.
+</ParamField>
+
+<ParamField body="formName" type="string">
+The form name, for display.
 </ParamField>
 
 </Expandable>
 </ParamField>
 
+</Expandable>
+</ParamField>
+
+<ParamField body="callDelaySeconds" type="number" default="0">
+Seconds to wait after a lead arrives before calling.
+</ParamField>
+
+<ParamField body="clientId" type="string">
+Your own Meta app ID. Leave it out to use Trillet's Meta app (the normal case after Install).
+</ParamField>
+
+<ParamField body="clientSecret" type="string">
+Your own Meta app secret. Only needed with `clientId`.
+</ParamField>
+
+<ParamField body="smartCallbackConfig" type="object">
+Retry schedule for leads who don't answer: `{"enabled": boolean, "maxAttempts": number, "gaps": [{"days": number, "hours": number}]}`. If left out, the flow's existing setting is kept (default: disabled, 5 attempts, 1 day apart).
+</ParamField>
+
+<ParamField body="complianceAccepted" type="boolean">
+Records that you accepted the lead-calling compliance terms. If left out, the existing value is kept.
+</ParamField>
+
 ## Response Fields
 
-<ResponseField name="success" type="boolean">
-Whether the configuration was successful.
+<ResponseField name="message" type="string">
+A summary of the result.
+</ResponseField>
+
+<ResponseField name="webhookUrl" type="string">
+The Trillet webhook URL registered with Meta.
+</ResponseField>
+
+<ResponseField name="flowId" type="string">
+The call flow ID.
+</ResponseField>
+
+<ResponseField name="appId" type="string">
+The Meta app ID used.
+</ResponseField>
+
+<ResponseField name="connectedPages" type="array">
+The `selectedPages` you sent, as saved.
 </ResponseField>
 
 <ResponseField name="webhookRegistered" type="boolean">
-Whether the webhook was successfully registered with Meta.
+Whether the webhook was registered with Meta. The settings are saved even when this is `false`.
 </ResponseField>
+
+<ResponseField name="webhookWarning" type="string">
+Why webhook registration failed, or `null`.
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Please select at least one page/form to connect"}` | `selectedPages` missing or empty |
+| `400` | `{"error": "Invalid pathwayId"}` | `flowId` isn't a valid ID |
+| `403` | `{"error": "Pathway does not belong to this workspace."}` | The flow belongs to another workspace |
+| `404` | `{"error": "Pathway not found"}` | No call flow with that ID |
+| `404` | `{"error": "Flow not found or inactive"}` | The flow exists but isn't active |
+| `500` | `{"error": "Failed to configure Meta integration", "details": "..."}` | Unexpected server error |
+
+## Related endpoints
+
+- After [Install Meta Lead Ads](/v1/api-reference/endpoints/integrations/meta-leads/install) completes, [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get) returns `settings.metaIntegration.availablePages`: the pages and lead forms the Meta account can see, already in the `{pageId, pageName, forms: [{formId, formName, ...}]}` shape this endpoint expects.
+- `POST /v1/api/meta-lead/disconnect/{flowId}` unsubscribes the pages and clears the Meta Lead Ads settings on the flow.
+
+<RequestExample>
+```json
+{
+  "callDelaySeconds": 30,
+  "selectedPages": [
+    {
+      "pageId": "104857362918273",
+      "pageName": "My Business Page",
+      "forms": [
+        { "formId": "1029384756102938", "formName": "Spring promo" }
+      ]
+    }
+  ]
+}
+```
+</RequestExample>
 
 <ResponseExample>
 ```json
 {
-  "success": true,
-  "webhookRegistered": true
+  "message": "Meta integration configured successfully. Webhook registered for 1 page(s), 1 form(s).",
+  "webhookUrl": "https://app.trillet.ai/v1/api/meta-lead/webhook",
+  "flowId": "674e75bbe1456b11a194f091",
+  "appId": "1234567890123456",
+  "connectedPages": [
+    {
+      "pageId": "104857362918273",
+      "pageName": "My Business Page",
+      "forms": [
+        { "formId": "1029384756102938", "formName": "Spring promo" }
+      ]
+    }
+  ],
+  "webhookRegistered": true,
+  "webhookWarning": null
 }
 ```
 </ResponseExample>

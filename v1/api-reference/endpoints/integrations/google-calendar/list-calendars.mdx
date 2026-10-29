@@ -1,52 +1,81 @@
 ---
 title: "List Google Calendars"
 api: "GET /v1/api/gcal/calendars"
-description: "List all available Google Calendars for the connected account."
+description: "List the Google Calendars the connected account can write to."
 ---
+
+Only calendars where the connected Google account is an **owner** or **writer** are returned. Read-only calendars are left out, because the agent can't book into them.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+Workspace identifier for the API. The call flow must belong to this workspace (or one of its sub-workspaces).
 </ParamField>
 
 ## Query Parameters
 
 <ParamField query="pathwayId" type="string" required>
-The call flow pathway ID with the Google Calendar connection.
+The `_id` of the call flow that has the Google Calendar connection.
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="calendars" type="array">
-Array of available calendars.
+The calendars the connected account can write to.
+
+<Expandable title="properties">
 
 <ResponseField name="id" type="string">
 Calendar ID.
 </ResponseField>
 
 <ResponseField name="summary" type="string">
-Calendar name/title.
+Calendar name.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+Calendar description (`""` if none).
 </ResponseField>
 
 <ResponseField name="primary" type="boolean">
-Whether this is the primary calendar.
+Whether this is the account's primary calendar.
 </ResponseField>
 
+<ResponseField name="timeZone" type="string">
+The calendar's IANA time zone (`""` if Google didn't return one).
 </ResponseField>
+
+</Expandable>
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "pathwayId query parameter is required"}` | No `pathwayId` |
+| `400` | `{"error": "Invalid pathwayId"}` | `pathwayId` isn't a valid ID |
+| `403` | `{"error": "You do not have access to this workspace."}` | You aren't a member of the `x-workspace-id` workspace |
+| `403` | `{"error": "Pathway does not belong to this workspace."}` | The flow belongs to another workspace |
+| `404` | `{"error": "Pathway not found"}` | No call flow with that ID |
+| `500` | `{"error": "Google Calendar Integration not found for this pathway"}` | The flow has no Google Calendar connection |
+| `500` | `{"error": "Failed to refresh Google Calendar token"}` | The stored Google token could not be refreshed. Reconnect with [Install Google Calendar](/v1/api-reference/endpoints/integrations/google-calendar/install) |
 
 <ResponseExample>
 ```json
 {
   "calendars": [
     {
-      "id": "primary",
-      "summary": "John Doe",
-      "primary": true
+      "id": "jane@company.com",
+      "summary": "Jane Doe",
+      "description": "",
+      "primary": true,
+      "timeZone": "America/New_York"
     },
     {
-      "id": "appointments@company.com",
+      "id": "c_8f2e1a@group.calendar.google.com",
       "summary": "Appointments",
-      "primary": false
+      "description": "Customer bookings",
+      "primary": false,
+      "timeZone": "America/New_York"
     }
   ]
 }

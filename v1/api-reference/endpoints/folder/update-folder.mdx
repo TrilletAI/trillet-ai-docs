@@ -1,104 +1,111 @@
 ---
 title: "Update Folder"
 api: "PATCH /v1/api/flow-folders/{folderId}"
-description: "Update the details of a specific folder identified by its folderId."
+description: "Rename a folder or change its color or icon."
 ---
+
+Only `name`, `color` and `icon` can be changed. Any other field you send (including `flowType`) is ignored.
 
 ### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
-  The unique identifier of the workspace being accessed.
+  The workspace the folder belongs to. Folders and flows in other workspaces are treated as not found.
 </ParamField>
 
 ### Path Parameters
 
 <ParamField path="folderId" type="string" required>
-  The unique identifier of the folder to update.
+  The folder's `_id`.
 </ParamField>
 
 ### Request Body
 
 <ParamField body="name" type="string">
-  The updated name of the folder (e.g., "Updated Workflow Folder").
+  The new folder name.
 </ParamField>
 
-<ParamField body="color" type="string" required>
-  The color of the folder, specified as one of the following color names with their corresponding hex codes: blue (#3B82F6), green (#10B981), teal (#14B8A6), purple (#8B5CF6), orange (#F97316), red (#EF4444).
+<ParamField body="color" type="string">
+  The new color, stored exactly as sent (for example `#10B981`).
 </ParamField>
 
-<ParamField body="icon" type="string" required>
-  The icon identifier for the folder, specified as one of the following: folder, file, phone, headphone, voice, message.
+<ParamField body="icon" type="string">
+  The new icon, stored exactly as sent (for example `phone`).
 </ParamField>
 
-<ParamField body="flowType" type="string">
-  The updated type of flow, either "call" or "message".
-</ParamField>
+### Response
 
-### Response Fields
+The updated folder:
 
 <ResponseField name="_id" type="string">
-  The unique identifier of the folder.
+  The folder's unique identifier.
 </ResponseField>
 
 <ResponseField name="workspaceId" type="string">
-  The identifier of the workspace where the folder belongs.
+  The workspace the folder belongs to.
 </ResponseField>
 
 <ResponseField name="name" type="string">
-  The updated name of the folder.
+  The folder name.
 </ResponseField>
 
 <ResponseField name="color" type="string">
-  The updated color of the folder, represented as a hex code.
+  The folder color, stored exactly as sent (default `#3498db`).
 </ResponseField>
 
 <ResponseField name="icon" type="string">
-  The updated icon identifier for the folder.
+  The folder icon, stored exactly as sent (default `folder`).
 </ResponseField>
 
 <ResponseField name="flowType" type="string">
-  The updated type of flow, either "call" or "message".
+  `call` or `message`.
 </ResponseField>
 
 <ResponseField name="pathwayModel" type="string">
-  The model type for flows, derived from `flowType`.
+  `Pathway` for call folders, `MessagePathway` for message folders. Set by the server from `flowType`.
 </ResponseField>
 
 <ResponseField name="pathways" type="array">
-  An array of flow IDs associated with the folder.
+  The `_id`s of the flows in the folder.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
-  Timestamp when the folder was created (ISO 8601 format).
+  When the folder was created (ISO 8601). Folders have no `updatedAt`.
 </ResponseField>
 
-<ResponseField name="updatedAt" type="string">
-  Timestamp when the folder was last updated (ISO 8601 format).
-</ResponseField>
+### Errors
 
-### Example Request
+All folder errors use a `message` field, not `error`.
 
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "x-workspace-id header is required"}` | `x-workspace-id` missing or not a valid ID |
+| `404` | `{"message": "Folder not found"}` | No folder with that ID in this workspace |
+| `500` | `{"message": "..."}` | Unexpected server error |
+
+<RequestExample>
 ```json
 {
-  "name": "Updated Workflow Folder",
-  "color": "#00FF00",
-  "icon": "new-folder-icon"
+  "name": "Sales Flows",
+  "color": "#10B981"
 }
 ```
+</RequestExample>
 
 <ResponseExample>
 ```json
 {
-  "_id": "folder123",
-  "workspaceId": "workspace456",
-  "name": "Updated Workflow Folder",
-  "color": "#00FF00",
-  "icon": "new-folder-icon",
+  "_id": "6720b3c4d5e6f7a8b9c0d1e2",
+  "workspaceId": "674a3edc2d89622daa9fcfd1",
+  "name": "Sales Flows",
+  "color": "#10B981",
+  "icon": "folder",
   "flowType": "call",
-  "pathwayModel": "Flow",
-  "pathways": ["flow123"],
-  "createdAt": "2023-10-15T09:30:00Z",
-  "updatedAt": "2023-10-16T12:00:00Z"
+  "pathways": [
+    "674e75bbe1456b11a194f091"
+  ],
+  "pathwayModel": "Pathway",
+  "createdAt": "2026-10-15T09:30:00.000Z",
+  "__v": 0
 }
 ```
 </ResponseExample>

@@ -1,56 +1,82 @@
 ---
 title: "Invite Team Member"
 api: "POST /v1/api/workspaces/{workspaceId}/invite"
-description: "Invite a new team member to join a workspace. Only workspace owners can send invitations."
+description: "Invite someone to join a workspace by email, with a given role."
 ---
+
+### Who can invite
+
+Your role must have both the `team:add_member` and `workspace:edit` permissions. For a client workspace under an agency or Studio master, you also need `agency_hub:manage_clients` on the master workspace.
 
 ### Path Parameters
 
 <ParamField path="workspaceId" type="string" required>
-  The unique identifier of the workspace where the invitation is being sent.
+  The `_id` of the workspace to invite the person to.
 </ParamField>
 
 ### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
-  The unique identifier of the workspace being accessed (should match the path parameter `:workspaceId`).
+  A workspace where your role has the permissions above. Permissions are checked against this header, so it's normally the same workspace as `workspaceId`.
 </ParamField>
-
 
 ### Request Body
 
 <ParamField body="email" type="string" required>
-  The email address of the person to invite.
+  The email address of the person to invite. Stored in lowercase.
 </ParamField>
 
 <ParamField body="role" type="string" required>
-  The role to assign to the invited user ("admin", "editor", "viewer").
+  The **name** of the role to give them. It is matched exactly, and is **case-sensitive**. Use a built-in role (`admin`, `editor`, `viewer`, all lowercase) or the name of a custom role in this workspace (see [List Roles](/v1/api-reference/endpoints/roles/list)). `owner` is not allowed.
 </ParamField>
 
-### Description
+<ParamField body="isSMB" type="boolean">
+  Agency and Studio plans only: invite the person as a simplified (SMB) client user. Defaults to `true` on those plans. Sending `true` on any other plan returns `403`.
+</ParamField>
 
-This endpoint allows a **workspace owner** to invite a new team member to their workspace by email.
+### What happens
 
-- The system checks for any existing pending invitation for the same email to prevent duplicates.
-- A new **invitation record** is created and stored with a 7-day expiration.
-- An invitation email is sent to the invitee with a secure link to accept the invitation.
-
-If the workspace is configured in **agency mode** with white-label settings, the invitation email will be sent using the workspace's verified custom email (if available).
-
-### Invitation Email Behavior
-
-- The email contains the inviter’s email, the workspace name, and a secure invitation acceptance link.
-- If the workspace has a **white-label custom domain**, the invitation link will use that domain.
-- If no custom domain is available, the link will use the default frontend URL.
-
-The invitation expires automatically after **7 days** if not accepted.
+- An invitation is created that expires after **7 days**.
+- An email is sent to the invitee with a link to accept. The inviter's email and the workspace name are included.
+- If the workspace is white-labelled (agency mode), the email is sent from the workspace's verified custom email when one is set, and the link uses the white-label domain. Otherwise the link is built from the request's `Origin` (or `Referer`) header, falling back to the default portal URL.
 
 ### Response Fields
 
 <ResponseField name="success" type="boolean">
-  Indicates whether the invitation was successfully sent.
+  `true` when the invitation was sent.
 </ResponseField>
 
 <ResponseField name="message" type="string">
-  A message confirming the outcome of the invitation process.
+  `Invitation sent successfully.`
 </ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "An invitation has already been sent to this email."}` | A pending, unexpired invitation to this email already exists for the workspace |
+| `403` | `{"error": "Cannot invite as owner"}` | `role` is `owner` |
+| `403` | `{"error": "Insufficient permissions", ...}` | Your role lacks `team:add_member` or `workspace:edit` |
+| `403` | `{"error": "Insufficient permissions to invite members"}` | Client workspace and you lack `agency_hub:manage_clients` on the master |
+| `403` | `{"error": "Only Agency and Studio plans can invite SMB users."}` | `isSMB: true` on another plan |
+| `404` | `{"error": "Workspace not found"}` | No workspace with that ID that you can see |
+| `500` | `{"error": "Role \"Admin\" not found for workspace ..."}` | `role` doesn't match a role name exactly (for example wrong case) |
+| `500` | `{"error": "..."}` | `role` or `email` missing, or another server error |
+
+<RequestExample>
+```json
+{
+  "email": "jane@company.com",
+  "role": "editor"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json
+{
+  "success": true,
+  "message": "Invitation sent successfully."
+}
+```
+</ResponseExample>

@@ -4,6 +4,10 @@ api: "POST /v1/api/knowledgebase/{id}/files"
 description: "Upload a file to an existing knowledge base. Supports PDF, TXT, DOCX, MD, CSV, and JSON files up to 50MB."
 ---
 
+Adds one file to the knowledge base and indexes its text so agents can search it. A knowledge base holds at most **5 files**, counting its text entry. Upload files one request at a time.
+
+Requires the `knowledge_base:create` and `knowledge_base:edit` permissions.
+
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
@@ -20,41 +24,93 @@ The unique identifier of the knowledge base to upload the file to.
 The request body should be sent as `multipart/form-data`.
 
 <ParamField body="uploadedFile" type="file" required>
-The file to upload. Supported formats: PDF, TXT, DOCX, MD, CSV, JSON. Maximum file size: 50MB.
+The file to upload. Supported formats: PDF, TXT, DOCX, MD, CSV, JSON (checked by MIME type, or by file extension when the MIME type is generic). Maximum file size: 50MB. One file per request.
 </ParamField>
 
-## Response Fields
+<ParamField body="duplicateStrategy" type="string">
+What to do when the knowledge base already has a file with the same name:
 
-<ResponseField name="success" type="boolean">
-Whether the file was uploaded successfully.
+- `replace`: swap the existing file for the new one. This doesn't count toward the 5-file limit.
+- `keep-both`: keep both files.
+
+Leave it out and a duplicate name is refused with `409 KB_DUPLICATE_FILENAME`, so you can decide.
+</ParamField>
+
+## Response
+
+`201` with the new file entry.
+
+<ResponseField name="filename" type="string">
+Name of the uploaded file.
 </ResponseField>
 
-<ResponseField name="file" type="object">
-Details of the uploaded file.
+<ResponseField name="key" type="string">
+Storage key of the file. Unique per upload.
+</ResponseField>
 
-<ResponseField name="name" type="string">
-Name of the uploaded file.
+<ResponseField name="url" type="string">
+Storage location of the file. Not a public link.
+</ResponseField>
+
+<ResponseField name="mimetype" type="string">
+MIME type of the file, as sent.
 </ResponseField>
 
 <ResponseField name="size" type="number">
 Size of the file in bytes.
 </ResponseField>
 
-<ResponseField name="type" type="string">
-MIME type of the file.
+<ResponseField name="uploadedAt" type="string">
+When the file was uploaded.
 </ResponseField>
 
+<ResponseField name="indexed" type="boolean">
+Whether text was extracted and indexed for search. `false` means the file is stored but agents can't search it.
 </ResponseField>
+
+<ResponseField name="chunks" type="number">
+Number of indexed chunks. `0` when `indexed` is `false`.
+</ResponseField>
+
+<ResponseField name="indexSkippedReason" type="string | null">
+Why the file wasn't indexed, for example `no-extractable-text` (such as a scanned PDF with no text layer). `null` when it was indexed.
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "Workspace ID header is required"}` | No `x-workspace-id` |
+| `400` | `{"message": "No file uploaded"}` | No `uploadedFile` part |
+| `400` | `{"message", "code": "KB_SINGLE_FILE_PER_REQUEST"}` | More than one file in the request |
+| `400` | `{"message", "code": "KB_UNSUPPORTED_FILE_TYPE"}` | The file isn't one of the supported formats |
+| `409` | `{"message", "code": "KB_DUPLICATE_FILENAME", "details": {"filename"}}` | A file with this name already exists and no `duplicateStrategy` was sent |
+| `409` | `{"message", "code": "KB_FILE_LIMIT_REACHED", "details": {"limit", "current"}}` | The knowledge base already holds 5 files |
+| `500` | `{"message": "Knowledge base not found or not accessible in this workspace."}` | No knowledge base with this ID in the workspace. This is currently a `500`, not a `404` |
+| `500` | `{"message": "..."}` | Anything else. The uploaded file is not kept |
+
+<RequestExample>
+```bash
+curl -X POST https://api.trillet.ai/v1/api/knowledgebase/665a1b2c3d4e5f6a7b8c9d0e/files \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -F "uploadedFile=@product-guide.pdf" \
+  -F "duplicateStrategy=replace"
+```
+</RequestExample>
 
 <ResponseExample>
 ```json
 {
-  "success": true,
-  "file": {
-    "name": "product-guide.pdf",
-    "size": 1048576,
-    "type": "application/pdf"
-  }
+  "filename": "product-guide.pdf",
+  "key": "workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/1761735600000-product-guide.pdf",
+  "url": "https://example-bucket.s3.amazonaws.com/workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/1761735600000-product-guide.pdf",
+  "mimetype": "application/pdf",
+  "size": 1048576,
+  "uploadedAt": "2026-10-29T10:00:00.000Z",
+  "indexed": true,
+  "chunks": 42,
+  "indexSkippedReason": null
 }
 ```
 </ResponseExample>
