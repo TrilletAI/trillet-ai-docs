@@ -2655,12 +2655,8 @@
                   "integer",
                   "null"
                 ],
-                "enum": [
-                  10,
-                  20,
-                  30,
-                  null
-                ]
+                "minimum": 5,
+                "maximum": 30
               },
               "checkInAttempts": {
                 "type": [
@@ -2756,11 +2752,8 @@
               },
               "checkInAfterSeconds": {
                 "type": "integer",
-                "enum": [
-                  10,
-                  20,
-                  30
-                ]
+                "minimum": 5,
+                "maximum": 30
               },
               "checkInAttempts": {
                 "type": "integer",

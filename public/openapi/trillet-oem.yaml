@@ -1301,7 +1301,7 @@ components:
           type: object
           properties:
             maxCallDurationSeconds: { type: [integer, "null"], minimum: 10, maximum: 1800 }
-            checkInAfterSeconds: { type: [integer, "null"], enum: [10, 20, 30, null] }
+            checkInAfterSeconds: { type: [integer, "null"], minimum: 5, maximum: 30 }
             checkInAttempts: { type: [integer, "null"], enum: [0, 1, 2, 3, null] }
             hangUpAfterCheckInSeconds: { type: [integer, "null"], enum: [10, 20, 30, null] }
         updatedAt: { type: [string, "null"], format: date-time }
@@ -1333,7 +1333,7 @@ components:
           additionalProperties: false
           properties:
             maxCallDurationSeconds: { type: integer, minimum: 10, maximum: 1800 }
-            checkInAfterSeconds: { type: integer, enum: [10, 20, 30] }
+            checkInAfterSeconds: { type: integer, minimum: 5, maximum: 30 }
             checkInAttempts: { type: integer, enum: [0, 1, 2, 3] }
             hangUpAfterCheckInSeconds: { type: integer, enum: [10, 20, 30] }
     GreetingDirectionUpdate:
