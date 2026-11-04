@@ -62,7 +62,7 @@ The response is `201` with the endpoint plus its signing `secret` (`whsec_...`).
 ```json
 {
   "object": "webhook_endpoint",
-  "id": "6b2e0f1a3c4d5e6f7a8b9c0d",
+  "id": "e4e4e4e4e4e4e4e4e4e4e4e4",
   "url": "https://api.example.com/trillet/events",
   "description": "Production",
   "enabledEvents": ["call.ended", "call.analyzed", "booking.created"],
@@ -86,21 +86,21 @@ An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid 
 
 ```json
 {
-  "id": "evt_6b3a1c2d4e5f6a7b8c9d0e1f",
+  "id": "evt_e6e6e6e6e6e6e6e6e6e6e6e6",
   "type": "call.ended",
   "created": 1762095851,
   "livemode": true,
-  "tenant": { "id": "6a9622d2c1e8f3a4b5d6e7f8", "externalId": "cust_8842" },
+  "tenant": { "id": "d9d9d9d9d9d9d9d9d9d9d9d9", "externalId": "cust_8842" },
   "data": {
     "call": {
-      "id": "6b3a1c0f9e8d7c6b5a4f3e2d",
+      "id": "e5e5e5e5e5e5e5e5e5e5e5e5",
       "direction": "inbound",
       "channel": "phone",
       "status": "completed",
       "from": "+15125550177",
       "to": "+15125550142",
-      "agentId": "6a9623aa1b2c3d4e5f6a7b8c",
-      "callFlowId": "6a9623bb1b2c3d4e5f6a7b8c",
+      "agentId": "e0e0e0e0e0e0e0e0e0e0e0e0",
+      "callFlowId": "e1e1e1e1e1e1e1e1e1e1e1e1",
       "startedAt": "2026-11-02T15:01:40.000Z",
       "endedAt": "2026-11-02T15:04:11.000Z",
       "durationSeconds": 151,
@@ -110,7 +110,7 @@ An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid 
       "batchId": null,
       "recording": {
         "available": true,
-        "url": "https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/calls/6b3a1c0f9e8d7c6b5a4f3e2d/recording"
+        "url": "https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/calls/e5e5e5e5e5e5e5e5e5e5e5e5/recording"
       },
       "summary": "Caller booked a cleaning for Thursday 3pm.",
       "extractedData": { "appointment_type": "cleaning" },
@@ -165,7 +165,7 @@ Other events:
 
 | Type | When | `data` |
 |---|---|---|
-| `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only). The payload does not include the workflow ID or run ID yet. |
+| `workflow_run.completed`, `workflow_run.failed` | A workflow run finished | `error` (failed runs only). The payload does not include the workflow ID or run ID. |
 | `number.provisioned` | A number was bought or registered | `phoneNumber`, `provider` |
 | `number.released` | A number was released, either directly or because its tenant was deleted | `phoneNumber`. A direct release also has `provider` (currently `null`); a tenant delete has `reason: "tenant_deleted"` instead. |
 | `number.renewal_failed` | A monthly number charge failed | `phoneNumber`, `amount` |
@@ -180,7 +180,7 @@ Notes on the in-call events:
 
 - `data.call` is the call record at delivery time. It can be `null`, for example for a call refused for insufficient balance, which has no call record.
 - `target` is masked: only the last 4 digits of a phone number or SIP user are shown.
-- `tool.failed` does not forward the third-party response body. `error` is a short error message of up to 300 characters. It can include text from the failing library or service, and `redactPII` does not apply to it. `kind` is `custom_tool` or `api` when known.
+- `tool.failed` does not forward the third-party response body. `error` is a short error message of up to 300 characters. `kind` is `custom_tool` or `api` when known.
 - `reason` on `call.blocked` is a short code such as `workspace_suspended`, `insufficient_balance` or `inbound_rule`. `rule` is the name of the matched inbound rule, when there is one.
 - `call.blocked` is listed in both tables: one is sent at the moment of refusal, the other when a blocked call record finishes post-call processing. The same call can produce both, so de-duplicate on `data.call.id` as well as the event `id`.
 
@@ -207,7 +207,7 @@ Recordings are never included in a payload. When a call has one, `data.call.reco
 
 ```bash
 curl -L -o call.mp3 \
-  "https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/calls/6b3a1c0f9e8d7c6b5a4f3e2d/recording" \
+  "https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/calls/e5e5e5e5e5e5e5e5e5e5e5e5/recording" \
   -H "Authorization: Bearer tpk_live_..."
 ```
 
@@ -325,7 +325,7 @@ Any Standard Webhooks library verifies this for you. Verify against the raw requ
 The event log keeps events for 30 days. It records an event when at least one of your endpoints subscribes to its type.
 
 ```bash
-curl "https://api.trillet.ai/partner/v1/events?type=call.ended&tenantId=6a9622d2c1e8f3a4b5d6e7f8&since=1762041600&limit=50" \
+curl "https://api.trillet.ai/partner/v1/events?type=call.ended&tenantId=d9d9d9d9d9d9d9d9d9d9d9d9&since=1762041600&limit=50" \
   -H "Authorization: Bearer tpk_live_..."
 ```
 
@@ -334,14 +334,14 @@ curl "https://api.trillet.ai/partner/v1/events?type=call.ended&tenantId=6a9622d2
 ```json
 {
   "object": "event",
-  "id": "evt_6b3a1c2d4e5f6a7b8c9d0e1f",
+  "id": "evt_e6e6e6e6e6e6e6e6e6e6e6e6",
   "type": "call.ended",
-  "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
+  "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9",
   "data": {},
   "created": 1762095851,
   "deliveries": [
     {
-      "endpointId": "6b2e0f1a3c4d5e6f7a8b9c0d",
+      "endpointId": "e4e4e4e4e4e4e4e4e4e4e4e4",
       "status": "failed",
       "attempts": 10,
       "lastAttemptAt": "2026-11-03T13:05:00.000Z",
@@ -357,10 +357,10 @@ In the list, `data` holds only the facts stored with the event. `GET /events/{ev
 To send an event again:
 
 ```bash
-curl -X POST https://api.trillet.ai/partner/v1/events/evt_6b3a1c2d4e5f6a7b8c9d0e1f/redeliver \
+curl -X POST https://api.trillet.ai/partner/v1/events/evt_e6e6e6e6e6e6e6e6e6e6e6e6/redeliver \
   -H "Authorization: Bearer tpk_live_..." \
   -H "Content-Type: application/json" \
-  -d '{ "endpointId": "6b2e0f1a3c4d5e6f7a8b9c0d" }'
+  -d '{ "endpointId": "e4e4e4e4e4e4e4e4e4e4e4e4" }'
 ```
 
 With `endpointId`, the event is sent to that endpoint even if it is not subscribed to the event's type. Without `endpointId`, the event is sent to every enabled endpoint subscribed to its type. Returns `202` with the number of endpoints it is being sent to. With no enabled endpoint to send to, it returns `409` `no_enabled_endpoint`. Redelivery needs `webhooks:write`. Unlike managing endpoints, it also works with a key restricted to some tenants, for those tenants' events.

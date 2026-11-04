@@ -22,7 +22,6 @@ It can work in every workspace you belong to. You pick the workspace it starts i
 ## What it can't do
 
 - It can't change your **password** or **email address**, and it can't see or create **API keys**. Trillet blocks these for connected apps whatever your role.
-- **Billing is not blocked** for connected apps. Through Trillet's tools, a Claude connection can read your wallet balance, auto-recharge settings, usage, and transactions, and buying a number charges the workspace. No Trillet tool changes your payment method.
 - It can't reach any workspace you are not a member of. Trillet checks your membership on every request, not just when you connect.
 - It can't do anything your own Trillet login can't do.
 
@@ -43,7 +42,7 @@ Some tools affect the outside world or cost money. They run for real and are cha
 How these are checked:
 
 - Buying, registering, or releasing a number, placing an outbound call, running a workflow, publishing a draft or node flow, and deleting an agent, call flow, knowledge base, workflow, or secret are [confirmation actions](/mcp/prompts-and-resources#confirmation-forms). In clients that support MCP forms, Trillet shows you a confirmation form before the tool runs.
-- In other clients, Trillet can't show you a form. Most of these tools then need the assistant to pass `confirm: true`, and the assistant is told to ask you first. Trillet can't check that you actually agreed, so read what the assistant says it will do.
+- In other clients, Trillet can't show you a form. Most of these tools then need the assistant to pass `confirm: true`, and the assistant is told to ask you first. Read what the assistant says it will do before you agree.
 - Text test calls and turning on a workflow have no Trillet confirmation step.
 
 ChatGPT and Claude may also ask you to approve tool use. Read the details before you approve.

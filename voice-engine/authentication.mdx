@@ -17,16 +17,12 @@ curl https://api.trillet.ai/partner/v1/key \
   -H "Authorization: Bearer tpk_live_..."
 ```
 
-- Keys start with `tpk_live_`. Keys can also be created with the `tpk_sandbox_` prefix, but sandbox tenants are not available yet, so use live keys.
+- Keys start with `tpk_live_`.
 - A key is shown **once**, when you create it. Trillet stores only a hash, so a lost key cannot be recovered. Create a new one and revoke the old one.
 - Keys are created and revoked in the **OEM API** section of your account settings, by an owner or admin of your partner account. Each key shows its name, prefix, scopes, allowed tenants and when it was last used.
 - A key acts as your partner account, not as a person, so it keeps working when staff leave. Keys do not expire. Revoking a key takes effect immediately.
 - An account can hold up to 50 active keys.
 - Send a partner key only in `Authorization`. Sending it in `x-api-key` is refused with `401`, and sending both a partner key and an `x-api-key` returns `400` `conflicting_credentials`.
-
-<Warning>
-  A `tpk_sandbox_` key is not a test key today. It acts exactly like a live key: it works on your real tenants, buys real numbers, places billed calls, and its events have `livemode: true`. Its `mode` is only a label.
-</Warning>
 
 <Warning>
   Treat partner keys like passwords. Keep them on your server, never in a browser or mobile app.
@@ -39,12 +35,12 @@ curl https://api.trillet.ai/partner/v1/key \
 ```json
 {
   "object": "partner_key",
-  "id": "6720c1f4a9b3e2d1c0f5a7b8",
+  "id": "b3b3b3b3b3b3b3b3b3b3b3b3",
   "mode": "live",
   "scopes": ["tenants:read", "tenants:write", "resources:read", "usage:read"],
   "tenantIds": [],
   "partner": {
-    "id": "671f0e2a8c4d3b1a2e5f6c7d",
+    "id": "b0b0b0b0b0b0b0b0b0b0b0b0",
     "name": "Example Health",
     "maxTenants": 100,
     "tenantCount": 12
@@ -82,8 +78,6 @@ A key can be **restricted to a list of tenants**, for example a key used by one 
 - gets `404` `tenant_not_found` for any other tenant on `/partner/v1` routes, and `403` `tenant_not_allowed` on standard routes;
 - cannot manage webhook endpoints (`403` `key_restricted`), because endpoints receive events for every tenant.
 
-A restricted key with `tenants:write` can still create tenants. The new tenant is not added to the key's list, so the same key then gets `404` `tenant_not_found` for it. Create tenants with an unrestricted key.
-
 ## Calling standard endpoints for a tenant
 
 A partner key can call a set of standard API endpoints on behalf of one of its tenants. Send the tenant ID in `x-workspace-id`:
@@ -91,7 +85,7 @@ A partner key can call a set of standard API endpoints on behalf of one of its t
 ```bash
 curl https://api.trillet.ai/v1/api/agents \
   -H "Authorization: Bearer tpk_live_..." \
-  -H "x-workspace-id: 6a9622d2c1e8f3a4b5d6e7f8"
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9"
 ```
 
 Access is deny by default. Only the endpoints below are available to partner keys, each with the scope shown. Any other standard endpoint returns `403` `route_not_available`.
@@ -310,11 +304,11 @@ These return `403` `route_not_available` to a partner key:
 ```bash
 curl -X POST https://api.trillet.ai/v1/api/call \
   -H "Authorization: Bearer tpk_live_..." \
-  -H "x-workspace-id: 6a9622d2c1e8f3a4b5d6e7f8" \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
   -H "Content-Type: application/json" \
   -d '{
     "to": "+15125550177",
-    "call_agent_id": "6a9623aa1b2c3d4e5f6a7b8c",
+    "call_agent_id": "e0e0e0e0e0e0e0e0e0e0e0e0",
     "dynamic_variables": { "customer_name": "Sam" },
     "metadata": { "crmLeadId": "L-1042" }
   }'
@@ -363,7 +357,7 @@ A tenant that is not yours returns `404` `tenant_not_found`, so a key can never 
 | `400` | `tenant_required` | A standard endpoint was called without `x-workspace-id` |
 | `400` | `invalid_tenant` | `x-workspace-id` is not a valid tenant ID |
 | `401` | `partner_key_required` | A `/partner/v1` route was called with a user session or user API key instead of a partner key |
-| `401` | `invalid_api_key` | The key starts with `tpk_live_` or `tpk_sandbox_` but is unknown or revoked |
+| `401` | `invalid_api_key` | The key is unknown or revoked |
 | `401` | `partner_not_enabled` | Trillet OEM is not enabled for this account |
 | `403` | `missing_scope` | The key lacks the scope this endpoint needs |
 | `403` | `route_not_available` | The standard endpoint is not available to partner keys |
@@ -371,12 +365,4 @@ A tenant that is not yours returns `404` `tenant_not_found`, so a key can never 
 | `404` | `tenant_not_found` | The tenant does not exist or is not yours |
 | `429` | `rate_limited` | Too many invalid keys from your IP address in the last minute |
 
-Some `401` responses come back before the partner key is read, and don't use the error envelope. They have a plain `error` string and no `code`:
-
-| Request | Response body |
-|---|---|
-| No `Authorization` header | `{"error": "Missing or invalid Authorization header"}` |
-| A bearer token without the `tpk_live_` or `tpk_sandbox_` prefix, for example a truncated or mistyped key | `{"error": "Invalid token"}` |
-| A partner key in `x-api-key` | `{"error": "Partner keys go in the Authorization header: Authorization: Bearer tpk_..."}` |
-
-Handle a `401` by its status. Don't assume `error.code` is present.
+Handle a `401` by its status, not only by `error.code`.
