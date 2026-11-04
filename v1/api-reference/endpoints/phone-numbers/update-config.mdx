@@ -66,7 +66,7 @@ Dates when the number is closed all day.
 </ParamField>
 
 <ParamField body="transferCallerIdMode" type="string">
-Caller ID shown on transferred calls: `from-transferee` (default, the original caller's number) or `from-transferor` (your Trillet number). Any other value fails with `500`.
+Caller ID shown on transferred calls: `from-transferee` (default, the original caller's number) or `from-transferor` (your Trillet number).
 </ParamField>
 
 <ParamField body="metadataTags" type="object">
@@ -98,14 +98,14 @@ The updated phone number, in the same shape as an item from [List Phone Numbers]
 | `404` | `{"error": "Phone number not found"}` | No number with that ID in this workspace (also for a malformed ID) |
 | `404` | `{"message", "code": "AGENT_NOT_FOUND", "error"}` | `agentId` isn't an agent in this workspace |
 | `409` | `{"message", "code": "CALL_FLOW_ARCHIVED", "error"}` | Every call flow of the agent is archived or inactive. Restore or turn one on first |
-| `500` | `{"error": "Failed to update phone number configuration", "message": "..."}` | Anything else, including an invalid `transferCallerIdMode` |
+| `500` | `{"error": "Failed to update phone number configuration", "message": "..."}` | Server error |
 
 When a request is refused, nothing is changed.
 
 <RequestExample>
 ```json
 {
-  "agentId": "665a1b2c3d4e5f6a7b8c9d0f",
+  "agentId": "a5a5a5a5a5a5a5a5a5a5a5a5",
   "recordingEnabled": true,
   "officeHours": {
     "enabled": true,
@@ -127,18 +127,18 @@ When a request is refused, nothing is changed.
 <ResponseExample>
 ```json Trimmed
 {
-  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "_id": "a4a4a4a4a4a4a4a4a4a4a4a4",
   "phoneNumber": "+14155550123",
   "sid": "1293384261075731499",
   "provider": "telnyx",
   "status": "active",
   "flowType": "call",
   "agentId": {
-    "_id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "_id": "a5a5a5a5a5a5a5a5a5a5a5a5",
     "name": "Front Desk"
   },
   "pathwayId": {
-    "_id": "665a1b2c3d4e5f6a7b8c9d10",
+    "_id": "a6a6a6a6a6a6a6a6a6a6a6a6",
     "name": "Front Desk Call Flow"
   },
   "recordingEnabled": true,
@@ -155,7 +155,7 @@ When a request is refused, nothing is changed.
     "location": "Downtown"
   },
   "label": "Front desk",
-  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e"
+  "workspaceId": "a1a1a1a1a1a1a1a1a1a1a1a1"
 }
 ```
 </ResponseExample>

@@ -26,7 +26,7 @@ curl -X POST https://api.trillet.ai/v1/api/call \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -H "Content-Type: application/json" \
   -d '{
-    "call_agent_id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "call_agent_id": "a5a5a5a5a5a5a5a5a5a5a5a5",
     "to": "+14155550123"
   }'
 ```
@@ -67,7 +67,7 @@ An agent with no live call flow (`422`):
 
 There is no general per-key request quota. What is enforced:
 
-- **Outbound calls** ([Initiate Outbound Call](/v1/api-reference/endpoints/calls/initiate-call)) are limited per workspace in a 60-second window: 1 call per minute without a paid plan or wallet top-up, 20 per minute on Studio or Agency Plus or after a top-up, and no limit on Enterprise pricing. Calls placed by a batch use a separate allowance. Over the limit, the API currently answers `500` with `error` "Rate limit exceeded: ... Please wait S seconds before making another call." Wait that many seconds before retrying.
+- **Outbound calls** ([Initiate Outbound Call](/v1/api-reference/endpoints/calls/initiate-call)) are limited per workspace in a 60-second window: 1 call per minute without a paid plan or wallet top-up, 20 per minute on Studio or Agency Plus or after a top-up, and no limit on Enterprise pricing. Calls placed by a batch use a separate allowance. Over the limit, the call is rejected with `error` "Rate limit exceeded: ... Please wait S seconds before making another call." Wait that many seconds before retrying.
 - **A few other endpoints**, such as voice previews and the public web call endpoints, have their own limits and answer `429` when you exceed them.
 
 Retry with backoff on `429` and on `5xx` responses. Don't retry `4xx` responses unchanged: fix the request first.

@@ -98,23 +98,12 @@ The record has the same shape as one item of `data` in [List Call Histories](/v1
 
 See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) for the remaining fields (`charged_duration`, `error`, `hasTelephonyCost`, `publicRecordingUrl`, `batchId`, `pendingReason`, `variables`, `dynamic_variables`, `llm`/`stt`/`tts`, `bookingOutcome` and others).
 
-### Errors
-
-<Note>
-A record that does not exist, or belongs to another workspace, currently returns `500` rather than `404`. A malformed ID also returns `500`.
-</Note>
-
-| Status | Body | When |
-|---|---|---|
-| `500` | `{"error": "Call history record not found"}` | No record with that ID in this workspace |
-| `500` | `{"error": "Cast to ObjectId failed ..."}` | `callHistoryId` is not a valid ID |
-
 <ResponseExample>
 ```json
 {
-  "_id": "6a32640492f1c2a7e5b10c44",
+  "_id": "d8d8d8d8d8d8d8d8d8d8d8d8",
   "timestamp": 1761731294,
-  "callId": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+  "callId": "d3d3d3d3d3d3d3d3d3d3d3d3-k3j9x0a1bq",
   "fromPhoneNumber": "+14155550123",
   "toPhoneNumber": "+14155550188",
   "direction": "outbound",
@@ -129,7 +118,7 @@ A record that does not exist, or belongs to another workspace, currently returns
   "cost": 0.12,
   "hasTelephonyCost": false,
   "isCallFromSmartCallback": false,
-  "recordingUrl": "https://api.trillet.ai/v2/api/recordings/6a32640492f1c2a7e5b10c44",
+  "recordingUrl": "https://api.trillet.ai/v2/api/recordings/d8d8d8d8d8d8d8d8d8d8d8d8",
   "publicRecordingUrl": null,
   "timezone": "America/Los_Angeles",
   "scheduledTime": null,
@@ -138,7 +127,7 @@ A record that does not exist, or belongs to another workspace, currently returns
   "nextAttemptAt": null,
   "publicRecording": null,
   "batchId": null,
-  "roomName": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+  "roomName": "d3d3d3d3d3d3d3d3d3d3d3d3-k3j9x0a1bq",
   "summary": "Caller booked a consultation for Tuesday.",
   "analyzedData": {
     "call_disposition": "booked",

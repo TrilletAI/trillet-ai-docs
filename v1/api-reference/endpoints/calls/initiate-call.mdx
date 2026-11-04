@@ -29,7 +29,7 @@ description: "Send an AI-driven phone call to a given number."
 </ParamField>
 
 <ParamField body="from_phone_number_id" type="string" optional>
-  The `_id` of the phone number to call from. It must be one of the agent's numbers, otherwise the call fails with `500` and `error` "Selected phone number is not assigned to this agent". When omitted, one of the agent's numbers is picked at random (WhatsApp numbers are used only when you name them here). An agent with no phone numbers can't place calls: the request fails with `500` and `error` "No phone numbers are configured for this agent...".
+  The `_id` of the phone number to call from. It must be one of the agent's numbers. When omitted, one of the agent's numbers is picked at random (WhatsApp numbers are used only when you name them here). An agent with no phone numbers can't place calls.
 </ParamField>
 
 <ParamField body="callback_url" type="string" optional>
@@ -82,7 +82,7 @@ Outbound calls are limited per workspace, in a fixed 60-second window:
 - 20 calls per minute for a workspace on Studio or Agency Plus, or one that has topped up its wallet
 - No limit on Enterprise pricing
 
-Calls placed by a [batch](/v1/api-reference/endpoints/calls/batch/overview) are counted separately. Over the limit, the API currently answers `500` (not `429`) with `error` "Rate limit exceeded: You have limit of N calls per minute. Please wait S seconds before making another call." Wait the number of seconds in the message before retrying.
+Calls placed by a [batch](/v1/api-reference/endpoints/calls/batch/overview) are counted separately. Over the limit, the call is rejected with `error` "Rate limit exceeded: You have limit of N calls per minute. Please wait S seconds before making another call." Wait the number of seconds in the message before retrying.
 
 To check on a call, read its record with [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get) using the `callId` from the response.
 
@@ -152,7 +152,7 @@ To check on a call, read its record with [Get a Specific Call History](/v1/api-r
 ```json Personalized greeting and voicemail
 {
   "to": "+14155550123",
-  "call_agent_id": "a1b2c3d4e5f6a7b8c9d0e1f2",
+  "call_agent_id": "e9e9e9e9e9e9e9e9e9e9e9e9",
   "dynamic_variables": {
     "first_name": "Maria",
     "greeting_text": "Hi Maria, this is Alex from Acme Plumbing. Is now a good time to confirm your appointment for tomorrow?",
@@ -166,10 +166,10 @@ To check on a call, read its record with [Get a Specific Call History](/v1/api-r
 ```json
 {
   "status": "success",
-  "message": "Outbound call job scheduled for agent a1b2c3d4e5f6a7b8c9d0e1f2 to number +14155550123",
-  "call_agent_id": "a1b2c3d4e5f6a7b8c9d0e1f2",
-  "callId": "f9e8d7c6b5a4f3e2d1c0b9a8",
-  "roomName": "a1b2c3d4e5f6a7b8c9d0e1f2-x7k2m9p4q1",
+  "message": "Outbound call job scheduled for agent e9e9e9e9e9e9e9e9e9e9e9e9 to number +14155550123",
+  "call_agent_id": "e9e9e9e9e9e9e9e9e9e9e9e9",
+  "callId": "f1f1f1f1f1f1f1f1f1f1f1f1",
+  "roomName": "e9e9e9e9e9e9e9e9e9e9e9e9-x7k2m9p4q1",
   "jobId": "123"
 }
 ```

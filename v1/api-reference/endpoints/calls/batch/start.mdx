@@ -30,7 +30,7 @@ This endpoint accepts multipart/form-data with the following fields:
   IANA timezone the start time was chosen in (for example `America/New_York`). It is stored for display only and does not change when the batch runs. Unknown zones are ignored.
 </ParamField>
 <ParamField body="smartCallbackConfig" type="string" optional>
-  JSON string that turns on outcome-based retries. Format: `{"enabled": boolean, "maxAttempts": number, "gaps": [{"days": number, "hours": number}]}`. `days` is 0-30 and `hours` 0-23. Without it (or with `enabled: false`), contacts are called once. Invalid JSON returns `500`.
+  JSON string that turns on outcome-based retries. Format: `{"enabled": boolean, "maxAttempts": number, "gaps": [{"days": number, "hours": number}]}`. `days` is 0-30 and `hours` 0-23. Without it (or with `enabled: false`), contacts are called once.
 </ParamField>
 <Note>
   **Testing Note**: The "Try Now" button in this documentation doesn't support file uploads. Use the cURL example below or a tool like Postman to test this endpoint.
@@ -61,14 +61,14 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@batch-calls.csv" \
-  -F "agentId=665f1c2e8b3a4d0012345678"
+  -F "agentId=a9a9a9a9a9a9a9a9a9a9a9a9"
 
 # Scheduled batch call with smart callback
 curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@batch-calls.csv" \
-  -F "agentId=665f1c2e8b3a4d0012345678" \
+  -F "agentId=a9a9a9a9a9a9a9a9a9a9a9a9" \
   -F "scheduledAt=2026-11-15T14:30:00Z" \
   -F "scheduledTimezone=America/New_York" \
   -F "smartCallbackConfig={\"enabled\": true, \"maxAttempts\": 3, \"gaps\": [{\"days\": 1, \"hours\": 0}]}"
@@ -103,21 +103,21 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
       -H "x-api-key: YOUR_API_KEY" \
       -H "x-workspace-id: YOUR_WORKSPACE_ID" \
       -F "file=@batch-calls.csv" \
-      -F "agentId=665f1c2e8b3a4d0012345678"
+      -F "agentId=a9a9a9a9a9a9a9a9a9a9a9a9"
 
     # With verbose output for debugging
     curl -v -X POST "https://api.trillet.ai/v1/api/batch-calls" \
       -H "x-api-key: YOUR_API_KEY" \
       -H "x-workspace-id: YOUR_WORKSPACE_ID" \
       -F "file=@batch-calls.csv" \
-      -F "agentId=665f1c2e8b3a4d0012345678"
+      -F "agentId=a9a9a9a9a9a9a9a9a9a9a9a9"
 
     # With scheduled time and smart callback
     curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
       -H "x-api-key: YOUR_API_KEY" \
       -H "x-workspace-id: YOUR_WORKSPACE_ID" \
       -F "file=@batch-calls.csv" \
-      -F "agentId=665f1c2e8b3a4d0012345678" \
+      -F "agentId=a9a9a9a9a9a9a9a9a9a9a9a9" \
       -F "scheduledAt=2026-11-15T14:30:00Z" \
       -F "smartCallbackConfig={\"enabled\": true, \"maxAttempts\": 5, \"gaps\": [{\"days\": 1, \"hours\": 0}, {\"days\": 2, \"hours\": 0}]}"
     ```
@@ -131,7 +131,7 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
 
     const form = new FormData();
     form.append('file', fs.createReadStream('batch-calls.csv'));
-    form.append('agentId', '665f1c2e8b3a4d0012345678');
+    form.append('agentId', 'a9a9a9a9a9a9a9a9a9a9a9a9');
 
     // Optional: Schedule for future
     form.append('scheduledAt', '2026-11-15T14:30:00Z');
@@ -169,7 +169,7 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls" \
 
     files = {
         'file': open('batch-calls.csv', 'rb'),
-        'agentId': (None, '665f1c2e8b3a4d0012345678'),
+        'agentId': (None, 'a9a9a9a9a9a9a9a9a9a9a9a9'),
         'scheduledAt': (None, '2026-11-15T14:30:00Z'),  # Optional
         'smartCallbackConfig': (None, json.dumps({      # Optional
             "enabled": True,
@@ -199,4 +199,4 @@ Errors return a JSON object with an `error` string.
 | `402` | `"code": "SPEND_CAP_REACHED"` |
 | `403` | Wallet not found, monthly limit exceeded, or the account's service has ended |
 | `404` | `"Agent with ID <id> not found"`: the agent doesn't exist or is in another workspace |
-| `500` | `"Failed to prepare batch: ..."`, `"Failed to start batch: ..."` (for example, no live call flow for the agent on a scheduled batch), invalid `smartCallbackConfig` JSON, or an upload over 20MB |
+| `500` | `"Failed to prepare batch: ..."`, `"Failed to start batch: ..."` |

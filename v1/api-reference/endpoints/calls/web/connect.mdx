@@ -6,7 +6,7 @@ description: "Initiate a live web-based call session with an AI agent."
 
 Initiate a web call that runs entirely via WebRTC in the browser (no phone number required). The response carries the LiveKit URL and token your client uses to join the call.
 
-Authenticate with your API key (`x-api-key`) or a dashboard session token. An SDK token from [Create SDK Token](/v1/api-reference/endpoints/calls/sdk/auth) is currently rejected by this endpoint with `401 {"error": "Invalid token"}`, so call it from your server.
+Authenticate with your API key (`x-api-key`) or a dashboard session token, and call it from your server.
 
 The workspace's wallet is checked first: a spent balance returns `400` with code `INSUFFICIENT_FUNDS`.
 
@@ -89,15 +89,15 @@ The workspace's wallet is checked first: a spent balance returns `400` with code
 {
   "status": "success",
   "callId": "k3j9x0a1bq",
-  "callHistoryId": "6650f1a2b3c4d5e6f7a8b9c0",
-  "roomName": "web-665a1b2c3d4e5f6a7b8c9d0f-k3j9x0a1bq",
+  "callHistoryId": "a2a2a2a2a2a2a2a2a2a2a2a2",
+  "roomName": "web-a5a5a5a5a5a5a5a5a5a5a5a5-k3j9x0a1bq",
   "token": "<LIVEKIT_TOKEN>",
   "connection": {
     "url": "wss://livekit.example.com",
     "token": "<LIVEKIT_TOKEN>"
   },
   "agent": {
-    "id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "id": "a5a5a5a5a5a5a5a5a5a5a5a5",
     "name": "Front Desk",
     "model": { "provider": "openai", "model": "gpt-4.1-mini" },
     "voice": { "provider": "cartesia", "voiceId": "a0e99841-438c-4a64-b679-ae501e7d6091" }

@@ -63,7 +63,7 @@ The provider's cost, before Trillet pricing. Not what you're charged.
 | --- | --- | --- |
 | `400` | `{"error": "Country, type, and workspace ID are required."}` | A parameter or `x-workspace-id` is missing |
 | `403` | `{"error": "...", "code": "TOLL_FREE_NOT_AVAILABLE"}` | `type` is toll-free |
-| `500` | `{"error": "Failed to retrieve phone number price"}` | No price for that country and type |
+| `500` | `{"error": "Failed to retrieve phone number price"}` | The price could not be retrieved |
 
 <ResponseExample>
 ```json

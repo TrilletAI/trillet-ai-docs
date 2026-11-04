@@ -29,7 +29,7 @@ Your role needs the `phone_number:create` permission. Otherwise the request fail
 </ParamField>
 
 <ParamField body="credentials" type="object" required>
-  The credentials for the provider. Always send an object, even an empty one: leaving it out fails with `500`.
+  The credentials for the provider. Always send an object, even an empty one.
   <Expandable title="Twilio (provider: twilio)">
     <ParamField body="accountSid" type="string" required>
       Your Twilio Account SID.
@@ -61,7 +61,7 @@ Your role needs the `phone_number:create` permission. Otherwise the request fail
       SIP password for your trunk.
     </ParamField>
     <ParamField body="ipAddresses" type="object[]">
-      IP addresses your trunk sends calls from. Each entry is an object with `id` (required, any unique string), `ip` and `subnetMask`. An entry without `id` fails with `500`.
+      IP addresses your trunk sends calls from. Each entry is an object with `id` (required, any unique string), `ip` and `subnetMask`.
     </ParamField>
     <ParamField body="headerMappings" type="object[]">
       Map incoming SIP headers to call attributes, each `{ "header": "X-Customer-Id", "attribute": "customer_id" }`.
@@ -110,7 +110,7 @@ The response status is `201`.
 | `400` | `{"error": "Phone number, provider type, and workspace ID are required."}` | `phoneNumber` or `provider` missing |
 | `400` | `{"error": "Invalid workspace ID", "message": "..."}` | `x-workspace-id` missing or malformed |
 | `403` | `{"error": "workspaceId in the request body does not match x-workspace-id."}` | Body `workspaceId` differs from the header |
-| `500` | `{"error": "..."}` | Every other failure, with the reason in `error`: the number isn't in E.164 format, it's already registered, the credentials are missing or wrong, the number isn't in that Twilio or Telnyx account, or `provider` isn't one of the three values |
+| `500` | `{"error": "..."}` | Any other failure, with the reason in `error` |
 
 ### Example Request
 
@@ -150,7 +150,7 @@ The response status is `201`.
 {
   "message": "twilio phone number registered successfully",
   "phoneNumber": "+14155550123",
-  "id": "665a1b2c3d4e5f6a7b8c9d0e",
+  "id": "a4a4a4a4a4a4a4a4a4a4a4a4",
   "status": "active",
   "monthlyPrice": 0
 }

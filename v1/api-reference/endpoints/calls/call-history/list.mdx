@@ -76,7 +76,7 @@ All filters are exact matches unless stated otherwise. A filter value that match
   JSON-stringified **array** of filter objects on post-call analysis fields, e.g. `[{"call_disposition":"booked"}]`. Each key is an `analyzedData` field; all conditions must match. A value can be a plain value, `null`, or an object using `$exists`, `$ne`, `$regex` (with optional `$options`, default `i`) or `$in`. The special key `function_calls` matches calls that invoked a tool by name (a string, or `{"$in": [...]}`).
 
   <Warning>
-  Send an array. A single object (`{"call_disposition":"booked"}`) is silently ignored and every call is returned.
+  Send an array, even for a single condition.
   </Warning>
 </ParamField>
 
@@ -159,16 +159,15 @@ All filters are exact matches unless stated otherwise. A filter value that match
 |---|---|---|
 | `400` | `{"error": "dateRange must be a JSON object with startDate and endDate ..."}` | `dateRange` is not valid JSON or has invalid dates |
 | `400` | `{"error": "<field> must be ..."}` | `search`, `fromPhone` or `toPhone` is repeated, over 200 characters, or (phone filters) has no digits |
-| `500` | `{"error": "<parser message>"}` | `callIds` or `postAnalysis` is not valid JSON |
 
 <ResponseExample>
 ```json
 {
   "data": [
     {
-      "_id": "6a32640492f1c2a7e5b10c44",
+      "_id": "d8d8d8d8d8d8d8d8d8d8d8d8",
       "timestamp": 1761731294,
-      "callId": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+      "callId": "d3d3d3d3d3d3d3d3d3d3d3d3-k3j9x0a1bq",
       "fromPhoneNumber": "+14155550123",
       "toPhoneNumber": "+14155550188",
       "direction": "outbound",
@@ -187,7 +186,7 @@ All filters are exact matches unless stated otherwise. A filter value that match
       "warmTransferCharge": 0,
       "warmTransferMinutes": 0,
       "isCallFromSmartCallback": false,
-      "recordingUrl": "https://api.trillet.ai/v2/api/recordings/6a32640492f1c2a7e5b10c44",
+      "recordingUrl": "https://api.trillet.ai/v2/api/recordings/d8d8d8d8d8d8d8d8d8d8d8d8",
       "publicRecordingUrl": null,
       "timezone": "America/Los_Angeles",
       "scheduledTime": null,
@@ -196,7 +195,7 @@ All filters are exact matches unless stated otherwise. A filter value that match
       "nextAttemptAt": null,
       "publicRecording": null,
       "batchId": null,
-      "roomName": "6a1f0c2b7d5e4a0012ab34cd-k3j9x0a1bq",
+      "roomName": "d3d3d3d3d3d3d3d3d3d3d3d3-k3j9x0a1bq",
       "summary": "Caller booked a consultation for Tuesday.",
       "analyzedData": {
         "call_disposition": "booked",

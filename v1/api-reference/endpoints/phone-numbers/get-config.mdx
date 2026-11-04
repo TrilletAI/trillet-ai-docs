@@ -90,14 +90,13 @@ Map of alias to workspace secret name. Names only, never secret values. `call` n
 | `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
 | `403` | `{"error": "Unauthorized access to the phone number"}` | The number belongs to another workspace |
 | `404` | `{"error": "Phone number not found"}` | No number with that ID |
-| `500` | `{"error": "Failed to fetch phone number configuration"}` | Also returned for an ID that isn't a valid ObjectId |
 
 <ResponseExample>
 ```json
 {
-  "phoneNumberId": "665a1b2c3d4e5f6a7b8c9d0e",
+  "phoneNumberId": "a4a4a4a4a4a4a4a4a4a4a4a4",
   "agentId": {
-    "_id": "665a1b2c3d4e5f6a7b8c9d0f",
+    "_id": "a5a5a5a5a5a5a5a5a5a5a5a5",
     "name": "Front Desk"
   },
   "flowType": "call",
