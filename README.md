@@ -149,6 +149,9 @@ jamdesk validate
 
 # Check for broken links
 jamdesk broken-links
+
+# Check that examples use obvious fake IDs (also runs on every PR)
+node scripts/check-example-ids.mjs
 ```
 
 ## Documentation
