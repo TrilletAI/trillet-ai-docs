@@ -115,7 +115,7 @@ curl https://api.trillet.ai/v1/api/workspaces \
     | Studio, Agency Plus, or after a top-up | 20 / min | 40 / min |
     | Enterprise | No limit | No limit |
 
-    Going over the limit currently returns an error with a message telling you how many seconds to wait (status `500`, not `429`). Wait that long before the next call.
+    Going over the limit returns an error with a message telling you how many seconds to wait. Wait that long before the next call.
   - A few endpoints, such as voice previews and the public web call endpoints, have their own limits and answer `429 Too many requests` when you exceed them.
 
   Back off and retry in both cases. If you expect sustained high volume, talk to the Trillet team first.

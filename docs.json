@@ -67,6 +67,18 @@
       "linkedin": "https://linkedin.com/company/trillet-ai"
     }
   },
+  "redirects": [
+    {
+      "source": "/introduction",
+      "destination": "/documentation/introduction",
+      "permanent": true
+    },
+    {
+      "source": "/quickstart",
+      "destination": "/documentation/quickstart",
+      "permanent": true
+    }
+  ],
   "navigation": {
     "tabs": [
       {

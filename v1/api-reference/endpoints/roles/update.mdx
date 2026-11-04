@@ -33,10 +33,6 @@ The complete new set of permission keys, in `category:action` form (e.g., `"agen
 
 <ParamField body="userIds" type="array of strings" required>
 User IDs to assign this role to, in addition to the users who already hold it. Send `[]` to assign no one new.
-
-<Warning>
-  Always send `userIds`. If it is omitted, the other changes are saved but the request returns `500 Internal server error`.
-</Warning>
 </ParamField>
 
 <Note>
@@ -81,8 +77,8 @@ Permissions grouped by category, as in [Create Role](/v1/api-reference/endpoints
 <ResponseExample>
 ```json
 {
-  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "_id": "a4a4a4a4a4a4a4a4a4a4a4a4",
+  "workspaceId": "a1a1a1a1a1a1a1a1a1a1a1a1",
   "name": "Senior Manager",
   "description": "Manages agents and reviews call history",
   "permissions": {

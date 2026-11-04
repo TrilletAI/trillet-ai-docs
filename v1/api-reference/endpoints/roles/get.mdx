@@ -14,7 +14,7 @@ Workspace identifier for the API.
 ## Path Parameters
 
 <ParamField path="roleId" type="string" required>
-The unique identifier of the role. A well-formed ID that matches no role returns `404`. A value that isn't a valid ID returns `500`.
+The unique identifier of the role. An ID that matches no role in the workspace returns `404`.
 </ParamField>
 
 ## Response Fields
@@ -58,8 +58,8 @@ Timestamp when the role was last updated.
 <ResponseExample>
 ```json
 {
-  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "_id": "a4a4a4a4a4a4a4a4a4a4a4a4",
+  "workspaceId": "a1a1a1a1a1a1a1a1a1a1a1a1",
   "name": "Agent Manager",
   "description": "Can manage agents and view call history",
   "permissions": {

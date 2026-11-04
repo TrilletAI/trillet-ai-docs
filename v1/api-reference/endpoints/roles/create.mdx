@@ -27,10 +27,6 @@ Permission keys to grant, in `category:action` form (e.g., `"agent:view"`, `"cal
 
 <ParamField body="userIds" type="array of strings" required>
 User IDs to assign this role to. Send an empty array `[]` to create the role without assigning anyone.
-
-<Warning>
-  Always send `userIds`. If it is omitted, the role is still created but the request returns `500 Internal server error`.
-</Warning>
 </ParamField>
 
 ## Response
@@ -88,8 +84,8 @@ Timestamp when the role was last updated.
 <ResponseExample>
 ```json 201
 {
-  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-  "workspaceId": "664a1b2c3d4e5f6a7b8c9d0e",
+  "_id": "a4a4a4a4a4a4a4a4a4a4a4a4",
+  "workspaceId": "a1a1a1a1a1a1a1a1a1a1a1a1",
   "name": "Manager",
   "description": "Full access to agents and call history",
   "permissions": {
