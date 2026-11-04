@@ -32,14 +32,14 @@ Deleting an agent does not touch the call flow that uses it. That flow keeps poi
 | --- | --- | --- |
 | `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
 | `404` | `{"error": "Agent not found or does not belong to the workspace"}` | No agent with this ID in the workspace, including one already deleted |
-| `500` | `{"error": "..."}` | Anything else, including a malformed `agentId` |
+| `500` | `{"error": "..."}` | Unexpected server error |
 
 <ResponseExample>
 
 ```json
 {
-  "_id": "6a1f0c2b9d4e8a0012ab34cd",
-  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "_id": "d5d5d5d5d5d5d5d5d5d5d5d5",
+  "workspaceId": "d1d1d1d1d1d1d1d1d1d1d1d1",
   "name": "Customer Support Agent",
   "ttsModel": {
     "provider": "rime",

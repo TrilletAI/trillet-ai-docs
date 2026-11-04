@@ -89,7 +89,7 @@ A JSON body is required. Send `{}` if you don't want to set anything.
 | `404` | `{"message", "code": "PHONE_NUMBER_NOT_FOUND", "error"}` | No number with this ID in the workspace |
 | `409` | `{"message", "code": "CALL_FLOW_ARCHIVED", "error"}` | Every call flow of the agent is archived or inactive. Restore or turn one on first |
 | `409` | `{"message", "code": "AGENT_HAS_NO_CALL_FLOW", "error"}` | The agent isn't used by any call flow |
-| `500` | `{"error": "..."}` | Anything else, including a request with no body |
+| `500` | `{"error": "..."}` | Unexpected server error |
 
 When a request is refused, nothing is changed.
 
@@ -118,14 +118,14 @@ When a request is refused, nothing is changed.
 ```json
 {
   "agent": {
-    "_id": "6a1f0c2b9d4e8a0012ab34cd",
+    "_id": "d5d5d5d5d5d5d5d5d5d5d5d5",
     "status": "ready",
-    "phoneNumberIds": ["6a1f0d7e9d4e8a0012ab35ef"]
+    "phoneNumberIds": ["d6d6d6d6d6d6d6d6d6d6d6d6"]
   },
   "phoneNumber": {
-    "_id": "6a1f0d7e9d4e8a0012ab35ef",
-    "agentId": "6a1f0c2b9d4e8a0012ab34cd",
-    "pathwayId": "6a1f0b119d4e8a0012ab3301",
+    "_id": "d6d6d6d6d6d6d6d6d6d6d6d6",
+    "agentId": "d5d5d5d5d5d5d5d5d5d5d5d5",
+    "pathwayId": "d2d2d2d2d2d2d2d2d2d2d2d2",
     "flowType": "call",
     "status": "active",
     "recordingEnabled": true,
@@ -144,7 +144,7 @@ When a request is refused, nothing is changed.
     },
     "transferCallerIdMode": "from-transferee"
   },
-  "pathwayId": "6a1f0b119d4e8a0012ab3301",
+  "pathwayId": "d2d2d2d2d2d2d2d2d2d2d2d2",
   "direction": "bidirectional"
 }
 ```

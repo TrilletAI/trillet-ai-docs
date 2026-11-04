@@ -210,8 +210,7 @@ Timestamp when the agent was last updated.
 | `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
 | `400` | `{"message", "code": "LLM_MODEL_INVALID"}` | A changed `llmModel` or `fallbackLlmModel` isn't an available model, or is the retired `trillet-llm` |
 | `400` | `{"error", "code"}` | `phoneNumberIds` names a number from another workspace |
-| `500` | `{"error": "Agent not found or does not belong to the workspace"}` | No agent with this ID in the workspace. This is currently a `500`, not a `404` |
-| `500` | `{"error": "..."}` | Anything else, including a `provider` outside the allowed list |
+| `500` | `{"error": "..."}` | Unexpected server error |
 
 <RequestExample>
 ```json
@@ -241,9 +240,9 @@ Timestamp when the agent was last updated.
 
 ```json
 {
-  "_id": "6a1f0c2b9d4e8a0012ab34cd",
-  "workspaceId": "695a4b40af74e5bb4bf8149d",
-  "userId": "6612a0b1c2d3e4f5a6b7c8d9",
+  "_id": "d5d5d5d5d5d5d5d5d5d5d5d5",
+  "workspaceId": "d1d1d1d1d1d1d1d1d1d1d1d1",
+  "userId": "a0a0a0a0a0a0a0a0a0a0a0a0",
   "name": "Updated Customer Support Agent",
   "ttsModel": {
     "provider": "rime",

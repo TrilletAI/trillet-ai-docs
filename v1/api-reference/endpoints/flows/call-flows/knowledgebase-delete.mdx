@@ -4,10 +4,12 @@ api: "DELETE /v1/api/call-flows/knowledge-base/{fileKey}"
 description: "Delete a stored call flow knowledge file by its storage key."
 ---
 
-<Warning>
-  Passing the `key` returned by [Upload Call Flow Knowledge File](/v1/api-reference/endpoints/flows/call-flows/knowledgebase-upload) does **not** delete the file. The file is stored under a different key than the one the upload returns, so the request answers `200` with `"File deleted successfully"` but the stored file is left in place. This is a known issue. Until it is fixed, don't rely on this endpoint to remove uploaded files; contact Trillet support if a file must be deleted.
+<Note>
+  This endpoint does not touch any call flow. To stop a flow using a file, remove it from the flow's `settings.knowledgeBaseFiles` with [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update).
+</Note>
 
-  The endpoint also does not touch any call flow. To stop a flow using a file, remove it from the flow's `settings.knowledgeBaseFiles` with [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update).
+<Warning>
+  Known issue: this call can return `200` without removing the stored file. A fix is in progress; until then, don't rely on it to remove a file's contents.
 </Warning>
 
 ### Headers
@@ -24,7 +26,7 @@ description: "Delete a stored call flow knowledge file by its storage key."
 
 ### Response Fields
 
-`200 OK` with `{ "success": true, "message": "File deleted successfully", "fileKey": "...", "result": true }`. `success` only means that no file is stored under the key you sent after the call; see the warning above.
+`200 OK` with `{ "success": true, "message": "File deleted successfully", "fileKey": "...", "result": true }`.
 
 ### Errors
 

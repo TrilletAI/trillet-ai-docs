@@ -38,15 +38,13 @@ No request body is read. If you send `Content-Type: application/json`, send `{}`
 | --- | --- | --- |
 | `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
 | `403` | `{"error": "Insufficient permissions"}` | Your role doesn't have `agent:edit` |
-| `500` | `{"error": "Agent not found or does not belong to the workspace"}` | No agent with this ID in the workspace. This is currently a `500`, not a `404` |
-| `500` | `{"error": "Phone number not associated with this agent"}` | The number isn't assigned to this agent |
 | `500` | `{"error": "..."}` | Anything else |
 
 <ResponseExample>
 ```json
 {
-  "_id": "6a1f0c2b9d4e8a0012ab34cd",
-  "workspaceId": "695a4b40af74e5bb4bf8149d",
+  "_id": "d5d5d5d5d5d5d5d5d5d5d5d5",
+  "workspaceId": "d1d1d1d1d1d1d1d1d1d1d1d1",
   "name": "Customer Support Agent",
   "ttsModel": {
     "provider": "rime",

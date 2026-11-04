@@ -7,7 +7,7 @@ description: "Turn an audio clip into a voice embedding you can use to create a 
 Cloning is the first of two steps. This endpoint sends your clip to Cartesia and returns its voice embedding. Nothing is saved to your workspace yet: pass the returned `embedding` to [Create Custom Voice](/v1/api-reference/endpoints/voices/create) to create the voice.
 
 <Note>
-Only the audio file is read. Form fields such as `name`, `description` or `language` are currently ignored, so this call never creates a voice by itself. Send those values to Create Custom Voice instead.
+Only the audio file is read. Form fields such as `name`, `description` or `language` are not used: this call does not create a voice. Send those values to Create Custom Voice instead.
 </Note>
 
 ## Headers

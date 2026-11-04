@@ -35,7 +35,7 @@ description: "Create a new message flow with full settings."
   - `Infobip-Whatsapp`
   - `Infobip-Facebook`
 
-  The value is case-sensitive. Any other value, including `"SMS"` or `"Email"`, fails validation and the response is `500` `{"message": "Error creating pathway"}`.
+  The value is case-sensitive. Any other value, including `"SMS"` or `"Email"`, is rejected.
 </ParamField>
 
 <ParamField body="agent" type="string">
@@ -43,7 +43,7 @@ description: "Create a new message flow with full settings."
 </ParamField>
 
 <ParamField body="settings" type="object" required>
-  The flow's settings. **Required**: leave it out and the request fails with `500`. Send `{}` for none.
+  The flow's settings. **Required**. Send `{}` for none.
 
   The object you send is stored as the flow's settings; it is not merged with defaults, so send every setting you want the flow to have.
   <Expandable title="settings">
@@ -221,7 +221,7 @@ description: "Create a new message flow with full settings."
   "name": "Customer Engagement Campaign",
   "direction": "bidirectional",
   "messageChannel": "Twilio-SMS",
-  "agent": "6874de297dc4243af17334c0",
+  "agent": "c9c9c9c9c9c9c9c9c9c9c9c9",
   "prompt": "You are a supportive assistant managing event inquiries.",
   "initiationMessage": "Welcome to our service! How can we assist you today?",
   "autopilot": true,
@@ -245,12 +245,12 @@ description: "Create a new message flow with full settings."
 <ResponseExample>
 ```json
 {
-  "_id": "6874de297dc4243af17334cb",
-  "workspaceId": "6764d172953253138a3a70f4",
+  "_id": "d0d0d0d0d0d0d0d0d0d0d0d0",
+  "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
   "name": "Customer Engagement Campaign",
   "direction": "bidirectional",
   "description": "Manages interactions for promotional events via SMS",
-  "agent": "6874de297dc4243af17334c0",
+  "agent": "c9c9c9c9c9c9c9c9c9c9c9c9",
   "settings": {
     "responseSettings": {
       "delay": 0,

@@ -60,8 +60,7 @@ Your role must have both the `team:add_member` and `workspace:edit` permissions.
 | `403` | `{"error": "Insufficient permissions to invite members"}` | Client workspace and you lack `agency_hub:manage_clients` on the master |
 | `403` | `{"error": "Only Agency and Studio plans can invite SMB users."}` | `isSMB: true` on another plan |
 | `404` | `{"error": "Workspace not found"}` | No workspace with that ID that you can see |
-| `500` | `{"error": "Role \"Admin\" not found for workspace ..."}` | `role` doesn't match a role name exactly (for example wrong case) |
-| `500` | `{"error": "..."}` | `role` or `email` missing, or another server error |
+| `500` | `{"error": "..."}` | Unexpected server error |
 
 <RequestExample>
 ```json

@@ -82,8 +82,7 @@ Send the user to `sessionUrl`. The workspace is created automatically, with the 
 | `402` | `{"error": "...", "requiresPayment": true, "isStudioPlan": true, ...}` | Studio plan over its included workspaces (see above) |
 | `403` | `{"error": "Please subscribe to a plan to create workspaces", "subscriptionCanceled": true}` | Your subscription is cancelled |
 | `423` | `{"error": "...", "code": "WORKSPACE_CHANGE_IN_PROGRESS"}` | Another workspace create or restore for your account is still running. Retry shortly |
-| `500` | `{"error": "Workspace name was not defined"}` | `name` missing |
-| `500` | `{"error": "..."}` | `initials` missing, your plan's workspace limit is reached (non-Studio plans and trials), or another server error |
+| `500` | `{"error": "..."}` | Unexpected server error |
 
 <RequestExample>
 ```json

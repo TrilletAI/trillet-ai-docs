@@ -23,7 +23,7 @@ If the flow has unpublished changes from the call flow editor (an active draft),
 | Status | Body | When |
 | --- | --- | --- |
 | `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
-| `500` | `{"message": "Error fetching flow"}` | No flow with that ID in this workspace, or a malformed ID. This endpoint does not currently return `404` |
+| `500` | `{"message": "Error fetching flow"}` | Unexpected server error |
 
 ### Response Fields
 
@@ -128,13 +128,13 @@ If the flow has unpublished changes from the call flow editor (an active draft),
 
 ```json
 {
-  "_id": "676b8e123456789012345678",
-  "workspaceId": "6764d172953253138a3a70f4",
+  "_id": "c2c2c2c2c2c2c2c2c2c2c2c2",
+  "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
   "name": "Customer Support Flow",
   "direction": "bidirectional",
   "description": "Handles inbound support calls",
   "agent": {
-    "_id": "676b8e123456789012345679",
+    "_id": "c3c3c3c3c3c3c3c3c3c3c3c3",
     "name": "Customer Support Flow",
     "phoneNumberIds": []
   },

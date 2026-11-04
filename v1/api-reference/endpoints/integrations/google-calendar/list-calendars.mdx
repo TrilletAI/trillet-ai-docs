@@ -56,7 +56,6 @@ The calendar's IANA time zone (`""` if Google didn't return one).
 | `403` | `{"error": "You do not have access to this workspace."}` | You aren't a member of the `x-workspace-id` workspace |
 | `403` | `{"error": "Pathway does not belong to this workspace."}` | The flow belongs to another workspace |
 | `404` | `{"error": "Pathway not found"}` | No call flow with that ID |
-| `500` | `{"error": "Google Calendar Integration not found for this pathway"}` | The flow has no Google Calendar connection |
 | `500` | `{"error": "Failed to refresh Google Calendar token"}` | The stored Google token could not be refreshed. Reconnect with [Install Google Calendar](/v1/api-reference/endpoints/integrations/google-calendar/install) |
 
 <ResponseExample>

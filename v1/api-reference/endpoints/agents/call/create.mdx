@@ -27,7 +27,7 @@ Text-to-Speech (TTS) configuration for the agent. `provider` and `voiceId` are b
 <Expandable title="properties">
 
 <ParamField body="provider" type="string" required>
-TTS provider. One of `rime`, `openai`, `openai-live`, `elevenlabs`, `11labs_byo`, `cartesia`, `cartesia_byo`, `google`, `gemini-3.8-flash`, `gemini-3.8-flash-lite`, `azure`, `hume`, `xai`, `grok`, `deepgram`, `fish`. A value outside this list fails with `500`.
+TTS provider. One of `rime`, `openai`, `openai-live`, `elevenlabs`, `11labs_byo`, `cartesia`, `cartesia_byo`, `google`, `gemini-3.8-flash`, `gemini-3.8-flash-lite`, `azure`, `hume`, `xai`, `grok`, `deepgram`, `fish`.
 
 Custom voices you create with the [Voices API](/v1/api-reference/endpoints/voices/create) use `cartesia`.
 </ParamField>
@@ -234,7 +234,7 @@ Timestamp when the agent was last updated.
 | `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
 | `400` | `{"message", "code": "TTS_MODEL_INVALID"}` | `ttsModel` is missing, or has no `provider` or `voiceId` |
 | `400` | `{"message", "code": "LLM_MODEL_INVALID"}` | `llmModel` or `fallbackLlmModel` isn't an available model, or is the retired `trillet-llm` |
-| `500` | `{"error": "..."}` | Anything else, including a `provider` or `sttProvider.id` outside the allowed list |
+| `500` | `{"error": "..."}` | Unexpected server error |
 
 <RequestExample>
 ```json
@@ -267,9 +267,9 @@ Timestamp when the agent was last updated.
 <ResponseExample>
 ```json
 {
-  "_id": "6a1f0c2b9d4e8a0012ab34cd",
-  "workspaceId": "695a4b40af74e5bb4bf8149d",
-  "userId": "6612a0b1c2d3e4f5a6b7c8d9",
+  "_id": "d5d5d5d5d5d5d5d5d5d5d5d5",
+  "workspaceId": "d1d1d1d1d1d1d1d1d1d1d1d1",
+  "userId": "a0a0a0a0a0a0a0a0a0a0a0a0",
   "name": "Customer Support Agent",
   "ttsModel": {
     "provider": "rime",

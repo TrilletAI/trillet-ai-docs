@@ -246,7 +246,7 @@ The flow's in-call webhooks (In-Call APIs). **This array replaces the flow's who
     HTTP method for the webhook request.
   </ParamField>
   <ParamField body="headers" type="array">
-    Headers to send, as an array of `{ "name": "...", "value": "..." }` objects. Both fields are required. An object of key-value pairs (`{ "Authorization": "..." }`) is not accepted and the update fails with `500`.
+    Headers to send, as an array of `{ "name": "...", "value": "..." }` objects. Both fields are required. An object of key-value pairs (`{ "Authorization": "..." }`) is not accepted.
     <Expandable title="headers">
       <ParamField body="name" type="string" required>
         Header name, for example `Authorization`.
@@ -334,7 +334,7 @@ When a request is refused, nothing is changed.
 | `400` | `{"message": "..."}` | Other settings rules: invalid transfers, custom tools, booking link, Google Calendar settings or speech-recognition keywords, or a knowledge base from another workspace |
 | `409` | `{"code": "FLOW_ARCHIVED", "message": "This flow is archived and is read-only. Restore it to make changes."}` | The flow is archived. Restore it in the dashboard first |
 | `409` | `{"message": "Flow has been updated by another user"}` | You sent `expectedUpdatedAt` and the flow changed since then |
-| `500` | `{"message": "Error updating flow"}` | No flow with that ID in this workspace, a malformed ID, or a body the flow cannot store (for example webhook `headers` sent as an object). This endpoint does not currently return `404` for an unknown flow |
+| `500` | `{"message": "Error updating flow"}` | Unexpected server error |
 
 ### Response Fields
 
@@ -492,13 +492,13 @@ The updated call flow, with one extra field, `numberSyncFailures`.
 <ResponseExample>
 ```json
 {
-  "_id": "676b8e123456789012345678",
-  "workspaceId": "6764d172953253138a3a70f4",
+  "_id": "c2c2c2c2c2c2c2c2c2c2c2c2",
+  "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
   "folderId": null,
   "name": "Customer Support Flow",
   "direction": "bidirectional",
   "description": "Handles inbound support calls",
-  "agent": "676b8e123456789012345679",
+  "agent": "c3c3c3c3c3c3c3c3c3c3c3c3",
   "promptType": "simple",
   "flowData": {
     "nodes": [
@@ -513,10 +513,10 @@ The updated call flow, with one extra field, `numberSyncFailures`.
     "edges": []
   },
   "prompt": "Keep the conversation short and friendly.",
-  "currentPromptId": "676b8e123456789012345680",
+  "currentPromptId": "c4c4c4c4c4c4c4c4c4c4c4c4",
   "promptVersions": [
     {
-      "_id": "676b8e123456789012345680",
+      "_id": "c4c4c4c4c4c4c4c4c4c4c4c4",
       "name": "Prompt Version - 1/15/2025, 3:00:00 PM",
       "prompt": "Keep the conversation short and friendly.",
       "metadata": {

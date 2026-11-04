@@ -9,8 +9,8 @@ The message sent is always the message flow's `initiationMessage`. It is recorde
 What actually gets delivered depends on the flow's `messageChannel`:
 
 - **`Twilio-SMS` and `Telnyx-SMS`**: the SMS is sent **immediately**, from the phone number bound to the flow's agent. `autopilot` has no effect and no flow delay is applied.
-- **`Twilio-Email`**: the message is recorded on the conversation, but **no email is sent**. Email sending is not implemented yet.
-- **Any other channel** (WhatsApp, Facebook): not supported by this endpoint. The request fails with `500`.
+- **`Twilio-Email`**: known issue. The message is recorded on the conversation, but no email is sent yet.
+- **Any other channel** (WhatsApp, Facebook): not supported by this endpoint.
 
 ### Headers  
 <ParamField header="x-workspace-id" type="string" required>
@@ -87,13 +87,12 @@ The flow's `messageChannel`, for example `Twilio-SMS`.
 | `400` | `{"error": "Phone number associated with the message flow not found."}` | No phone number is bound to the flow's agent |
 | `400` | `{"error": "Country code mismatch: ..."}` | Sender and recipient are in different countries |
 | `403` | `{"error": "..."}` | The workspace's service has ended, or its traffic is suspended |
-| `500` | `{"error": "Insufficient balance to send this message. Please top up your account."}` | Wallet balance below 1 |
-| `500` | `{"error": "..."}` | `flowId` isn't a valid ID, the flow has no `initiationMessage`, the channel isn't supported, or the provider rejected the SMS |
+| `500` | `{"error": "..."}` | The SMS provider rejected the message, or another server error |
 
 <RequestExample>
 ```json
 {
-  "flowId": "674e75bbe1456b11a194f091",
+  "flowId": "b7b7b7b7b7b7b7b7b7b7b7b7",
   "to": "+14155550123",
   "metadata": {
     "customerDetails": {
@@ -108,8 +107,8 @@ The flow's `messageChannel`, for example `Twilio-SMS`.
 ```json  
 {  
   "status": "success",  
-  "conversation_id": "675c8e368824aa5f130b94d6",  
-  "message_id": "675c8e368824aa5f130b94d3",  
+  "conversation_id": "b9b9b9b9b9b9b9b9b9b9b9b9",  
+  "message_id": "b8b8b8b8b8b8b8b8b8b8b8b8",  
   "message": "Hi Sam, your appointment is confirmed for tomorrow at 3 PM.",
   "channel": "Twilio-SMS"
 }  

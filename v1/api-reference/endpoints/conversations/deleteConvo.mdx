@@ -35,15 +35,14 @@ The conversation is hard-deleted and can't be recovered. Only conversations whos
 | Status | Body | When |
 | --- | --- | --- |
 | `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
-| `500` | `{"error": "Conversation not found"}` | No conversation with that ID. This currently returns `500`, not `404` |
-| `500` | `{"error": "Message flow not found in this workspace"}` | The conversation's message flow is in another workspace |
+| `500` | `{"error": "..."}` | Unexpected server error |
 
 <ResponseExample>
 ```json
 {
   "status": "success",
-  "message": "Conversation with ID 675c8e368824aa5f130b94d6 deleted successfully.",
-  "conversationId": "675c8e368824aa5f130b94d6"
+  "message": "Conversation with ID b9b9b9b9b9b9b9b9b9b9b9b9 deleted successfully.",
+  "conversationId": "b9b9b9b9b9b9b9b9b9b9b9b9"
 }
 ```
 </ResponseExample>

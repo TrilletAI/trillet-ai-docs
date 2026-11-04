@@ -86,12 +86,11 @@ Why the file wasn't indexed, for example `no-extractable-text` (such as a scanne
 | `400` | `{"message", "code": "KB_UNSUPPORTED_FILE_TYPE"}` | The file isn't one of the supported formats |
 | `409` | `{"message", "code": "KB_DUPLICATE_FILENAME", "details": {"filename"}}` | A file with this name already exists and no `duplicateStrategy` was sent |
 | `409` | `{"message", "code": "KB_FILE_LIMIT_REACHED", "details": {"limit", "current"}}` | The knowledge base already holds 5 files |
-| `500` | `{"message": "Knowledge base not found or not accessible in this workspace."}` | No knowledge base with this ID in the workspace. This is currently a `500`, not a `404` |
 | `500` | `{"message": "..."}` | Anything else. The uploaded file is not kept |
 
 <RequestExample>
 ```bash
-curl -X POST https://api.trillet.ai/v1/api/knowledgebase/665a1b2c3d4e5f6a7b8c9d0e/files \
+curl -X POST https://api.trillet.ai/v1/api/knowledgebase/a4a4a4a4a4a4a4a4a4a4a4a4/files \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "uploadedFile=@product-guide.pdf" \
@@ -103,8 +102,8 @@ curl -X POST https://api.trillet.ai/v1/api/knowledgebase/665a1b2c3d4e5f6a7b8c9d0
 ```json
 {
   "filename": "product-guide.pdf",
-  "key": "workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/1761735600000-product-guide.pdf",
-  "url": "https://example-bucket.s3.amazonaws.com/workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/1761735600000-product-guide.pdf",
+  "key": "workspaces/d1d1d1d1d1d1d1d1d1d1d1d1/knowledge-bases/a4a4a4a4a4a4a4a4a4a4a4a4/1761735600000-product-guide.pdf",
+  "url": "https://example-bucket.s3.amazonaws.com/workspaces/d1d1d1d1d1d1d1d1d1d1d1d1/knowledge-bases/a4a4a4a4a4a4a4a4a4a4a4a4/1761735600000-product-guide.pdf",
   "mimetype": "application/pdf",
   "size": 1048576,
   "uploadedAt": "2026-10-29T10:00:00.000Z",

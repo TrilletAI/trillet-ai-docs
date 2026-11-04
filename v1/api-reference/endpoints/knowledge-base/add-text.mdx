@@ -70,14 +70,13 @@ When the text was saved.
 | `400` | `{"message": "Workspace ID header is required"}` | No `x-workspace-id` |
 | `400` | `{"message": "Text content is required"}` | `text` is missing or blank |
 | `409` | `{"message", "code": "KB_FILE_LIMIT_REACHED", "details": {"limit", "current"}}` | The knowledge base has no text yet and already holds 5 files |
-| `500` | `{"message": "Knowledge base not found or not accessible in this workspace."}` | No knowledge base with this ID in the workspace. This is currently a `500`, not a `404` |
 | `500` | `{"message": "..."}` | Anything else |
 
 <ResponseExample>
 ```json
 {
   "filename": "Opening hours",
-  "key": "workspaces/695a4b40af74e5bb4bf8149d/knowledge-bases/665a1b2c3d4e5f6a7b8c9d0e/text-1761735600000.txt",
+  "key": "workspaces/d1d1d1d1d1d1d1d1d1d1d1d1/knowledge-bases/a4a4a4a4a4a4a4a4a4a4a4a4/text-1761735600000.txt",
   "url": "",
   "mimetype": "text/plain",
   "size": 412,

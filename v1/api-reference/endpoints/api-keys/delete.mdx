@@ -34,7 +34,7 @@ The key record's `_id` (not the key itself).
 | `403` | `{"error": "Insufficient permissions", ...}` | Your role lacks `api_keys:delete` |
 | `403` | `{"error": "API keys cannot be managed by connected apps."}` | The request used an OAuth (connected app) token |
 | `404` | `{"error": "API key not found"}` | No key with that ID belongs to you |
-| `500` | `{"error": "Internal server error", "message": "..."}` | `id` isn't a valid ID, or another server error |
+| `500` | `{"error": "Internal server error", "message": "..."}` | Unexpected server error |
 
 <ResponseExample>
 ```json

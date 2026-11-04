@@ -32,7 +32,7 @@ The flow and agent are soft-deleted: the records are kept and can be recovered b
 | --- | --- | --- |
 | `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
 | `404` | `{"message": "Flow not found"}` | No flow with that ID in this workspace |
-| `500` | `{"message": "Error deleting flow"}` | Anything else, including a malformed ID |
+| `500` | `{"message": "Error deleting flow"}` | Unexpected server error |
 
 <ResponseExample>
 ```json 

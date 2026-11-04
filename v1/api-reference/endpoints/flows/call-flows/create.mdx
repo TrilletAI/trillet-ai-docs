@@ -278,7 +278,7 @@ description: "Create a new call flow with full settings."
       Call length and silence handling.
 
       <Warning>
-        Create does not check these values; [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) does. A flow created with a value outside the limits below is stored as sent, and a later update that changes any of these values is refused until they are all valid. Stay within the limits on create too.
+        Send values within the limits below. [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) refuses values outside them.
       </Warning>
 
       <ParamField body="endCallOnSilence" type="number">
@@ -488,13 +488,13 @@ When a request is refused, the flow is not created.
 <ResponseExample>
 ```json 201 Created
 {
-  "_id": "676b8e123456789012345678",
-  "workspaceId": "6764d172953253138a3a70f4",
+  "_id": "c2c2c2c2c2c2c2c2c2c2c2c2",
+  "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
   "folderId": null,
   "name": "Customer Support Flow",
   "direction": "bidirectional",
   "description": "Handles inbound support calls",
-  "agent": "676b8e123456789012345679",
+  "agent": "c3c3c3c3c3c3c3c3c3c3c3c3",
   "promptType": "simple",
   "flowData": {
     "nodes": [
@@ -509,10 +509,10 @@ When a request is refused, the flow is not created.
     "edges": []
   },
   "prompt": "Keep the conversation short and friendly.",
-  "currentPromptId": "676b8e123456789012345680",
+  "currentPromptId": "c4c4c4c4c4c4c4c4c4c4c4c4",
   "promptVersions": [
     {
-      "_id": "676b8e123456789012345680",
+      "_id": "c4c4c4c4c4c4c4c4c4c4c4c4",
       "name": "Prompt Version - 1/15/2025, 3:00:00 PM",
       "prompt": "Keep the conversation short and friendly.",
       "metadata": {

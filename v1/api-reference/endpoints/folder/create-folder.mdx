@@ -73,7 +73,7 @@ All folder errors use a `message` field, not `error`.
 | Status | Body | When |
 | --- | --- | --- |
 | `400` | `{"message": "x-workspace-id header is required"}` | `x-workspace-id` missing or not a valid ID |
-| `500` | `{"message": "FlowFolder validation failed: ..."}` | `name` or `flowType` missing, or `flowType` isn't `call` or `message`. These validation errors currently return `500`, not `400` |
+| `500` | `{"message": "..."}` | Unexpected server error |
 
 <RequestExample>
 ```json
@@ -89,8 +89,8 @@ All folder errors use a `message` field, not `error`.
 <ResponseExample>
 ```json 201
 {
-  "_id": "6720b3c4d5e6f7a8b9c0d1e2",
-  "workspaceId": "674a3edc2d89622daa9fcfd1",
+  "_id": "b2b2b2b2b2b2b2b2b2b2b2b2",
+  "workspaceId": "b4b4b4b4b4b4b4b4b4b4b4b4",
   "name": "Inbound Flows",
   "color": "#3B82F6",
   "icon": "folder",

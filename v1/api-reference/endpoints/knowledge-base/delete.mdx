@@ -30,5 +30,4 @@ The unique identifier of the knowledge base to delete.
 | Status | Body | When |
 | --- | --- | --- |
 | `400` | `{"message": "X-Workspace-ID header is required"}` | No `x-workspace-id` |
-| `500` | `{"message": "Knowledge base not found or not accessible in this workspace."}` | No knowledge base with this ID in the workspace, including one already deleted. This is currently a `500`, not a `404` |
 | `500` | `{"message": "..."}` | Anything else |
