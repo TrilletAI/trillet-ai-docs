@@ -1,0 +1,28 @@
+name: Example IDs
+
+# docs.trillet.ai is public: block PRs that add real-looking IDs or internal hostnames.
+# See scripts/check-example-ids.mjs.
+on:
+  pull_request:
+    paths:
+      - '**/*.mdx'
+      - '**/*.md'
+      - '**/*.json'
+      - '**/*.yaml'
+      - '**/*.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  example-ids:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check added lines for real IDs and internal hosts
+        run: node scripts/check-example-ids.mjs "origin/${{ github.base_ref }}"
