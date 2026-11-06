@@ -1,45 +1,56 @@
 ---
 title: "Get Meta Lead Ads Status"
 api: "GET /v1/api/meta-lead/status/{flowId}"
-description: "Check the connection and configuration status of Meta Lead Ads for a specific call flow."
+description: "Check whether Meta Lead Ads is connected and enabled for a call flow."
 ---
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+Workspace identifier for the API. The call flow must belong to this workspace (or one of its sub-workspaces).
 </ParamField>
 
 ## Path Parameters
 
 <ParamField path="flowId" type="string" required>
-The call flow ID to check the Meta Lead Ads status for.
+The `_id` of the call flow. The flow must be active.
 </ParamField>
 
 ## Response Fields
 
-<ResponseField name="connected" type="boolean">
-Whether Meta Lead Ads is connected and configured for this flow.
+<ResponseField name="enabled" type="boolean">
+Whether new leads trigger calls on this flow.
 </ResponseField>
 
-<ResponseField name="pages" type="array">
-Configured Facebook pages and their forms.
+<ResponseField name="connected" type="boolean">
+Whether Meta Lead Ads is connected to this flow.
+</ResponseField>
+
+<ResponseField name="webhookUrl" type="string">
+The webhook URL registered with Meta. Absent if the integration was never configured.
 </ResponseField>
 
 <ResponseField name="callDelaySeconds" type="number">
-Current call delay setting in seconds.
+Seconds Trillet waits after a lead arrives before calling. Absent if the integration was never configured.
 </ResponseField>
+
+The connected pages and forms are not returned here.
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Invalid pathwayId"}` | `flowId` isn't a valid ID |
+| `403` | `{"error": "Pathway does not belong to this workspace."}` | The flow belongs to another workspace |
+| `404` | `{"error": "Pathway not found"}` | No call flow with that ID |
+| `404` | `{"error": "Flow not found"}` | The flow exists but isn't active |
+| `500` | `{"error": "Failed to get integration status", "details": "..."}` | Unexpected server error |
 
 <ResponseExample>
 ```json
 {
+  "enabled": true,
   "connected": true,
-  "pages": [
-    {
-      "pageId": "123456789",
-      "pageName": "My Business Page",
-      "forms": ["form_001", "form_002"]
-    }
-  ],
+  "webhookUrl": "https://app.trillet.ai/v1/api/meta-lead/webhook",
   "callDelaySeconds": 30
 }
 ```

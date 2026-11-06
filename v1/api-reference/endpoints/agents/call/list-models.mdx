@@ -8,6 +8,8 @@ Returns every language model your workspace can use, so you can pass a valid `id
 
 The available models change over time. Read this endpoint rather than hardcoding a list.
 
+To list the models available to one particular call flow, call `GET /v1/api/llm-models/call-flow-models/{callFlowId}`. It returns the same fields, and also includes models enabled only for that flow.
+
 ### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
@@ -38,6 +40,26 @@ Relative quality score, as a percentage. May be empty.
 
 <ResponseField name="tier" type="string">
 Broad performance band, for example `fast` or `balanced`.
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+The model's vendor.
+</ResponseField>
+
+<ResponseField name="tags" type="string[]">
+Labels shown in the model picker. May be empty.
+</ResponseField>
+
+<ResponseField name="standardRatePerMinute" type="number">
+Your workspace's standard per-minute call rate.
+</ResponseField>
+
+<ResponseField name="effectiveRatePerMinute" type="number">
+What a minute costs your workspace with this model, including any model surcharge.
+</ResponseField>
+
+<ResponseField name="costMultiplier" type="number | null">
+How many times the standard rate this model costs. `null` when it costs no more than a standard minute.
 </ResponseField>
 
 <ResponseField name="isRecommended" type="boolean">

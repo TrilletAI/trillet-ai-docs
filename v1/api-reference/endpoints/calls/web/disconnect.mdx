@@ -19,6 +19,14 @@ End an active web-based call session. This API notifies the server that the user
   The room name for the ongoing web call session.
 </ParamField>
 
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `404` | `{"error": "Session not found"}` | No session with that `roomName` in this workspace |
+| `404` | `{"error": "Agent not found"}` | The session's agent no longer exists |
+| `500` | `{"error": "Failed to end web call", "details": "..."}` | Server error |
+
 <ResponseExample>
 ```json
 {

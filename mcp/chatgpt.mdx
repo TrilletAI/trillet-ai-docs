@@ -4,7 +4,9 @@ sidebarTitle: "Connect ChatGPT"
 description: "Add Trillet to ChatGPT as a custom MCP connector and sign in with your Trillet account."
 ---
 
-Add Trillet to ChatGPT once, then ask ChatGPT to build, test, and review your agents in any conversation. You sign in with your Trillet login. You don't need an API key.
+Add Trillet to ChatGPT once, then ask ChatGPT to build and edit your agents in any conversation. You sign in with your Trillet login. You don't need an API key.
+
+ChatGPT gets a smaller set of Trillet tools than Claude and the other clients. Check [What ChatGPT can do](#what-chatgpt-can-do) before you start.
 
 ## Before you start
 
@@ -30,7 +32,7 @@ OpenAI updates the ChatGPT interface often, so labels can differ slightly in you
     Fill in the form:
 
     - **Name:** `Trillet`
-    - **Description:** `Build, test, and review my Trillet voice agents` (optional)
+    - **Description:** `Build and edit my Trillet voice agents` (optional)
     - **Server URL:** `https://mcp.trillet.ai/mcp`
     - **Authentication:** **OAuth**
 
@@ -43,7 +45,7 @@ OpenAI updates the ChatGPT interface often, so labels can differ slightly in you
     ChatGPT opens a Trillet sign-in page. Log in with the account you use at [app.trillet.ai](https://app.trillet.ai).
   </Step>
   <Step title="Review and allow access">
-    Trillet shows a consent screen titled **ChatGPT wants to access your Trillet account**. It lists what ChatGPT can view and do, and confirms that it can't see or change your password, email, billing details, or API keys.
+    Trillet shows a consent screen titled **ChatGPT wants to access your Trillet account**. It lists what ChatGPT can view and do, and what it can't reach. See [Security and permissions](/mcp/security#what-it-cant-do) for exactly what a connection can and can't reach.
 
     If you belong to more than one workspace, choose the workspace ChatGPT starts in. ChatGPT can reach all of your workspaces and switches when you ask.
 
@@ -64,6 +66,36 @@ OpenAI updates the ChatGPT interface often, so labels can differ slightly in you
   </Step>
 </Steps>
 
+## What ChatGPT can do
+
+A ChatGPT connection (and an OpenAI Codex connection) gets 24 of Trillet's tools. It gets no [prompts or resources](/mcp/prompts-and-resources).
+
+| Area | Tools |
+|---|---|
+| Workspaces | `trillet_list_workspaces`, `trillet_switch_workspace` |
+| Agents and voices | `trillet_list_agents`, `trillet_search_voices`, `trillet_create_agent`, `trillet_update_agent` |
+| Call flows | `trillet_list_call_flows`, `trillet_get_call_flow`, `trillet_list_drafts`, `trillet_create_call_flow`, `trillet_update_prompt`, `trillet_set_post_call_analysis` |
+| Call-flow settings | `trillet_set_transfers`, `trillet_set_office_hours`, `trillet_set_call_settings`, `trillet_set_speech_settings`, `trillet_set_welcome_message` |
+| Knowledge bases | `trillet_list_knowledge_bases`, `trillet_create_knowledge_base`, `trillet_add_kb_text`, `trillet_attach_knowledge_bases` |
+| Demo links | `trillet_list_demo_links`, `trillet_create_demo_link`, `trillet_set_demo_page_design` |
+
+ChatGPT can't:
+
+- Read call history, recordings, or transcripts. Real callers' words can hold health information, so call data stays in the Trillet dashboard.
+- Run text test calls or place outbound calls.
+- Search, buy, assign, or release phone numbers.
+- Create, run, or turn on workflows, or manage secrets.
+- Check usage, wallet balance, or transactions.
+- Publish drafts or node flows, or delete anything.
+- Upload a file to a knowledge base. Add the content as text instead.
+
+Use the Trillet dashboard, or connect [Claude](/mcp/claude) or [another client](/mcp/claude-code-and-other-clients), for those.
+
+Two tools work differently in ChatGPT:
+
+- **`trillet_set_call_settings`** only changes how the call runs: silence handling, silence reminders, maximum call length and its closing message, the business time zone, and whether the agent knows the current date and time. Recording, transcript redaction, voicemail detection, and the other call settings stay in the dashboard.
+- **`trillet_create_demo_link`** needs your explicit approval (`confirm: true`), and every link has limits. It expires after 14 days by default (at most 90). Each visitor can talk for 5 minutes by default (at most 30), and all visitors together for 60 minutes by default (at most 600). Anyone with the link can talk to your agent, and their minutes are billed to your workspace. To revoke a link, delete it on the call flow's demo links in the Trillet dashboard.
+
 ## Use Trillet in a chat
 
 1. Start a new conversation.
@@ -71,16 +103,16 @@ OpenAI updates the ChatGPT interface often, so labels can differ slightly in you
 3. Ask for what you want. For example:
 
 ```
-List my Trillet agents and tell me which phone number each one answers.
+Show me the prompt on my Reception call flow in Trillet and suggest three improvements.
 ```
 
 ChatGPT works best when you name Trillet and say what you want done. For more ideas, see [What you can ask](/mcp/example-prompts).
 
 ### Confirming actions
 
-ChatGPT asks you to approve any tool that changes something, such as updating a prompt or buying a number. Check the details before you approve. You can choose to remember your decision for a tool for the rest of that conversation. A new conversation asks again.
+ChatGPT asks you to approve any tool that changes something, such as updating a prompt or a call flow's settings. Check the details before you approve. You can choose to remember your decision for a tool for the rest of that conversation. A new conversation asks again.
 
-Trillet adds its own check on top: placing calls, buying numbers, running workflows, and deleting anything only go ahead after you confirm in the chat.
+Creating a public demo link also needs an explicit `confirm: true` from the assistant. ChatGPT is told to set it only after you approve the link in the chat.
 
 ## For ChatGPT workspace admins
 

@@ -1,64 +1,102 @@
 ---
-title: "Voice Engine API"
+title: "Trillet OEM: white-label voice AI API for EHR vendors, telecom providers and software platforms"
 sidebarTitle: "Overview"
-description: "Run Trillet voice agents inside your own product, for every one of your customers, from your own backend."
+description: "Trillet OEM is a white-label voice AI API for EHR and practice-management vendors, telecommunications providers and software platforms. One integration gives each of your clients a voice agent and a phone line, under your brand, billed to your account."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This section describes the planned design so you can plan your integration; details may change before release. To join early access, contact your Trillet account manager or [talk to us](https://form.typeform.com/to/qRRENIBp).
-</Warning>
+Trillet OEM is a white-label voice AI API for platforms that serve many businesses: EHR and practice-management vendors, telecommunications providers, and software companies with hundreds, thousands or tens of thousands of clients. With one integration you can offer every one of your clients a voice agent and a phone line out of the box, under your own brand, billed to your account. Your product stays the experience your clients know. Trillet runs the telephony, the real-time voice pipeline, the agents and the call data underneath it.
 
-<Tip>
-  You can start now. Partners already run Trillet for their customers with white-label and the standard API. See [Building on Trillet today](/voice-engine/available-today) for that setup and the release status of each part of the Voice Engine API.
-</Tip>
+## What you get
 
-The Voice Engine API is for software companies that want to offer AI voice agents to their own customers, under their own brand, without building the voice stack themselves. Your product stays the experience your users know. Trillet runs the telephony, the real-time voice pipeline, the agents and the call data underneath it.
-
-It suits platforms such as practice management and EHR systems, CRMs, field-service and booking software, contact-centre platforms and learning platforms.
+- **A workspace per client.** Each client is a tenant with its own agents, numbers, call history and usage, created and managed by API with your own customer ID.
+- **Voice agents and phone numbers.** Inbound and outbound calling, numbers bought per tenant or brought over SIP, and agents built from node flows.
+- **Signed events and usage.** One webhook stream for all of your tenants, usage per tenant and per call, and monthly spend caps.
+- **We build it with you.** Partners work with the Trillet solutions team and have direct access to our engineers to design, launch and grow their voice offering.
 
 ## How it works
 
-You hold one **partner account**. Each of your customers gets a **tenant**: an isolated workspace with its own agents, numbers, call history and usage. Your backend manages tenants with a partner key, and your users never need a Trillet login.
+<Steps>
+  <Step title="Partner key">
+    Your backend authenticates with a partner key that belongs to your account. See [Authentication](/voice-engine/authentication).
+  </Step>
+  <Step title="A tenant per client">
+    Create a [tenant](/voice-engine/tenants) for each client, keyed by your own customer ID. Your clients never need a Trillet login.
+  </Step>
+  <Step title="Agents and numbers">
+    Build the client's agent and give it a [phone number](/voice-engine/phone-numbers), using the same key with the tenant ID in `x-workspace-id`.
+  </Step>
+  <Step title="Signed events">
+    Receive [events](/voice-engine/events) for calls, bookings, numbers and tenants from every tenant at one endpoint.
+  </Step>
+  <Step title="Usage">
+    Read [usage](/voice-engine/usage-and-billing) per tenant and per call, and cap each tenant's monthly spend.
+  </Step>
+</Steps>
+
+<Columns cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/voice-engine/quickstart">
+    Your first tenant, agent and phone call in five steps, in curl, Node.js and Python.
+  </Card>
+  <Card title="OpenAPI specification" icon="file-code" href="https://raw.githubusercontent.com/TrilletAI/trillet-ai-docs/main/public/openapi/trillet-oem.json">
+    The Trillet OEM API as OpenAPI 3.1, with a generated [API reference](/voice-engine/api-reference/create-a-tenant).
+  </Card>
+</Columns>
+
+## Pricing
+
+Trillet OEM partners pay the same standard rates as every Trillet customer, billed to the partner account: calls start at $0.12 per minute and phone numbers start at $4.99 per month. What you charge your own clients is up to you.
+
+## Early access
+
+Trillet OEM is in early access with design partners. Contact your Trillet account manager or [talk to us](https://form.typeform.com/to/qRRENIBp) to join. Design partners work directly with our solutions team and engineers. Details of the API may still change before general release.
+
+Partners also run Trillet for their clients today with white-label and the standard API. See [Building on Trillet today](/voice-engine/available-today) for that setup and the status of each part of Trillet OEM.
+
+## Building blocks
 
 <Columns cols={2}>
   <Card title="Tenants" icon="building" href="/voice-engine/tenants">
-    Create, suspend and delete a workspace per customer, keyed by your own customer ID.
-  </Card>
-  <Card title="Templates and rollouts" icon="layer-group" href="/voice-engine/templates">
-    Design an agent once, install it for every tenant, and roll out new versions in stages.
-  </Card>
-  <Card title="Events" icon="bolt" href="/voice-engine/events">
-    Signed webhooks for calls, bookings, SMS, workflows, numbers and tenants.
-  </Card>
-  <Card title="Usage and billing" icon="receipt" href="/voice-engine/usage-and-billing">
-    Usage per tenant, so you can bill your customers and reconcile your invoice.
+    Create, suspend, delete and restore a workspace per customer, keyed by your own customer ID.
   </Card>
   <Card title="Phone numbers" icon="phone" href="/voice-engine/phone-numbers">
-    Buy numbers per tenant, or bring your own carrier over SIP.
+    Buy numbers per tenant, or bring your own Twilio account or SIP carrier.
   </Card>
-  <Card title="Embedding" icon="window-maximize" href="/voice-engine/embedding">
+  <Card title="Events" icon="bolt" href="/voice-engine/events">
+    Signed webhooks for calls, bookings, workflows, numbers, tenants and spend caps.
+  </Card>
+  <Card title="Usage and spend caps" icon="receipt" href="/voice-engine/usage-and-billing">
+    Usage per tenant and per call, with monthly spend caps.
+  </Card>
+  <Card title="Templates and rollouts (planned)" icon="layer-group" href="/voice-engine/templates">
+    Design an agent once, install it for every tenant, and roll out new versions in stages.
+  </Card>
+  <Card title="Embedding (planned)" icon="window-maximize" href="/voice-engine/embedding">
     Show call history or the flow editor inside your app, signed in as your user.
   </Card>
 </Columns>
 
-## Voice Engine API or the standard API?
+## Trillet OEM or the standard API?
 
 | You want to | Use |
 |---|---|
 | Run agents for your own business | The [standard API](/v1/api-reference/introduction) with your workspace API key |
 | Manage a handful of client workspaces by hand | The Trillet dashboard (Agency plan) |
-| Provision and run agents for many customers from your own product | The Voice Engine API |
+| Provision and run agents for many customers from your own product | Trillet OEM |
 
-The Voice Engine API does not replace the standard API. A partner key can call the standard endpoints (agents, call flows, knowledge bases, calls, call history, workflows) on behalf of any of its tenants. The Voice Engine API adds what a platform needs on top: tenant lifecycle, fleet configuration, partner-level events, usage and embedding.
+Trillet OEM does not replace the standard API. A partner key can call a defined set of standard endpoints (agents, node flows, call flows, knowledge bases, numbers, calls, batch calls, call history, recordings, workflows and secrets) on behalf of any of its tenants. See [Authentication](/voice-engine/authentication#calling-standard-endpoints-for-a-tenant) for the list. Trillet OEM adds what a platform needs on top: tenant lifecycle, partner-billed numbers, [call flow settings](/voice-engine/call-flow-settings), partner-level events and usage.
 
-## Environments and regions
+## Regions
 
-- **Live and sandbox.** Sandbox keys work only on sandbox tenants: no real numbers, no charges, and every event is marked `livemode: false`. Use sandbox in your CI.
-- **Data residency.** Each tenant is created in a region (`us` or `au`). Its calls, transcripts and recordings stay in that region.
+Each tenant is created in a region, `us` or `au`. Its calls, transcripts and recordings are stored in that region.
+
+A separate sandbox environment is planned. Today, use a dedicated tenant for development and testing.
 
 ## Next steps
 
 <Steps>
+  <Step title="Run the quickstart">
+    Follow the [quickstart](/voice-engine/quickstart) to create a tenant, an agent and a number, and place a call.
+  </Step>
   <Step title="Read the concepts">
     [Authentication](/voice-engine/authentication) and [API conventions](/voice-engine/conventions) cover keys, scopes, idempotency, errors and pagination.
   </Step>

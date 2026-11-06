@@ -2,6 +2,7 @@
   "$schema": "https://www.jamdesk.com/docs.json",
   "theme": "pulsar",
   "name": "Trillet AI",
+  "description": "Trillet is a voice AI platform and API for AI phone agents, phone numbers, workflows, white-label and OEM.",
   "colors": {
     "primary": "#0062E9",
     "light": "#27A3FD",
@@ -20,7 +21,10 @@
         "method": "key",
         "name": "x-api-key"
       }
-    }
+    },
+    "openapi": [
+      "/public/openapi/trillet-oem.yaml"
+    ]
   },
   "appearance": {
     "default": "light",
@@ -47,10 +51,14 @@
     }
   },
   "search": {
-    "prompt": "Expedite Development - Search Trillet..."
+    "prompt": "Search Trillet docs"
   },
   "seo": {
-    "indexing": "all"
+    "indexing": "all",
+    "titleTemplate": "%s | Trillet Docs"
+  },
+  "metadata": {
+    "timestamp": true
   },
   "footer": {
     "socials": {
@@ -59,6 +67,18 @@
       "linkedin": "https://linkedin.com/company/trillet-ai"
     }
   },
+  "redirects": [
+    {
+      "source": "/introduction",
+      "destination": "/documentation/introduction",
+      "permanent": true
+    },
+    {
+      "source": "/quickstart",
+      "destination": "/documentation/quickstart",
+      "permanent": true
+    }
+  ],
   "navigation": {
     "tabs": [
       {
@@ -151,10 +171,31 @@
             "pages": [
               "v1/api-reference/endpoints/workspace/create-workspace",
               "v1/api-reference/endpoints/workspace/invite-team-member",
+              "v1/api-reference/endpoints/workspace/get-workspace",
               "v1/api-reference/endpoints/workspace/get-workspace-by-id",
               "v1/api-reference/endpoints/workspace/get-pending-invitation",
               "v1/api-reference/endpoints/workspace/update-name",
               "v1/api-reference/endpoints/workspace/delete-workspace"
+            ]
+          },
+          {
+            "group": "API Keys",
+            "icon": "key",
+            "pages": [
+              "v1/api-reference/endpoints/api-keys/create",
+              "v1/api-reference/endpoints/api-keys/delete"
+            ]
+          },
+          {
+            "group": "Roles",
+            "icon": "user-shield",
+            "pages": [
+              "v1/api-reference/endpoints/roles/list",
+              "v1/api-reference/endpoints/roles/get",
+              "v1/api-reference/endpoints/roles/create",
+              "v1/api-reference/endpoints/roles/update",
+              "v1/api-reference/endpoints/roles/delete",
+              "v1/api-reference/endpoints/roles/list-permissions"
             ]
           },
           {
@@ -173,6 +214,17 @@
               "v1/api-reference/endpoints/calls/call-history/metrics-daily",
               "v1/api-reference/endpoints/calls/call-history/phonebook",
               "v1/api-reference/endpoints/calls/get-recording"
+            ]
+          },
+          {
+            "group": "Call Dispositions",
+            "icon": "tags",
+            "pages": [
+              "v1/api-reference/endpoints/call-dispositions/list",
+              "v1/api-reference/endpoints/call-dispositions/get",
+              "v1/api-reference/endpoints/call-dispositions/update",
+              "v1/api-reference/endpoints/call-dispositions/delete",
+              "v1/api-reference/endpoints/call-dispositions/export"
             ]
           },
           {
@@ -198,11 +250,17 @@
             "group": "Telephony",
             "icon": "phone-office",
             "pages": [
+              "v1/api-reference/endpoints/phone-numbers/available-countries",
+              "v1/api-reference/endpoints/phone-numbers/available-numbers",
+              "v1/api-reference/endpoints/phone-numbers/get-price",
+              "v1/api-reference/endpoints/phone-numbers/purchase",
+              "v1/api-reference/endpoints/phone-numbers/list",
+              "v1/api-reference/endpoints/phone-numbers/get-config",
+              "v1/api-reference/endpoints/phone-numbers/update-config",
+              "v1/api-reference/endpoints/phone-numbers/release",
               "v1/api-reference/endpoints/telephony/register-externalNumber",
               "v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber",
-              "v1/api-reference/endpoints/telephony/unbind-call-to-phoneNumber",
-              "v1/api-reference/endpoints/phone-numbers/release",
-              "v1/api-reference/endpoints/phone-numbers/list"
+              "v1/api-reference/endpoints/telephony/unbind-call-to-phoneNumber"
             ]
           },
           {
@@ -298,21 +356,60 @@
               "v1/api-reference/endpoints/recordings/start",
               "v1/api-reference/endpoints/recordings/get"
             ]
+          },
+          {
+            "group": "Integrations",
+            "icon": "plug",
+            "pages": [
+              {
+                "group": "GoHighLevel",
+                "pages": [
+                  "v1/api-reference/endpoints/integrations/ghl/install",
+                  "v1/api-reference/endpoints/integrations/ghl/disconnect"
+                ]
+              },
+              {
+                "group": "Google Calendar",
+                "pages": [
+                  "v1/api-reference/endpoints/integrations/google-calendar/install",
+                  "v1/api-reference/endpoints/integrations/google-calendar/list-calendars",
+                  "v1/api-reference/endpoints/integrations/google-calendar/disconnect"
+                ]
+              },
+              {
+                "group": "Meta Lead Ads",
+                "pages": [
+                  "v1/api-reference/endpoints/integrations/meta-leads/install",
+                  "v1/api-reference/endpoints/integrations/meta-leads/configure",
+                  "v1/api-reference/endpoints/integrations/meta-leads/status"
+                ]
+              },
+              {
+                "group": "Meta WhatsApp",
+                "pages": [
+                  "v1/api-reference/endpoints/integrations/meta-whatsapp/authorize",
+                  "v1/api-reference/endpoints/integrations/meta-whatsapp/status",
+                  "v1/api-reference/endpoints/integrations/meta-whatsapp/disconnect"
+                ]
+              }
+            ]
           }
         ]
       },
       {
-        "tab": "Voice Engine API (Coming soon)",
+        "tab": "Trillet OEM (Early access)",
         "icon": "tower-broadcast",
         "groups": [
           {
-            "group": "Voice Engine API",
+            "group": "Trillet OEM",
             "icon": "tower-broadcast",
             "pages": [
+              "voice-engine/quickstart",
               "voice-engine/overview",
               "voice-engine/available-today",
               "voice-engine/authentication",
-              "voice-engine/conventions"
+              "voice-engine/conventions",
+              "voice-engine/changelog"
             ]
           },
           {
@@ -321,6 +418,7 @@
             "pages": [
               "voice-engine/tenants",
               "voice-engine/phone-numbers",
+              "voice-engine/call-flow-settings",
               "voice-engine/templates"
             ]
           },
@@ -332,6 +430,72 @@
               "voice-engine/usage-and-billing",
               "voice-engine/embedding",
               "voice-engine/compliance"
+            ]
+          },
+          {
+            "group": "API reference",
+            "icon": "code",
+            "pages": [
+              "voice-engine/api-reference/get-the-current-key",
+              {
+                "group": "Tenants",
+                "pages": [
+                  "voice-engine/api-reference/create-a-tenant",
+                  "voice-engine/api-reference/list-tenants",
+                  "voice-engine/api-reference/get-a-tenant",
+                  "voice-engine/api-reference/get-a-tenant-by-external-id",
+                  "voice-engine/api-reference/update-a-tenant",
+                  "voice-engine/api-reference/suspend-a-tenant",
+                  "voice-engine/api-reference/resume-a-tenant",
+                  "voice-engine/api-reference/delete-a-tenant",
+                  "voice-engine/api-reference/restore-a-deleted-tenant"
+                ]
+              },
+              {
+                "group": "Phone numbers",
+                "pages": [
+                  "voice-engine/api-reference/buy-a-number",
+                  "voice-engine/api-reference/register-your-own-number",
+                  "voice-engine/api-reference/list-tenant-numbers",
+                  "voice-engine/api-reference/get-a-number",
+                  "voice-engine/api-reference/release-a-number"
+                ]
+              },
+              {
+                "group": "Call flow settings",
+                "pages": [
+                  "voice-engine/api-reference/get-call-flow-settings",
+                  "voice-engine/api-reference/change-call-flow-settings"
+                ]
+              },
+              {
+                "group": "Webhook endpoints",
+                "pages": [
+                  "voice-engine/api-reference/add-a-webhook-endpoint",
+                  "voice-engine/api-reference/list-webhook-endpoints",
+                  "voice-engine/api-reference/get-a-webhook-endpoint",
+                  "voice-engine/api-reference/update-a-webhook-endpoint",
+                  "voice-engine/api-reference/delete-a-webhook-endpoint",
+                  "voice-engine/api-reference/rotate-the-signing-secret",
+                  "voice-engine/api-reference/send-a-test-event"
+                ]
+              },
+              {
+                "group": "Events",
+                "pages": [
+                  "voice-engine/api-reference/list-events",
+                  "voice-engine/api-reference/get-an-event",
+                  "voice-engine/api-reference/redeliver-an-event",
+                  "voice-engine/api-reference/download-a-call-recording"
+                ]
+              },
+              {
+                "group": "Usage",
+                "pages": [
+                  "voice-engine/api-reference/get-usage-totals",
+                  "voice-engine/api-reference/list-call-charges"
+                ]
+              }
             ]
           }
         ]
@@ -361,7 +525,7 @@
     },
     {
       "name": "Change Log",
-      "href": "https://www.skool.com/trillet-ai/-/search?q=Release",
+      "href": "/changelog/changelog",
       "icon": "clock-rotate-left"
     }
   ]

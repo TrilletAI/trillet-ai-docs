@@ -1,4 +1,114 @@
 ---
-title: 'Trillet Change Log'
-description: 'View the latest changes to Trillet'
+title: "Trillet changelog"
+sidebarTitle: "Changelog"
+description: "Dated product and API changes to Trillet: voice agents, phone numbers, workflows, API, MCP and Trillet OEM"
+rss: true
 ---
+
+The Trillet changelog lists dated product and API changes that are live in production, newest first. Changes to the Trillet OEM partner API have their own [Trillet OEM changelog](/voice-engine/changelog).
+
+<Update label="October 27, 2026" tags={["MCP"]}>
+
+**Sign in to the Trillet MCP server from ChatGPT and Claude**
+
+- The hosted MCP server at `https://mcp.trillet.ai/mcp` now accepts OAuth sign-in, so you can add Trillet as a connector in ChatGPT and Claude.ai with your Trillet account instead of an API key. API keys still work for Claude Code, Cursor and other clients.
+- The consent screen lets you choose which workspace to start in. You can see and disconnect connected apps under **Settings > Connected Apps**.
+- List your workspaces and switch between them by name during a conversation.
+- On clients that support it, buying a number, starting an outbound call, running a workflow, publishing and deleting ask you to confirm in a form first.
+- Built-in prompts to build an agent, build a demo, test an agent with scripted text calls, debug a call, review the week's calls and run a launch checklist.
+- Upload knowledge base files from a public URL.
+
+See [AI assistants (MCP)](/mcp).
+
+</Update>
+
+<Update label="October 22, 2026" tags={["API", "Calls", "Billing"]}>
+
+**Calls API and batch call changes**
+
+- `POST /v1/api/call` now returns `422` with the code `NO_ACTIVE_CALL_FLOW` or `CALL_FLOW_INBOUND_ONLY` when a call can never start. Before, it returned `200` and the call stayed pending.
+- New optional `reject_outside_hours` flag on `POST /v1/api/call`. When `true`, a call outside calling hours is refused instead of queued. The default is unchanged.
+- `POST /v1/api/call` accepts `call_flow_id` and `call_agent_id` interchangeably.
+- Greeting fields sent through the public API to a call flow are now applied.
+- Batch calls are scheduled in the agent's time zone, and each retry waits the time you configured.
+- Cold transfers that connect are counted as connected in call outcomes.
+- If a greeting uses a variable that has no value, the agent no longer makes one up.
+- SMS sent from your own Twilio or Telnyx number are no longer charged a Trillet per-segment fee, because your carrier already bills you for them.
+
+</Update>
+
+<Update label="October 19, 2026" tags={["Demo links"]}>
+
+**Branded demo pages**
+
+- Each demo link can have its own page design: colours, font, logo, tab icon, copy, a call-to-action button, and which features show, such as the live transcript, timer and post-call summary.
+- Choose which sites may embed a demo page in an iframe.
+- Turn off the repeat-use captcha on a demo link.
+- **Share demo** appears as soon as the link is saved.
+
+</Update>
+
+<Update label="October 18, 2026" tags={["Web widget", "MCP"]}>
+
+**Website widget for voice and chat**
+
+- Design the website widget in a studio that shows the live widget on the page.
+- Three modes: voice, chat, or type-or-talk, where visitors can switch between typing and speaking.
+- Optional feedback from visitors at the end of a conversation.
+- Pass dynamic variables from your page to the agent through the widget.
+- Copy the embed code from the dashboard.
+- Warm transfers now work from calls started on your website, and agent-to-agent transfers stay in the chat without a second greeting.
+- New MCP tools to design the widget and branded demo pages from an AI assistant.
+
+See [AI voice widget for your website](/documentation/web-integration/voice-agent) and [AI chat widget for your website](/documentation/web-integration/text-agent).
+
+</Update>
+
+<Update label="October 8, 2026" tags={["Integrations"]}>
+
+**Google Calendar: more than one calendar and more than one business**
+
+- Check availability across several Google calendars on the same connection before the agent offers times.
+- Book for more than one business from one call flow. The caller names the business, for example a location or a team member, and the agent books in that business's calendar.
+- From October 18, each business can list other calendars whose busy time also blocks its slots.
+
+</Update>
+
+<Update label="September 17, 2026" tags={["Workflows"]}>
+
+**Workflows: read from Google Sheets**
+
+- The Google Sheets step can read rows as well as write them, and you can set up the read in the workflow builder.
+- An upsert to Google Sheets no longer clears the columns it was not given.
+- The workflow builder no longer fails to open steps that were created through the API.
+
+</Update>
+
+<Update label="September 10, 2026" tags={["Voice agents"]}>
+
+**Medical speech-to-text, noise cancellation and voice picks**
+
+- Two medical speech-to-text models for clinical vocabulary: Deepgram Nova-3 Medical and Speechmatics Medical.
+- A noise cancellation option in the call flow speech settings.
+- Recommended voices are marked **Popular** in the voice picker.
+
+</Update>
+
+<Update label="September 8, 2026" tags={["Voice agents"]}>
+
+**Custom Tools**
+
+- Give your agent tools backed by your own JavaScript code, which Trillet runs for you during the call. Use them for checks the language model should not do on its own, such as validating the format of an order number before looking it up.
+- Code tools are deployed when you save or publish the call flow, and test calls in the editor use the draft version.
+
+</Update>
+
+<Update label="September 5, 2026" tags={["API", "MCP"]}>
+
+**Daily call metrics and call review from AI assistants**
+
+- New endpoint for a daily series of call metrics. See [Daily call metrics](/v1/api-reference/endpoints/calls/call-history/metrics-daily).
+- New MCP tool `trillet_review_calls`: reads the recent calls of a call flow, an agent or a workspace and reports what went wrong, such as failed transfers, callers asking for a person with no transfer set up, and calls that ended on silence.
+- MCP tools to set background audio and security settings, edit an agent's pronunciation dictionary, and write to a call flow's draft instead of production.
+
+</Update>

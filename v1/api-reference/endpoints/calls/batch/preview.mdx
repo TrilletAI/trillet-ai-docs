@@ -18,6 +18,42 @@ This endpoint accepts `multipart/form-data`.
   CSV file to preview. Maximum file size: 20MB.
 </ParamField>
 
+### Response
+
+Returns the raw result of the CSV check. It always returns `200` when the file parses, even if rows have errors.
+
+<ResponseField name="totalRecords" type="number">
+  Number of data rows in the file.
+</ResponseField>
+
+<ResponseField name="validRecords" type="number">
+  Number of rows without errors.
+</ResponseField>
+
+<ResponseField name="preview" type="array">
+  The first 5 rows after normalization, each with an internal `_hasErrors` flag.
+</ResponseField>
+
+<ResponseField name="records" type="array">
+  The valid rows only. These are the rows a batch would call.
+</ResponseField>
+
+<ResponseField name="allRecords" type="array">
+  Every row after normalization, including rows with errors.
+</ResponseField>
+
+<ResponseField name="validationErrors" type="array | null">
+  Per-row problems in the same shape as [Validate Batch CSV](/v1/api-reference/endpoints/calls/batch/validate), or `null`.
+</ResponseField>
+
+<ResponseField name="valid" type="boolean">
+  `true` when no row has an error or warning.
+</ResponseField>
+
+<ResponseField name="hasWarningsOnly" type="boolean">
+  `true` when every issue is a warning.
+</ResponseField>
+
 ### Example
 
 ```bash
@@ -26,3 +62,7 @@ curl -X POST "https://api.trillet.ai/v1/api/batch-calls/preview" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID" \
   -F "file=@contacts.csv"
 ```
+
+### Error Responses
+
+`400` with `{"error": "..."}` when no file is uploaded, the file can't be parsed as CSV, or it has no data rows.

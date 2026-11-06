@@ -1,48 +1,189 @@
 ---
-title: "Phone numbers"
+title: "Trillet OEM phone numbers"
 sidebarTitle: "Phone numbers"
-description: "Give each tenant phone numbers from Trillet, or bring your own carrier over SIP."
+description: "Buy phone numbers for each Trillet OEM tenant, billed to your partner account, or bring your own Twilio account or SIP carrier."
 ---
 
-<Warning>
-  **Coming soon.** The Voice Engine API is in development. This page describes the planned design; details may change before release.
-</Warning>
+<Note>
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
 
-Each tenant needs at least one number for inbound or outbound calls. You have two options, and you can mix them across tenants.
+Each tenant needs at least one number for phone calls. You can buy numbers through Trillet, bring your own, or mix both across tenants.
 
-## Numbers from Trillet
-
-Search with the standard [phone number endpoints](/v1/api-reference/introduction) on behalf of the tenant, then buy through the Voice Engine API so the number is billed on your partner invoice instead of a card:
-
-```bash
-curl -X POST https://api.trillet.ai/partner/v1/tenants/ten_6a9622d2/numbers \
-  -H "Authorization: Bearer tpk_live_..." \
-  -H "Idempotency-Key: number-cust_8842-1" \
-  -H "Content-Type: application/json" \
-  -d '{ "e164": "+15125550142", "bindTo": { "callFlowId": "cf_123" } }'
-```
+## Endpoints
 
 | Method | Path | Scope |
 |---|---|---|
-| `POST` | `/partner/v1/tenants/{id}/numbers` | `numbers:write` |
-| `DELETE` | `/partner/v1/tenants/{id}/numbers/{numberId}` | `numbers:write` |
+| `GET` | `/partner/v1/tenants/{tenantId}/numbers` | `resources:read` |
+| `GET` | `/partner/v1/tenants/{tenantId}/numbers/{numberId}` | `resources:read` |
+| `POST` | `/partner/v1/tenants/{tenantId}/numbers` | `numbers:write` |
+| `POST` | `/partner/v1/tenants/{tenantId}/numbers/external` | `numbers:write` |
+| `DELETE` | `/partner/v1/tenants/{tenantId}/numbers/{numberId}` | `numbers:write` |
 
-Numbers renew monthly and appear in [usage](/voice-engine/usage-and-billing) as `phone_number` charges. Releasing a number emits `number.released`.
+## The phone number object
 
-## Bring your own carrier
-
-If you or your customer already have numbers with a carrier, connect them over SIP:
-
-```bash
-curl -X POST https://api.trillet.ai/partner/v1/tenants/ten_6a9622d2/numbers/external \
-  -H "Authorization: Bearer tpk_live_..." \
-  -H "Idempotency-Key: byo-cust_8842-1" \
-  -H "Content-Type: application/json" \
-  -d '{ "e164": "+15125550199", "provider": "sip", "credentials": { "sipUri": "sip:pbx.example.com" } }'
+```json
+{
+  "object": "phone_number",
+  "id": "e3e3e3e3e3e3e3e3e3e3e3e3",
+  "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9",
+  "phoneNumber": "+15125550142",
+  "provider": "telnyx",
+  "type": "local",
+  "external": false,
+  "status": "active",
+  "agentId": null,
+  "callFlowId": null,
+  "billing": {
+    "monthlyPrice": 4.99,
+    "nextChargeAt": "2026-12-02T10:20:00.000Z",
+    "status": "active"
+  },
+  "createdAt": "2026-11-02T10:20:00.000Z"
+}
 ```
 
-You can also set up one **partner trunk** shared by all your tenants, so each new tenant only needs its numbers assigned rather than its own SIP configuration.
+`billing` is present for numbers bought through Trillet OEM and `null` for your own numbers. `billing.monthlyPrice` is the monthly price in USD, `billing.nextChargeAt` is when the next month is charged, and `billing.status` is `active` or `past_due`.
 
-## Binding numbers to agents
+`GET /numbers/{numberId}` for a number that is not in the tenant returns `404` `number_not_found`.
 
-Bind a number to a call flow or agent with the standard phone number configuration endpoints, sending the tenant ID in `x-workspace-id`. Template installs can bind numbers for you; see [Templates](/voice-engine/templates).
+## Buy a number
+
+Find a number with the standard [available numbers](/v1/api-reference/endpoints/phone-numbers/available-numbers) endpoint, sending the tenant ID in `x-workspace-id`. Then buy it through Trillet OEM, so it is billed to your partner account instead of a card:
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/numbers \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Idempotency-Key: number-cust_8842-1" \
+  -H "Content-Type: application/json" \
+  -d '{ "phoneNumber": "+15125550142", "country": "US", "type": "local" }'
+```
+
+<ParamField body="phoneNumber" type="string" required>
+  The number in E.164 format.
+</ParamField>
+<ParamField body="country" type="string" required>
+  Two-letter country code.
+</ParamField>
+<ParamField body="type" type="string">
+  `local` (default) or `mobile`.
+</ParamField>
+<ParamField body="addressSid" type="string">
+  Regulatory address, for countries that need one.
+</ParamField>
+<ParamField body="bundleSid" type="string">
+  Regulatory bundle, for countries that need one.
+</ParamField>
+
+Returns `201` with the number. `Idempotency-Key` is required.
+
+- Each number costs $4.99 per month, whatever its country and type, unless Trillet has agreed a different number price for your account. The price is fixed on the number when you buy it. A change to your account's agreed price applies from each number's next renewal.
+- The first month is charged to your account when you buy. After that each number renews monthly on the date it was bought. Renewals are processed daily.
+- The `402` below is a check made before the purchase. If the first month's charge then fails after the carrier has sold you the number, the request still returns `201`, with `billing.status: "past_due"`. Check `billing.status` on the response.
+- If a charge cannot be taken, the number keeps working, `billing.status` becomes `past_due`, and the charge is retried daily. Each failed renewal attempt sends a `number.renewal_failed` event, so you get one a day while the number stays past due. Releasing the number is your decision.
+- Number charges appear in [usage](/voice-engine/usage-and-billing) as `phone_number_charge`.
+
+| Status | Code | When |
+|---|---|---|
+| `402` | `insufficient_funds` | Your account cannot pay for the first month, or a [spend cap](/voice-engine/usage-and-billing#spend-caps) has been reached |
+| `409` | `tenant_suspended` | Resume the tenant first |
+| `400` | `number_purchase_failed` | The carrier refused the purchase, for example the number is taken or a regulatory bundle is needed. The message has the reason. |
+
+## Bring your own numbers
+
+Register a number you or your customer already own. Trillet does not bill these numbers.
+
+<Tabs>
+  <Tab title="SIP trunk">
+
+    ```bash
+    curl -X POST https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/numbers/external \
+      -H "Authorization: Bearer tpk_live_..." \
+      -H "Idempotency-Key: byo-cust_8842-1" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phoneNumber": "+15125550199",
+        "provider": "sip",
+        "credentials": {
+          "sipUri": "sip:pbx.example.com",
+          "username": "trillet",
+          "password": "YOUR_SIP_PASSWORD",
+          "ipAddresses": [
+            { "id": "carrier-1", "ip": "203.0.113.10", "subnetMask": "32" }
+          ]
+        }
+      }'
+    ```
+
+  </Tab>
+  <Tab title="Twilio account">
+
+    ```bash
+    curl -X POST https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/numbers/external \
+      -H "Authorization: Bearer tpk_live_..." \
+      -H "Idempotency-Key: byo-cust_8842-2" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "phoneNumber": "+15125550188",
+        "provider": "twilio",
+        "credentials": { "accountSid": "AC...", "authToken": "..." }
+      }'
+    ```
+
+  </Tab>
+</Tabs>
+
+<ParamField body="phoneNumber" type="string" required>
+  The number in E.164 format. A number can be registered only once across Trillet.
+</ParamField>
+<ParamField body="provider" type="string" required>
+  `sip` or `twilio`.
+</ParamField>
+<ParamField body="credentials" type="object" required>
+  For `sip`: `sipUri` (where Trillet sends outbound calls), optional `username` and `password`, and optional `ipAddresses` your carrier sends calls from. For `twilio`: `accountSid` and `authToken`.
+
+  Each entry in `ipAddresses` is an object, not a string:
+
+  - `id` (required): any string you choose, unique in the list
+  - `ip`: the IPv4 address
+  - `subnetMask`: the prefix length as a string, for example `"32"`
+
+  A plain list of IP strings, or an entry without `id`, is refused with `400` `number_registration_failed`.
+</ParamField>
+
+Returns `201` with the number. A refused registration returns `400` `number_registration_failed` with the reason.
+
+## Release a number
+
+```bash
+curl -X DELETE https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/numbers/e3e3e3e3e3e3e3e3e3e3e3e3 \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+A bought number goes back to the carrier and stops renewing. Your own number is detached from Trillet. Returns `{ "object": "phone_number", "id": "...", "released": true }`.
+
+[Deleting a tenant](/voice-engine/tenants#delete-and-restore) releases all of its numbers the same way.
+
+## Assign a number to an agent
+
+Use the standard [assign phone number to agent](/v1/api-reference/endpoints/telephony/bind-call-to-phoneNumber) endpoint, sending the tenant ID in `x-workspace-id`. It needs `resources:write`. The agent's call flow must be live, so [publish its node flow](/voice-engine/authentication#building-an-agent) first.
+
+```bash
+curl -X POST https://api.trillet.ai/v1/api/agents/e0e0e0e0e0e0e0e0e0e0e0e0/bind/e3e3e3e3e3e3e3e3e3e3e3e3 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Content-Type: application/json" \
+  -d '{ "recordCalls": true }'
+```
+
+Send a JSON body, even an empty `{}`. Optional fields include `recordCalls`, `officeHours`, `metadataTags` and `label`. The number must belong to the tenant. `POST /v1/api/agents/{agentId}/release/{phoneNumberId}` unassigns it.
+
+To change a number's settings later without rebinding it, such as recording, office hours or metadata tags, use the standard [update phone number configuration](/v1/api-reference/endpoints/phone-numbers/update-config) endpoint (`PUT /v1/api/twilio/phone-numbers/{phoneNumberId}/config`).
+
+## Events
+
+Buying or registering a number sends `number.provisioned`, with `phoneNumber` and `provider` in `data`. Releasing one sends `number.released`, and so does deleting its tenant, with `reason: "tenant_deleted"` in `data`. A failed renewal sends `number.renewal_failed`. See [Events](/voice-engine/events).
+
+<Note>
+  A shared partner SIP trunk for all of your tenants is planned.
+</Note>
