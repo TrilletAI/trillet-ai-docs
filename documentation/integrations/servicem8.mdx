@@ -15,11 +15,11 @@ When ServiceM8 is connected, the agent has four abilities.
 | Ability | What happens in ServiceM8 | What the caller experiences |
 | --- | --- | --- |
 | **Look up a client** | Searches for an existing client by phone number, then by name. Nothing is changed. | The agent can greet a returning customer. If no match is found, the agent says it will create a record when it books. |
-| **Check availability** | Works out open times from your booking hours and the jobs already in the diary. | The agent offers the two or three open times closest to what the caller asked for. It doesn't read out a long list. |
+| **Check availability** | Works out open times from your booking hours and the jobs already in the diary. | The agent offers two or three open times. It doesn't read out a long list. |
 | **Book a job** | Finds or creates the client, creates a job with the caller's description and address, and places it in the diary. | The agent confirms the day and time and reads out the ServiceM8 job number. |
 | **Add a note to the job** | Adds a note to the job booked on this call. | The caller can add details after booking, such as a gate code, access instructions or pets on site. |
 
-The agent always checks availability before it books. If someone else takes the time while the caller is deciding, the agent says the time was just taken and offers other times. It never double-books a time.
+The agent always checks availability before it books. If someone else takes the time while the caller is deciding, the agent says the time was just taken and offers other times. It checks the time is still free when it books.
 
 <Note>
   The agent can only add a note to a job it booked on the same call. It can't add notes to existing jobs.
@@ -78,7 +78,7 @@ You can connect from either call flow editor. The connection and its settings ar
   </Tab>
 </Tabs>
 
-Once connected, the panel shows **Connected** with your default staff member. Select **Test** at any time to check the connection still works.
+Once connected, the panel shows **Connected**, and the ServiceM8 card under Integrations shows your default staff member once one is set. Select **Test** at any time to check the connection still works.
 
 ## Booking settings
 
@@ -99,7 +99,7 @@ New jobs are created in ServiceM8 with the status **Work Order**.
 ServiceM8 stores job times without a timezone, so Trillet needs to know which timezone your business works in.
 
 - **Set Business timezone to the timezone your ServiceM8 account uses.** Jobs are booked, and times are offered to the caller, in that timezone.
-- **If you leave it blank,** the panel shows **Agent timezone** and Trillet uses the call flow's own timezone (**Settings > Advanced Settings > Locale**).
+- **If you leave it blank,** the panel shows **Agent timezone** and Trillet uses the call flow's own timezone (**Settings > Advanced Settings > Locale**). If that isn't set either, Trillet uses UTC.
 
 <Warning>
   If the Business timezone doesn't match your ServiceM8 account, jobs land in the diary at the wrong time, usually off by whole hours. Always set it when your business and your call flow are in different timezones.
@@ -118,17 +118,17 @@ After the agent books a job, Trillet fills in these variables for the call. You 
 | `servicem8_job_end` | Scheduled end time (ISO 8601, in the Business timezone) | `2026-11-03T11:00:00+11:00` |
 | `servicem8_staff_name` | The staff member the job is assigned to | `Sam Taylor` |
 
-If no job was booked on the call, these variables are empty. `servicem8_staff_name` holds whoever the job was assigned to, including a staff member picked automatically.
+If no job was booked on the call, these variables are not set. `servicem8_staff_name` holds whoever the job was assigned to, including a staff member picked automatically.
 
 ### Where you can use them
 
-- **Webhooks.** In the webhook payload designer, insert a variable as `{{servicem8_job_number}}`. The post-call webhook also includes all six under `call_metadata.extracted_variables`.
-- **Workflows.** Use them in workflow steps that run after the call, for example to create a follow-up task or send a message.
-- **Post-call SMS.** When a job was booked, the customer's post-call SMS automatically includes **"Your job number is 1042."** You don't need to set this up.
+- **Webhooks.** In the webhook's **Custom Payload**, insert a variable as `{{servicem8_job_number}}`. The post-call webhook also includes all six under `call_metadata.extracted_variables`.
+- **Workflows.** Use them in workflow steps that run after the call as `{{trigger.extractedVariables.servicem8_job_number}}`, for example to create a follow-up task or send a message.
+- **Post-call SMS.** If the call flow sends the caller a post-call SMS, it automatically includes **"Your job number is 1042."** when a job was booked. You don't need to set this up.
 
 ### Webhook example
 
-A payload designed in the webhook payload designer:
+A payload designed in **Custom Payload**:
 
 ```json
 {
