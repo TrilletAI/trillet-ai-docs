@@ -10,7 +10,7 @@ description: "HIPAA, data residency, what data events carry, and retention for T
 
 ## HIPAA
 
-Trillet supports HIPAA workloads. A Business Associate Agreement is available on Agency and Enterprise accounts, including Trillet OEM partners, at no extra fee. Execute the BAA before any tenant processes protected health information. See our [Terms of Use](https://trillet.ai/terms-of-use).
+Trillet supports HIPAA workloads. See our [Terms of Use](https://trillet.ai/terms-of-use).
 
 A call flow in HIPAA mode keeps call recording off. [Call flow settings](/voice-engine/call-flow-settings) refuses `recording.enabled: true` on such a flow with `409` `hipaa_recording_conflict`.
 
@@ -34,7 +34,7 @@ The event log keeps events for 30 days.
 - Each tenant is a separate workspace. A partner key can reach only its own tenants, and a key can be restricted further to a list of tenants.
 - Requests naming another partner's tenant return `404`.
 - Partner keys are stored as hashes. Webhook signing secrets are stored encrypted.
-- Tenant and phone number changes made through Trillet OEM are written to the tenant's audit log with the ID of the key that made them.
+- Tenant lifecycle changes (create, update, suspend, resume, delete, restore) and phone number purchases, registrations and releases made through Trillet OEM are written to the tenant's audit log with the ID of the key that made them.
 
 ## Branding
 

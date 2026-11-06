@@ -15,7 +15,7 @@ A tenant is one of your customers. It is an isolated workspace with its own agen
 ```json
 {
   "object": "tenant",
-  "id": "6a9622d2c1e8f3a4b5d6e7f8",
+  "id": "d9d9d9d9d9d9d9d9d9d9d9d9",
   "externalId": "cust_8842",
   "name": "Harbour Dental",
   "status": "active",
@@ -96,6 +96,7 @@ Each tenant has a wallet linked to your account and starts with no agents, flows
 | `409` | `tenant_deleted_restorable` | A deleted tenant with this `externalId` can still be restored |
 | `409` | `tenant_limit_reached` | Your account is at its tenant limit (`maxTenants` on [`GET /key`](/voice-engine/authentication#check-a-key)) |
 | `400` | `invalid_request`, `invalid_external_id`, `invalid_name`, `invalid_metadata`, `invalid_limits` | A field is invalid. `error.param` names it when the request failed schema validation. |
+| `400` | `invalid_region` | The region you asked for, or your account's default region, is not available. Contact your account manager. |
 
 ## List and look up tenants
 
@@ -112,7 +113,7 @@ curl https://api.trillet.ai/partner/v1/tenants/by-external-id/cust_8842 \
 ## Update a tenant
 
 ```bash
-curl -X PATCH https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8 \
+curl -X PATCH https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9 \
   -H "Authorization: Bearer tpk_live_..." \
   -H "Content-Type: application/json" \
   -d '{ "name": "Harbour Dental Group", "limits": { "monthlySpendCap": 750 } }'
@@ -133,7 +134,7 @@ curl -X PATCH https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8
 Suspending a tenant stops its traffic but keeps everything else. Use it for unpaid accounts, offboarding or abuse.
 
 ```bash
-curl -X POST https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8/suspend \
+curl -X POST https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/suspend \
   -H "Authorization: Bearer tpk_live_..." \
   -H "Content-Type: application/json" \
   -d '{ "reason": "Invoice overdue" }'

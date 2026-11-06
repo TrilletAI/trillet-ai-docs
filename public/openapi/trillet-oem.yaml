@@ -18,6 +18,9 @@ info:
 
     Trillet OEM is in early access. Details may change before general release. Within `/partner/v1`
     changes are additive: ignore fields and event types you do not recognise.
+
+    Any endpoint can also return `500` `api_error`. Repeated invalid keys from one IP address return
+    `429` `rate_limited`.
   contact:
     name: Trillet
     url: https://docs.trillet.ai/voice-engine/overview
@@ -311,8 +314,10 @@ paths:
       operationId: buyTenantNumber
       summary: Buy a number
       description: |
-        Buys a number for the tenant, billed to your partner account at the standard Trillet number
-        price. The first month is charged when you buy, then the number renews monthly.
+        Buys a number for the tenant, billed to your partner account at $4.99 per month whatever the
+        country and type, or at the price agreed for your account. The first month is charged when
+        you buy, then the number renews monthly. If the first month's charge fails after the
+        carrier purchase, the response is still `201`, with `billing.status: past_due`.
         Find numbers first with `GET /v1/api/twilio/available-numbers` and the tenant ID in
         `x-workspace-id`. Needs `numbers:write`. `Idempotency-Key` is required.
       parameters:
@@ -378,7 +383,8 @@ paths:
                     sipUri: sip:pbx.example.com
                     username: trillet
                     password: YOUR_SIP_PASSWORD
-                    ipAddresses: ["203.0.113.10"]
+                    ipAddresses:
+                      - { id: carrier-1, ip: 203.0.113.10, subnetMask: "32" }
               twilio:
                 summary: Twilio account
                 value:
@@ -458,7 +464,10 @@ paths:
       tags: [Call flow settings]
       operationId: getCallFlowSettings
       summary: Get call flow settings
-      description: Needs `resources:read`. A setting the call flow has never stored is returned as `null`.
+      description: |
+        Needs `resources:read`. A setting the call flow has never stored is returned as `null`.
+        Values are returned as stored, so an older call flow can hold values outside the ranges a
+        change accepts.
       responses:
         "200":
           description: The settings.
@@ -967,7 +976,9 @@ components:
       required: true
       description: |
         1 to 255 printable ASCII characters, no spaces. A retry with the same key and request
-        returns the stored response for 24 hours instead of running again.
+        returns the stored response for 24 hours instead of running again. Failed responses are
+        stored too, except `5xx`, `401`, `403`, `409` and `429`: after fixing the cause of a `4xx`
+        such as `402` `insufficient_funds`, retry with a new key.
       schema: { type: string, minLength: 1, maxLength: 255 }
     IdempotencyKeyOptional:
       name: Idempotency-Key
@@ -1002,10 +1013,19 @@ components:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
     Unauthorized:
-      description: "The partner key is missing, malformed, unknown or revoked (`partner_key_required`, `invalid_api_key`, `partner_not_enabled`)."
+      description: |
+        Authentication failed. A key that is unknown or revoked returns `invalid_api_key`, an
+        account without Trillet OEM returns `partner_not_enabled`, and a user session or user API
+        key returns `partner_key_required`. Handle a `401` by status, not only by `error.code`.
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+          schema:
+            oneOf:
+              - { $ref: "#/components/schemas/Error" }
+              - type: object
+                required: [error]
+                properties:
+                  error: { type: string }
     Forbidden:
       description: "`missing_scope`, or `key_restricted` on webhook endpoint routes."
       content:
@@ -1031,11 +1051,11 @@ components:
     ObjectId:
       type: string
       pattern: "^[a-fA-F0-9]{24}$"
-      example: 6a9622d2c1e8f3a4b5d6e7f8
+      example: d9d9d9d9d9d9d9d9d9d9d9d9
     EventId:
       type: string
       pattern: "^evt_[a-fA-F0-9]{24}$"
-      example: evt_6b3a1c2d4e5f6a7b8c9d0e1f
+      example: evt_e6e6e6e6e6e6e6e6e6e6e6e6
 
     Error:
       type: object
@@ -1069,7 +1089,7 @@ components:
         error:
           type: conflict_error
           code: tenant_exists
-          message: A tenant with this externalId already exists.
+          message: Tenant d9d9d9d9d9d9d9d9d9d9d9d9 already has this externalId.
           requestId: req-1a2b
 
     PartnerKey:
@@ -1078,7 +1098,9 @@ components:
       properties:
         object: { type: string, const: partner_key }
         id: { $ref: "#/components/schemas/ObjectId" }
-        mode: { type: string, enum: [live, sandbox] }
+        mode:
+          type: string
+          enum: [live, sandbox]
         scopes:
           type: array
           items: { $ref: "#/components/schemas/Scope" }
@@ -1131,7 +1153,7 @@ components:
         createdAt: { type: string, format: date-time }
       example:
         object: tenant
-        id: 6a9622d2c1e8f3a4b5d6e7f8
+        id: d9d9d9d9d9d9d9d9d9d9d9d9
         externalId: cust_8842
         name: Harbour Dental
         status: active
@@ -1218,8 +1240,8 @@ components:
         createdAt: { type: [string, "null"], format: date-time }
       example:
         object: phone_number
-        id: 6b0c4e1a9d2f3e4a5b6c7d8e
-        tenantId: 6a9622d2c1e8f3a4b5d6e7f8
+        id: e3e3e3e3e3e3e3e3e3e3e3e3
+        tenantId: d9d9d9d9d9d9d9d9d9d9d9d9
         phoneNumber: "+15125550142"
         provider: telnyx
         type: local
@@ -1263,7 +1285,10 @@ components:
           additionalProperties: true
           description: |
             For `sip`: `sipUri` (where Trillet sends outbound calls), optional `username` and
-            `password`, and optional `ipAddresses` your carrier sends calls from.
+            `password`, and optional `ipAddresses` your carrier sends calls from. Each entry in
+            `ipAddresses` is an object: `id` (required, any string you choose, unique in the list),
+            `ip`, and `subnetMask` (the prefix length as a string, for example `"32"`). A plain list
+            of IP strings is refused with `400` `number_registration_failed`.
             For `twilio`: `accountSid` and `authToken`.
 
     GreetingDirection:
@@ -1287,23 +1312,26 @@ components:
           properties:
             inbound: { $ref: "#/components/schemas/GreetingDirection" }
             outbound: { $ref: "#/components/schemas/GreetingDirection" }
-            delaySeconds: { type: [number, "null"], minimum: 0, maximum: 5 }
+            delaySeconds: { type: [number, "null"] }
         speech:
           type: object
           properties:
-            responsiveness: { type: [number, "null"], minimum: 1, maximum: 10 }
-            interruptionSensitivity: { type: [number, "null"], minimum: 1, maximum: 10 }
+            responsiveness: { type: [number, "null"] }
+            interruptionSensitivity: { type: [number, "null"] }
         recording:
           type: object
           properties:
             enabled: { type: [boolean, "null"] }
         callHandling:
           type: object
+          description: |
+            Values are returned as stored. Older call flows can hold values outside the ranges
+            `CallFlowSettingsUpdate` accepts, including fractions of a second.
           properties:
-            maxCallDurationSeconds: { type: [integer, "null"], minimum: 10, maximum: 1800 }
-            checkInAfterSeconds: { type: [integer, "null"], minimum: 5, maximum: 30 }
-            checkInAttempts: { type: [integer, "null"], enum: [0, 1, 2, 3, null] }
-            hangUpAfterCheckInSeconds: { type: [integer, "null"], enum: [10, 20, 30, null] }
+            maxCallDurationSeconds: { type: [number, "null"] }
+            checkInAfterSeconds: { type: [number, "null"] }
+            checkInAttempts: { type: [number, "null"] }
+            hangUpAfterCheckInSeconds: { type: [number, "null"] }
         updatedAt: { type: [string, "null"], format: date-time }
     CallFlowSettingsUpdate:
       type: object
@@ -1333,7 +1361,7 @@ components:
           additionalProperties: false
           properties:
             maxCallDurationSeconds: { type: integer, minimum: 10, maximum: 1800 }
-            checkInAfterSeconds: { type: integer, minimum: 5, maximum: 30 }
+            checkInAfterSeconds: { type: integer, minimum: 5, maximum: 30, description: "Whole seconds of caller silence before the agent checks in." }
             checkInAttempts: { type: integer, enum: [0, 1, 2, 3] }
             hangUpAfterCheckInSeconds: { type: integer, enum: [10, 20, 30] }
     GreetingDirectionUpdate:
@@ -1488,12 +1516,12 @@ components:
       type: object
       properties:
         id: { $ref: "#/components/schemas/ObjectId" }
-        tenantId: { $ref: "#/components/schemas/ObjectId" }
+        tenantId: { type: [string, "null"], description: "The tenant ID." }
         callId: { type: [string, "null"], description: "Trillet's internal call identifier." }
         callHistoryId:
           type: [string, "null"]
           description: The call history ID. Matches `data.call.id` in call events.
         at: { type: string, format: date-time }
-        billedSeconds: { type: number }
-        ratePerMinute: { type: number }
+        billedSeconds: { type: [number, "null"] }
+        ratePerMinute: { type: [number, "null"] }
         amount: { type: number, description: "USD." }

@@ -40,6 +40,7 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
 | Same key while the first request is still running | `409` `idempotency_key_in_use`. Retry after `Retry-After`. |
 | No key on an endpoint that requires one | `400` `idempotency_key_required` |
 | The first request failed with a `5xx`, `401`, `403`, `409` or `429` | Not stored. A retry runs again. |
+| The first request failed with any other `4xx`, for example `402` `insufficient_funds`, `400` `number_purchase_failed` or `404` | Stored and replayed for 24 hours like a success. After you fix the cause (add funds, add the regulatory bundle, correct the field), retry with a **new** key. A body that fails the endpoint's schema is refused before the key is checked, so that `400` is not stored. |
 
 - Keys are 1 to 255 printable ASCII characters, with no spaces, and are scoped to your partner account. A UUID, or your own operation ID, works well. A key that does not fit returns `400` `idempotency_key_invalid`.
 - "The same request" means the same method, path, query string and JSON body. Key order in the body does not matter.
@@ -56,7 +57,7 @@ Every other error has the same shape:
   "error": {
     "type": "conflict_error",
     "code": "tenant_deleted_restorable",
-    "message": "A deleted tenant 6a9622d2c1e8f3a4b5d6e7f8 has this externalId. Restore it, or use a different externalId.",
+    "message": "A deleted tenant d9d9d9d9d9d9d9d9d9d9d9d9 has this externalId. Restore it, or use a different externalId.",
     "requestId": "req-1a2b"
   }
 }
@@ -85,7 +86,7 @@ List endpoints return a page, newest first:
 ```json
 {
   "object": "list",
-  "data": [ { "object": "tenant", "id": "6a9622d2c1e8f3a4b5d6e7f8" } ],
+  "data": [ { "object": "tenant", "id": "d9d9d9d9d9d9d9d9d9d9d9d9" } ],
   "hasMore": true
 }
 ```
@@ -93,7 +94,7 @@ List endpoints return a page, newest first:
 To get the next page, pass the `id` of the last item as `starting_after`, with an optional `limit`:
 
 ```bash
-curl "https://api.trillet.ai/partner/v1/tenants?limit=50&starting_after=6a9622d2c1e8f3a4b5d6e7f8" \
+curl "https://api.trillet.ai/partner/v1/tenants?limit=50&starting_after=d9d9d9d9d9d9d9d9d9d9d9d9" \
   -H "Authorization: Bearer tpk_live_..."
 ```
 

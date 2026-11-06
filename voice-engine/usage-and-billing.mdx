@@ -50,7 +50,7 @@ curl "https://api.trillet.ai/partner/v1/usage?from=2026-11-01T00:00:00Z&to=2026-
   "data": [
     {
       "period": "2026-11",
-      "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
+      "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9",
       "amount": 241.17,
       "count": 655,
       "billedMinutes": 1030.67
@@ -81,7 +81,7 @@ Account-level fees, such as plan and white-label fees, are not tenant usage and 
 ### Per call
 
 ```bash
-curl "https://api.trillet.ai/partner/v1/usage/calls?tenantId=6a9622d2c1e8f3a4b5d6e7f8&limit=100" \
+curl "https://api.trillet.ai/partner/v1/usage/calls?tenantId=d9d9d9d9d9d9d9d9d9d9d9d9&limit=100" \
   -H "Authorization: Bearer tpk_live_..."
 ```
 
@@ -90,10 +90,10 @@ curl "https://api.trillet.ai/partner/v1/usage/calls?tenantId=6a9622d2c1e8f3a4b5d
   "object": "list",
   "data": [
     {
-      "id": "6b3a1d0e9f8a7b6c5d4e3f2a",
-      "tenantId": "6a9622d2c1e8f3a4b5d6e7f8",
+      "id": "e7e7e7e7e7e7e7e7e7e7e7e7",
+      "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9",
       "callId": "SCL_q4Zt8vXbN2kP",
-      "callHistoryId": "6b3a1c0f9e8d7c6b5a4f3e2d",
+      "callHistoryId": "e5e5e5e5e5e5e5e5e5e5e5e5",
       "at": "2026-11-02T15:04:12.000Z",
       "billedSeconds": 151,
       "ratePerMinute": 0.12,
@@ -125,7 +125,7 @@ A spend cap limits a month's usage, from the first of the month (UTC). There are
 | Account cap | Trillet, on request through your account manager | The total across all of your tenants |
 
 ```bash
-curl -X PATCH https://api.trillet.ai/partner/v1/tenants/6a9622d2c1e8f3a4b5d6e7f8 \
+curl -X PATCH https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9 \
   -H "Authorization: Bearer tpk_live_..." \
   -H "Content-Type: application/json" \
   -d '{ "limits": { "monthlySpendCap": 500 } }'
@@ -139,16 +139,22 @@ When month-to-date usage reaches 80% of a cap, and again at 100%, a `usage.thres
 
 ```json
 {
-  "id": "evt_6b3a2e1f0a9b8c7d6e5f4a3b",
+  "id": "evt_e8e8e8e8e8e8e8e8e8e8e8e8",
   "type": "usage.threshold_reached",
   "created": 1762095851,
   "livemode": true,
-  "tenant": { "id": "6a9622d2c1e8f3a4b5d6e7f8", "externalId": "cust_8842" },
+  "tenant": { "id": "d9d9d9d9d9d9d9d9d9d9d9d9", "externalId": "cust_8842" },
   "data": { "scope": "tenant", "percent": 80, "cap": 500, "monthToDate": 401.25, "month": "2026-11" }
 }
 ```
 
 `scope` is `tenant` or `partner`. For the account cap, `tenant` is `null`.
+
+Caps are not checked on a schedule. Trillet checks a cap, and sends these alerts, only when one of the paid actions listed under [At 100%](#at-100) is about to run. So:
+
+- A tenant with only inbound calls gets no alert, even though its inbound usage counts towards its month-to-date spend. The alert comes with its next paid action.
+- If usage goes from under 80% to over 100% between two checks, only the 100% alert is sent.
+- With a cap of `0`, the 100% alert is sent on the tenant's first paid action.
 
 ### At 100%
 
