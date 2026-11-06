@@ -17,13 +17,24 @@ description: "Cancel the batch job for one phone number."
 </ParamField>
 
 <ParamField path="phone" type="string" required>
-  Phone number of the contact to cancel, in the same form stored on the batch job.
+  Phone number of the contact to cancel, in the E.164 form stored on the batch (for example `+14155550123`). URL-encode it.
 </ParamField>
+
+### Behavior and Response
+
+The contact is resolved to its current job (including a pending smart-callback retry), and then handled exactly like [Cancel Batch Job](/v1/api-reference/endpoints/calls/batch/cancel-job): same response fields (`ok`, `reason`, `message`, `jobId`, `phone`, `callStatus`) and the same status codes:
+
+| HTTP status | `reason` |
+|---|---|
+| `200` | `cancelled` (removed from the queue, or retries cancelled after the call already finished), `call_in_progress` (the live call continues; future retries are cancelled) |
+| `404` | `call_not_found` (no such number in this batch), or `{"error": "Batch not found"}` |
+| `409` | `already_cancelled` |
+| `500` | `{"ok": false, "error": "..."}` |
 
 ### Example
 
 ```bash
-curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/contacts/%2B14155551234" \
+curl -X DELETE "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq/contacts/%2B14155550123" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
