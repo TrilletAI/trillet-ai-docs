@@ -21,17 +21,23 @@ curl https://api.trillet.ai/v1/api/workspaces \
   Workspace the request applies to. Required on customer API calls.
 </ParamField>
 
-<ParamField header="Content-Type" type="string" required>
-  Set to `application/json` for JSON bodies. File uploads use `multipart/form-data`.
+<ParamField header="Content-Type" type="string">
+  Set to `application/json` when you send a JSON body. File uploads use `multipart/form-data`. Leave it off requests with no body, such as `DELETE`: an empty body sent as `application/json` is rejected with `400`.
 </ParamField>
 
 <Info>
-  `Authorization: Bearer` is a dashboard session token. The API key belongs in `x-api-key`.
+  `Authorization: Bearer` carries dashboard session tokens and connected-app (OAuth) tokens. Voice Engine partner keys (`tpk_...`) also use `Authorization: Bearer`. Your API key belongs in `x-api-key`.
 </Info>
 
 ## Obtaining API Keys
 
-Generate an API key under the Settings tab. Each key has its own permissions and limits.
+Generate an API key under the Settings tab.
+
+An API key belongs to the user who created it. It has no permissions or limits of its own: every request made with it acts as that user, with that user's role, in whichever workspace `x-workspace-id` names. The key works in every workspace the user belongs to. If the user isn't a member of the workspace you name, the request fails with `403`.
+
+<Tip>
+  To limit what an integration can do, create a dedicated team member with a narrow [role](/v1/api-reference/endpoints/roles/create) in the workspaces it needs, and generate the key while signed in as that user.
+</Tip>
 
 <Note>
   Get your API key from the [Trillet Settings Dashboard](https://app.trillet.ai/settings).
