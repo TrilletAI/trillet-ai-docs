@@ -18,11 +18,13 @@ Add an AI chat widget to your website with the Trillet Web SDK (`@trillet-ai/web
   <Step title="Get your Agent ID">
     Navigate to **Call Flows** in the sidebar. Each call flow card displays its **Agent ID** - copy it from the card.
   </Step>
-  <Step title="Whitelist your domain">
-    Go to **Settings → Domain** and add the domain where you'll embed the widget (e.g. `https://yoursite.com`). This is required to avoid CORS errors. Allow up to 24 hours for propagation. Skip this if you're using a whitelabelled custom domain.
+  <Step title="Enable public access and publish">
+    Open your call flow and click **Website widget** in the editor header, then **Get embed code**. In that dialog, click **Turn on Public Access**, then **Publish changes**. Public Access only counts once it is published: a draft-only change is ignored, and `startPublicCall()` is refused with 403 `Public access not allowed for this agent`. (The same switch is also under **Settings > Advanced Settings > Security & Privacy > HIPAA & Compliance**.)
   </Step>
-  <Step title="Enable public access">
-    Open your call flow, go to the **Settings** tab, and toggle **Public Access** on. Without this, `startPublicCall()` will be rejected.
+  <Step title="Add your site to Domains (recommended)">
+    Go to **Settings > Domains** (under **Workspace > Developer**) and add the domain where you'll embed the widget, for example `yoursite.com`. You can also add it from the **Get embed code** dialog. The change takes effect immediately.
+
+    While your workspace has **no** domains listed, public calls are allowed from any site. Once you add **one**, calls from every other site are refused with 403 `Origin not allowed`, so list every site that embeds the widget, including staging. `localhost` and your workspace's own whitelabel portal domain are always allowed.
   </Step>
 </Steps>
 
@@ -41,7 +43,7 @@ Choose between a minimal quick-start snippet or a complete styled widget, then p
     <Tab title="HTML / CDN">
 ```html
 <script type="module">
-  import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm';
+  import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk@1.14.1/+esm';
 
   const WORKSPACE_ID = 'your-workspace-id';
   const AGENT_ID = 'your-agent-id';
@@ -486,7 +488,7 @@ Usage:
   </div>
 
   <script type="module">
-    import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk/+esm';
+    import { TrilletAgent } from 'https://cdn.jsdelivr.net/npm/@trillet-ai/web-sdk@1.14.1/+esm';
 
     // ── REPLACE THESE WITH YOUR VALUES ──
     const WORKSPACE_ID = 'your-workspace-id';
