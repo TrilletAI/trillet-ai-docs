@@ -142,8 +142,12 @@ The name of the TTS model configuration.
 The language set for the TTS model.
 </ResponseField>
 
-<ResponseField name="elevenLabsApiKey" type="string">
-Encrypted ElevenLabs API key (only present if provider is "11labs_byo").
+<ResponseField name="elevenLabsApiKeySaved" type="boolean">
+`true` when an ElevenLabs key is saved on the agent. The key itself is never returned.
+</ResponseField>
+
+<ResponseField name="cartesiaApiKeySaved" type="boolean">
+`true` when a Cartesia key is saved on the agent. The key itself is never returned.
 </ResponseField>
 </ResponseField>
 
