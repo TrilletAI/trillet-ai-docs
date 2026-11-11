@@ -77,6 +77,16 @@
       "source": "/quickstart",
       "destination": "/documentation/quickstart",
       "permanent": true
+    },
+    {
+      "source": "/changelog/changelog",
+      "destination": "https://trillet.ai/changelog",
+      "permanent": true
+    },
+    {
+      "source": "/changelog",
+      "destination": "https://trillet.ai/changelog",
+      "permanent": true
     }
   ],
   "navigation": {
@@ -143,15 +153,7 @@
       {
         "tab": "Change Log",
         "icon": "clock",
-        "groups": [
-          {
-            "group": "Changes",
-            "icon": "clock-rotate-left",
-            "pages": [
-              "changelog/changelog"
-            ]
-          }
-        ]
+        "href": "https://trillet.ai/changelog"
       },
       {
         "tab": "API Reference V1",
