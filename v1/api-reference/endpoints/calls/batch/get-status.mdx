@@ -34,7 +34,7 @@ description: "Get status and counters for a batch call operation"
   - `scheduled` - The batch has a future start time and no calls have been queued yet
   - `queued` - Calls are waiting and none has completed yet
   - `processing` - Calls are being placed
-  - `completed` - Nothing is waiting or active, and every job completed or failed
+  - `completed` - Nothing is waiting or active, and every job completed, failed or was cancelled
   - `failed` - Nothing is waiting or active, and every job failed
 </ResponseField>
 
@@ -51,7 +51,10 @@ description: "Get status and counters for a batch call operation"
       Dial jobs that finished. This doesn't mean the conversation succeeded; read the outcome from Call History.
     </ResponseField>
     <ResponseField name="failed" type="number">
-      Dial jobs that failed
+      Dial jobs that failed. Cancelled calls are not counted here.
+    </ResponseField>
+    <ResponseField name="cancelled" type="number">
+      Calls cancelled before they were dialled, by [Cancel Batch Operation](/v1/api-reference/endpoints/calls/batch/cancel), [Cancel Batch Job](/v1/api-reference/endpoints/calls/batch/cancel-job) or [Cancel Batch Contact](/v1/api-reference/endpoints/calls/batch/cancel-contact).
     </ResponseField>
     <ResponseField name="total" type="number">
       Total jobs in the batch
@@ -64,7 +67,7 @@ description: "Get status and counters for a batch call operation"
 </ResponseField>
 
 <ResponseField name="progress" type="object">
-  The same object [Get Batch Progress](/v1/api-reference/endpoints/calls/batch/get-progress) returns: `batchId`, `total`, `completed`, `failed`, `waiting`, `active`, `progress` (percent completed, 0-100) and `lastUpdated` (Unix milliseconds).
+  The same object [Get Batch Progress](/v1/api-reference/endpoints/calls/batch/get-progress) returns: `batchId`, `total`, `completed`, `failed`, `cancelled`, `waiting`, `active`, `progress` (percent completed, 0-100) and `lastUpdated` (Unix milliseconds).
 </ResponseField>
 
 <ResponseField name="scheduledAt" type="string">
@@ -99,6 +102,7 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq" \
     "active": 5,
     "completed": 95,
     "failed": 5,
+    "cancelled": 0,
     "total": 150
   },
   "timestamp": 1793284800000,
@@ -107,6 +111,7 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq" \
     "total": 150,
     "completed": 95,
     "failed": 5,
+    "cancelled": 0,
     "waiting": 45,
     "active": 5,
     "progress": 63,
@@ -125,13 +130,14 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq" \
   "scheduledAt": "2026-11-15T14:30:00.000Z",
   "scheduledTimezone": "America/New_York",
   "timezone": "America/New_York",
-  "counters": { "waiting": 0, "active": 0, "completed": 0, "failed": 0, "total": 150 },
+  "counters": { "waiting": 0, "active": 0, "completed": 0, "failed": 0, "cancelled": 0, "total": 150 },
   "timestamp": 1793284800000,
   "progress": {
     "batchId": "p8d2m4t7zs",
     "total": 0,
     "completed": 0,
     "failed": 0,
+    "cancelled": 0,
     "waiting": 0,
     "active": 0,
     "progress": 0,

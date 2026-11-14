@@ -30,7 +30,11 @@ description: "Get the job counters and percent complete for a batch call operati
 </ResponseField>
 
 <ResponseField name="failed" type="number">
-  Dial jobs that failed
+  Dial jobs that failed. Cancelled calls are not counted here.
+</ResponseField>
+
+<ResponseField name="cancelled" type="number">
+  Calls cancelled before they were dialled, by [Cancel Batch Operation](/v1/api-reference/endpoints/calls/batch/cancel), [Cancel Batch Job](/v1/api-reference/endpoints/calls/batch/cancel-job) or [Cancel Batch Contact](/v1/api-reference/endpoints/calls/batch/cancel-contact).
 </ResponseField>
 
 <ResponseField name="waiting" type="number">
@@ -65,6 +69,7 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq/status" \
   "total": 150,
   "completed": 95,
   "failed": 5,
+  "cancelled": 0,
   "waiting": 45,
   "active": 5,
   "progress": 63,
