@@ -34,8 +34,9 @@ description: "Get status and counters for a batch call operation"
   - `scheduled` - The batch has a future start time and no calls have been queued yet
   - `queued` - Calls are waiting and none has completed yet
   - `processing` - Calls are being placed
-  - `completed` - Nothing is waiting or active, and every job completed, failed or was cancelled
+  - `completed` - Nothing is waiting or active, and every job completed, failed or was cancelled one at a time
   - `failed` - Nothing is waiting or active, and every job failed
+  - `cancelled` - The batch was stopped with [Cancel Batch Operation](/v1/api-reference/endpoints/calls/batch/cancel). This status is final: a stopped batch never reads `completed`. Calls already in progress when it was stopped still finish, and their outcomes still count in `completed` or `failed`
 </ResponseField>
 
 <ResponseField name="counters" type="object">
