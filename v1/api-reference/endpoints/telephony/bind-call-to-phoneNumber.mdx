@@ -28,12 +28,12 @@ Requires the `agent:edit` permission.
 
 A JSON body is required. Send `{}` if you don't want to set anything.
 
-<ParamField body="recordCalls" type="boolean" optional>
-  Whether calls on this number are recorded. Left out, the current setting is kept.
+<ParamField body="recordCalls" type="boolean" optional deprecated>
+  Deprecated and ignored. Recording is set on the agent's call flow, not on the number. The field is still accepted so existing requests keep working, and will be removed in a later release.
 </ParamField>
 
-<ParamField body="recordingPublic" type="boolean" optional>
-  Whether recordings are publicly accessible. Left out, the current setting is kept.
+<ParamField body="recordingPublic" type="boolean" optional deprecated>
+  Deprecated and ignored. Recording is set on the agent's call flow, not on the number. The field is still accepted so existing requests keep working, and will be removed in a later release.
 </ParamField>
 
 <ParamField body="officeHours" type="object" optional>
@@ -96,8 +96,6 @@ When a request is refused, nothing is changed.
 <RequestExample>
 ```json
 {
-  "recordCalls": true,
-  "recordingPublic": false,
   "officeHours": {
     "enabled": true,
     "start": "09:00",
@@ -128,8 +126,6 @@ When a request is refused, nothing is changed.
     "pathwayId": "d2d2d2d2d2d2d2d2d2d2d2d2",
     "flowType": "call",
     "status": "active",
-    "recordingEnabled": true,
-    "recordingPublic": false,
     "officeHours": {
       "enabled": true,
       "start": "09:00",

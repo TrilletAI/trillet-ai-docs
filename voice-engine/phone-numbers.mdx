@@ -173,12 +173,12 @@ curl -X POST https://api.trillet.ai/v1/api/agents/e0e0e0e0e0e0e0e0e0e0e0e0/bind/
   -H "Authorization: Bearer tpk_live_..." \
   -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
   -H "Content-Type: application/json" \
-  -d '{ "recordCalls": true }'
+  -d '{}'
 ```
 
-Send a JSON body, even an empty `{}`. Optional fields include `recordCalls`, `officeHours`, `metadataTags` and `label`. The number must belong to the tenant. `POST /v1/api/agents/{agentId}/release/{phoneNumberId}` unassigns it.
+Send a JSON body, even an empty `{}`. Optional fields include `officeHours`, `metadataTags` and `label`. Recording is set on the call flow, not on the number. The number must belong to the tenant. `POST /v1/api/agents/{agentId}/release/{phoneNumberId}` unassigns it.
 
-To change a number's settings later without rebinding it, such as recording, office hours or metadata tags, use the standard [update phone number configuration](/v1/api-reference/endpoints/phone-numbers/update-config) endpoint (`PUT /v1/api/twilio/phone-numbers/{phoneNumberId}/config`).
+To change a number's settings later without rebinding it, such as office hours or metadata tags, use the standard [update phone number configuration](/v1/api-reference/endpoints/phone-numbers/update-config) endpoint (`PUT /v1/api/twilio/phone-numbers/{phoneNumberId}/config`).
 
 ## Events
 
