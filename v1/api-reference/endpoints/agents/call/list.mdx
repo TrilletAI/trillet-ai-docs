@@ -145,7 +145,7 @@ Returns a plain array of every agent in the workspace, newest first, including a
 </ResponseField>
 
 <ResponseField name="phoneNumberIds" type="array">
-  The agent's phone numbers as full phone number objects (not IDs).
+  The agent's phone numbers as phone number objects (not IDs). Each holds the number's own settings, such as `phoneNumber`, `country`, `type`, `label`, `status`, `provider`, `agentId`, `pathwayId`, `flowType`, `recordingEnabled`, `recordingPublic`, `officeHours` and `metadataTags`. Provider identifiers (for example the Twilio SID), credentials, subscription details and partner billing details are not included.
 </ResponseField>
 
 <ResponseField name="fallbackTtsModel" type="object | null">

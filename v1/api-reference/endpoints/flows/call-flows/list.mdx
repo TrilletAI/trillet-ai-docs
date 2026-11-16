@@ -35,7 +35,7 @@ The response is a plain array with one full call flow document per item, the sam
 </ResponseField>
 
 <ResponseField name="agent" type="object">
-  The agent the flow uses, as a full agent object (`_id`, `name`, `ttsModel`, `llmModel`, `sttProvider`, `phoneNumberIds` and so on), with its `phoneNumberIds` populated as phone number objects. Use `agent._id` for the agent's ID. It is `null` if the flow has no agent.
+  The agent the flow uses, as a full agent object (`_id`, `name`, `ttsModel`, `llmModel`, `sttProvider`, `phoneNumberIds` and so on), with its `phoneNumberIds` populated as phone number objects. Each holds the number's own settings, such as `phoneNumber`, `country`, `type`, `label`, `status`, `agentId`, `pathwayId`, `recordingEnabled` and `officeHours`, without provider identifiers, credentials, subscription or partner billing details. Use `agent._id` for the agent's ID. It is `null` if the flow has no agent.
 </ResponseField>
 
 <ResponseField name="folderId" type="object">

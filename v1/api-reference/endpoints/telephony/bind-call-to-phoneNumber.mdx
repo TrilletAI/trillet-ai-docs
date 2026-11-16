@@ -67,7 +67,7 @@ A JSON body is required. Send `{}` if you don't want to set anything.
 </ResponseField>
 
 <ResponseField name="phoneNumber" type="object">
-  The updated phone number object after binding and SIP trunk configuration.
+  The updated phone number object after binding and SIP trunk configuration. It holds the number's own settings, such as `phoneNumber`, `label`, `status`, `agentId`, `pathwayId`, `flowType`, `recordingEnabled`, `recordingPublic`, `officeHours`, `metadataTags`, `secretBindings` and `transferCallerIdMode`. Provider identifiers (for example the Twilio SID), credentials, subscription details and partner billing details are not included. The example shows some of the fields.
 </ResponseField>
 
 <ResponseField name="pathwayId" type="string">
@@ -124,6 +124,8 @@ When a request is refused, nothing is changed.
   },
   "phoneNumber": {
     "_id": "d6d6d6d6d6d6d6d6d6d6d6d6",
+    "phoneNumber": "+15125550142",
+    "label": "Front desk",
     "agentId": "d5d5d5d5d5d5d5d5d5d5d5d5",
     "pathwayId": "d2d2d2d2d2d2d2d2d2d2d2d2",
     "flowType": "call",
