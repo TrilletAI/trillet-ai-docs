@@ -96,6 +96,14 @@ The record has the same shape as one item of `data` in [List Call Histories](/v1
   Why the call ended, or `"Unknown"`. Phone calls only.
 </ResponseField>
 
+<ResponseField name="twilioCallSid" type="string">
+  Twilio call SID for calls on Twilio numbers, or `null`.
+</ResponseField>
+
+<ResponseField name="headerVariables" type="array">
+  Values of mapped SIP headers for inbound calls on Bring Your Own Twilio numbers, as `{ key, value }` objects. `[]` when none.
+</ResponseField>
+
 See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) for the remaining fields (`charged_duration`, `error`, `hasTelephonyCost`, `publicRecordingUrl`, `batchId`, `pendingReason`, `variables`, `dynamic_variables`, `llm`/`stt`/`tts`, `bookingOutcome` and others).
 
 <ResponseExample>
@@ -138,6 +146,8 @@ See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) f
   "hipaaCompliance": false,
   "functionCalls": [],
   "dynamic_variables": {},
+  "twilioCallSid": "CA0123456789abcdef0123456789abcdef",
+  "headerVariables": [{ "key": "store_id", "value": "1042" }],
   "llm": { "model": "gpt-4.1" },
   "stt": {},
   "tts": {},

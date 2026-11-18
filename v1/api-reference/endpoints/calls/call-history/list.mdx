@@ -138,6 +138,8 @@ All filters are exact matches unless stated otherwise. A filter value that match
     <ResponseField name="postCallStatus" type="object">Post-call processing status, or `null`. Omitted with `slim=true`.</ResponseField>
     <ResponseField name="preCallWebhook" type="object">Pre-call webhook result, or `null`. Omitted with `slim=true`.</ResponseField>
     <ResponseField name="postCallEmailDeliveries" type="array">Post-call email delivery records.</ResponseField>
+    <ResponseField name="twilioCallSid" type="string">Twilio call SID for calls on Twilio numbers, or `null`.</ResponseField>
+    <ResponseField name="headerVariables" type="array">Values of mapped SIP headers for inbound calls on Bring Your Own Twilio numbers, as `{ key, value }` objects. `[]` when none.</ResponseField>
     <ResponseField name="bookingOutcome" type="object">Booking result for calls that booked an appointment, or `null`.</ResponseField>
     <ResponseField name="callEndedBy" type="string">Who ended the call, or `"Unknown"`. Phone calls only (not present on web calls).</ResponseField>
     <ResponseField name="callEndReason" type="string">Why the call ended, or `"Unknown"`. Phone calls only.</ResponseField>
@@ -210,6 +212,8 @@ All filters are exact matches unless stated otherwise. A filter value that match
       "stt": {},
       "tts": {},
       "postCallStatus": null,
+      "twilioCallSid": "CA0123456789abcdef0123456789abcdef",
+      "headerVariables": [{ "key": "store_id", "value": "1042" }],
       "preCallWebhook": null,
       "postCallEmailDeliveries": [],
       "bookingOutcome": null,

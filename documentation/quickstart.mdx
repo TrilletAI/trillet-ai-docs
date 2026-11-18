@@ -145,6 +145,10 @@ The Phone Numbers page gives you three ways to get a number:
 - Keep using your existing carrier rates
 - Manage everything from within Trillet
 
+<Note>
+  **SIP header mappings (Twilio):** on a Bring Your Own Twilio number, including numbers you already added, you can map incoming SIP headers to variables. Set the mappings on the number in the dashboard. On inbound calls the values show up as `headerVariables` on the call record (see [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get)). The post-call webhook sends them as `header_variables`, plus `twilio_call_sid`.
+</Note>
+
 <img
   className="block dark:hidden rounded-xl"
   src="../images/bring_your_own_number.png"
