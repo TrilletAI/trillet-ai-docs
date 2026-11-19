@@ -106,6 +106,15 @@ The record has the same shape as one item of `data` in [List Call Histories](/v1
 
 See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) for the remaining fields (`charged_duration`, `error`, `hasTelephonyCost`, `publicRecordingUrl`, `batchId`, `pendingReason`, `variables`, `dynamic_variables`, `llm`/`stt`/`tts`, `bookingOutcome` and others).
 
+### Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "Workspace ID is required", "code": "WORKSPACE_ID_REQUIRED"}` | The `x-workspace-id` header is missing |
+| `400` | `{"error": "Invalid call history ID", "code": "CALL_HISTORY_ID_INVALID"}` | `callHistoryId` is not a 24-character hex ID |
+| `404` | `{"error": "Call history record not found", "code": "CALL_HISTORY_NOT_FOUND"}` | No call with that ID exists in this workspace |
+| `500` | `{"error": "Could not fetch call history", "code": "CALL_HISTORY_FETCH_FAILED"}` | Unexpected server error. Safe to retry |
+
 <ResponseExample>
 ```json
 {
