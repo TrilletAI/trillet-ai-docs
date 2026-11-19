@@ -1,0 +1,126 @@
+---
+title: "Get Node Flow"
+api: "GET /v2/api/node-graphs/{id}"
+description: "Retrieve a node flow: the graph, the effective graph and its companion call flow."
+---
+
+This is where you find the companion call flow's ID: it is `pathway._id`. Use that ID with [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) and for phone numbers and calls. Going the other way, [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get) returns `nodeGraphId`.
+
+If the graph has no companion call flow or agent (for example, an older graph), this request creates the missing pieces so voice, model and phone settings can be edited. If that fails, `pathway` is `null` and the graph is still returned.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The graph `_id` (not the call flow ID).
+</ParamField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `404` | `{"code": "NODE_GRAPH_NOT_FOUND"}` | No graph with that ID in the workspace |
+| `500` | `{"code": "NODE_GRAPH_FETCH_FAILED"}` | Unexpected server error, including a malformed ID |
+
+### Response Fields
+
+<ResponseField name="graph" type="object">
+  The stored graph. Besides the fields in [Graph fields](/v1/api-reference/endpoints/flows/node-flows/overview#graph-fields), it has `_id`, `workspaceId`, `status` (`draft`, `active` or `archived`), `hasDraft`, `draftData` (the saved draft, or `null`), `lastDraftSavedAt`, `publishedVersion`, `publishedAt`, `compiled` (what calls run, `null` until the first publish), `versions`, `stats`, `createdAt` and `updatedAt`. The document can be large.
+</ResponseField>
+
+<ResponseField name="effective" type="object">
+  The graph with the draft merged over the live fields: what the editor shows and what [Validate](/v1/api-reference/endpoints/flows/node-flows/validate) and [Publish](/v1/api-reference/endpoints/flows/node-flows/publish) act on. Equal to `graph` when there is no draft.
+</ResponseField>
+
+<ResponseField name="pathway" type="object">
+  The companion call flow, or `null`.
+  <Expandable title="pathway">
+    <ResponseField name="_id" type="string">
+      The call flow ID.
+    </ResponseField>
+    <ResponseField name="name" type="string">
+      The call flow's name.
+    </ResponseField>
+    <ResponseField name="description" type="string">
+      The call flow's description.
+    </ResponseField>
+    <ResponseField name="direction" type="string">
+      `outbound` or `bidirectional`.
+    </ResponseField>
+    <ResponseField name="promptType" type="string">
+      Always `nodes`.
+    </ResponseField>
+    <ResponseField name="settings" type="object">
+      The call flow's settings. See [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update).
+    </ResponseField>
+    <ResponseField name="webhooks" type="array">
+      The call flow's webhooks.
+    </ResponseField>
+    <ResponseField name="codeActions" type="array">
+      The call flow's code actions.
+    </ResponseField>
+    <ResponseField name="dynamicVariableCollections" type="array">
+      The call flow's dynamic variable collections.
+    </ResponseField>
+    <ResponseField name="agent" type="object">
+      The agent the flow uses, or `null`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+
+```bash
+curl -X GET "https://api.trillet.ai/v2/api/node-graphs/{id}" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "graph": {
+    "_id": "a1a1a1a1a1a1a1a1a1a1a1a1",
+    "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
+    "name": "Front desk",
+    "status": "draft",
+    "startNodeId": "start",
+    "nodes": [],
+    "edges": [],
+    "hasDraft": false,
+    "publishedVersion": 0
+  },
+  "effective": {
+    "_id": "a1a1a1a1a1a1a1a1a1a1a1a1",
+    "name": "Front desk",
+    "startNodeId": "start",
+    "nodes": [],
+    "edges": []
+  },
+  "pathway": {
+    "_id": "b1b1b1b1b1b1b1b1b1b1b1b1",
+    "name": "Front desk",
+    "description": "Node Flow",
+    "direction": "bidirectional",
+    "promptType": "nodes",
+    "settings": {},
+    "webhooks": [],
+    "codeActions": [],
+    "dynamicVariableCollections": [],
+    "agent": { "_id": "d1d1d1d1d1d1d1d1d1d1d1d1", "name": "Front desk" }
+  }
+}
+```
+
+In the example, `nodes`, `edges`, `settings` and the agent are shortened.
+
+</ResponseExample>

@@ -1,0 +1,371 @@
+---
+title: "Node Flows Overview"
+description: "Build a call flow as a graph of nodes and edges through the API: how node flows relate to call flows, draft versus live, and every route."
+---
+
+A node flow is a call flow whose conversation is a graph instead of one prompt. The graph is made of **nodes** (a step the agent performs, such as talking, asking a question, routing, running an action or ending the call) joined by **edges** (the transitions between them). Only one node is active at a time, and a small routing model decides which edge to take.
+
+The routes below live under `/v2/api/node-graphs`. They use the same authentication as [Call Flows](/v1/api-reference/endpoints/flows/call-flows/create): send `x-api-key` and `x-workspace-id` on every request (see [Authentication](/v1/api-reference/authentication)). Partner API keys work too. Access follows the call flow permissions: `pathway:view` to read, validate and simulate, `pathway:create` to create and duplicate, `pathway:edit` to change, publish and archive, and `pathway:delete` to delete.
+
+<Note>
+  These routes are plain REST routes, not part of the OpenAPI reference. They are documented here as regular pages.
+</Note>
+
+## A node flow is a graph plus a call flow
+
+Creating a node flow creates two things:
+
+1. The **graph** (the nodes, edges and variables), which you edit with the routes on these pages.
+2. A **companion call flow** with `promptType: "nodes"`, `direction: "bidirectional"` and its own agent (a default voice and model). The call flow is what makes the graph callable: it carries the agent, voice, model, phone numbers, transfers, webhooks, recording, post-call analysis and call history.
+
+The graph and the call flow have **different IDs**:
+
+| ID | What it is | Used with |
+| --- | --- | --- |
+| Graph `_id` | The graph document | Every `/v2/api/node-graphs/{id}` route. Also the `nodeGraphId` of a `subflow` node. |
+| Call flow `_id` | The companion call flow | `/v1/api/call-flows/{id}`, phone number assignment and starting calls. |
+
+### Getting from one ID to the other
+
+- **Graph to call flow:** [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get) returns the companion call flow in `pathway`, so `pathway._id` is the call flow ID. [Create Node Flow](/v1/api-reference/endpoints/flows/node-flows/create) returns only the graph, so call Get Node Flow right after creating to read it.
+- **Call flow to graph:** [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get) returns the flow's `nodeGraphId` (set only when `promptType` is `nodes`). [List Call Flows](/v1/api-reference/endpoints/flows/call-flows/list) returns it for every flow in the workspace.
+
+## What lives where
+
+| You want to change | Where | How |
+| --- | --- | --- |
+| Conversation steps, routing, variables, persona, guardrails, router, knowledge bases on the graph | The graph | The routes on these pages |
+| Voice, model, phone numbers, transfers, webhooks, post-call analysis, greeting, call limits and other settings | The companion call flow | [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) with `PUT /v1/api/call-flows/{id}` |
+| Agent name, voice and model fields | The agent | [Update Call Agent](/v1/api-reference/endpoints/agents/call/update) |
+
+A `prompt` sent to Update Call Flow is saved but ignored on node flows: the published graph drives the call.
+
+## Draft versus live
+
+A graph has **live** fields (what new calls run) and an optional **draft** (work in progress). Which route writes where matters:
+
+| Route | Writes | Validates | Effect on calls |
+| --- | --- | --- | --- |
+| [Update Node Flow](/v1/api-reference/endpoints/flows/node-flows/update) `PUT` | The live fields, and also merges the same fields into an open draft | No | None until you publish. The compiled version that calls use only changes on publish. |
+| [Save Draft](/v1/api-reference/endpoints/flows/node-flows/save-draft) `PATCH` | The draft only | Never | None |
+| [Validate](/v1/api-reference/endpoints/flows/node-flows/validate) `POST` | Nothing | Yes, on the effective graph | None |
+| [Publish](/v1/api-reference/endpoints/flows/node-flows/publish) `POST` | Promotes the effective graph to live, clears the draft | Yes, blocks on errors | New calls use it immediately |
+
+The **effective graph** is the draft merged over the live fields when a draft exists, otherwise the live fields. Get, Validate and Publish all work on the effective graph.
+
+Calls run the **published** version. A node flow that has never been published cannot take calls.
+
+## Suggested workflow
+
+<Steps>
+  <Step title="Create the flow">
+    [Create Node Flow](/v1/api-reference/endpoints/flows/node-flows/create), optionally from a template or with your own nodes and edges.
+  </Step>
+  <Step title="Read both IDs">
+    [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get) and note `graph._id` and `pathway._id`.
+  </Step>
+  <Step title="Build the graph">
+    [Update Node Flow](/v1/api-reference/endpoints/flows/node-flows/update) to set the whole graph from your code, or [Save Draft](/v1/api-reference/endpoints/flows/node-flows/save-draft) while you iterate.
+  </Step>
+  <Step title="Configure the call flow">
+    `PUT /v1/api/call-flows/{pathway._id}` for voice, model, phone numbers, transfers, webhooks and post-call analysis.
+  </Step>
+  <Step title="Validate">
+    [Validate](/v1/api-reference/endpoints/flows/node-flows/validate) and fix every `error` problem.
+  </Step>
+  <Step title="Publish">
+    [Publish](/v1/api-reference/endpoints/flows/node-flows/publish) to make the graph live.
+  </Step>
+</Steps>
+
+## Graph fields
+
+These are the fields you can write (`name`, `description`, `startNodeId`, `variables`, `globals`, `router`, `nodes`, `edges`, `dataSources`). Any other field on the graph is set by the server and ignored if you send it. Arrays and objects you send replace the stored value for that field as a whole.
+
+<ResponseField name="name" type="string">
+  The flow's name. Required on the graph; defaults to `Untitled node flow` on create. Publishing copies it to the companion call flow's name.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  A description of the flow.
+</ResponseField>
+
+<ResponseField name="startNodeId" type="string">
+  The `nodeId` of the first node. Must exist and cannot be an `end` node.
+</ResponseField>
+
+<ResponseField name="variables" type="array">
+  The call state the graph reads and writes. Declare a variable here before a node refers to it.
+
+  <Expandable title="variable">
+    <ResponseField name="key" type="string" required>
+      Unique key, used as `{{_variable.key}}`.
+    </ResponseField>
+    <ResponseField name="label" type="string">
+      A human-readable label.
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      One of `string` (default), `number`, `boolean`, `date`, `time`, `enum`, `phone`, `email`, `object`, `array`. An `enum` variable needs a non-empty `enumValues`.
+    </ResponseField>
+    <ResponseField name="enumValues" type="string[]">
+      The allowed values for an `enum` variable.
+    </ResponseField>
+    <ResponseField name="validation" type="object">
+      Optional `pattern` (string), `min`, `max`, `minLength` and `maxLength` (numbers).
+    </ResponseField>
+    <ResponseField name="required" type="boolean">
+      Defaults to `false`.
+    </ResponseField>
+    <ResponseField name="extractionPrompt" type="string">
+      Instructions for recognising this value in what the caller says.
+    </ResponseField>
+    <ResponseField name="redact" type="boolean">
+      When `true`, the value is left out of traces and run logs. Defaults to `false`.
+    </ResponseField>
+    <ResponseField name="initialFrom" type="string">
+      Seeds the value at call start from a placeholder, for example `{{_dynamic_variable.patient_id}}`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="globals" type="object">
+  Content that applies to the whole call.
+
+  <Expandable title="globals">
+    <ResponseField name="persona" type="string">
+      Who the agent is.
+    </ResponseField>
+    <ResponseField name="guardrails" type="string">
+      Rules the agent must follow on every node.
+    </ResponseField>
+    <ResponseField name="knowledgeBases" type="string[]">
+      Knowledge base IDs. Each must belong to your workspace, otherwise the write is refused with `400` and `code: "KNOWLEDGE_BASE_NOT_IN_WORKSPACE"`. Publishing adds them to the call flow's `settings.knowledgeBases`.
+    </ResponseField>
+    <ResponseField name="interrupts" type="array">
+      Intents that can jump anywhere in the graph. Each has `id`, `name`, `targetNodeId` (all required), `utterancePatterns` (string array; without any, validation warns) and `returnAfter` (boolean, default `true`: resume the interrupted node afterwards). `targetNodeId` must be an existing node.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="router" type="object">
+  Settings for the model that picks the next edge.
+
+  <Expandable title="router">
+    <ResponseField name="model" type="string">
+      Router model ID. Empty means the platform default.
+    </ResponseField>
+    <ResponseField name="maxCandidates" type="number">Default `8`.</ResponseField>
+    <ResponseField name="historyTurns" type="number">Default `4`.</ResponseField>
+    <ResponseField name="confidenceFloor" type="number">Default `0.5`. Must be between `0` and `1`.</ResponseField>
+    <ResponseField name="sequential" type="boolean">Default `false`. Route strictly before generating the reply instead of in parallel.</ResponseField>
+    <ResponseField name="speculative" type="boolean">Default `false`. Generate the reply while the turn is analysed, and interrupt it if the turn moves the call.</ResponseField>
+    <ResponseField name="timeoutMs" type="number">Default `2500`. How long turn analysis may take before the turn continues on the deterministic fallback.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="nodes" type="array">
+  The steps. See [Nodes](#nodes).
+</ResponseField>
+
+<ResponseField name="edges" type="array">
+  The transitions. See [Edges](#edges).
+</ResponseField>
+
+<ResponseField name="dataSources" type="array">
+  Stored as sent and not checked by validation. No node type documented here uses it.
+</ResponseField>
+
+## Nodes
+
+Every node has these fields:
+
+<ResponseField name="nodeId" type="string" required>
+  Unique within the graph. Edges and `startNodeId` refer to it.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  One of the types below.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  A display name. Validation warns when it is missing.
+</ResponseField>
+
+<ResponseField name="config" type="object">
+  The per-type settings below.
+</ResponseField>
+
+<ResponseField name="stage" type="string">
+  Editor grouping label. No effect on calls.
+</ResponseField>
+
+<ResponseField name="canvasPosition" type="object">
+  `{ x, y }` position in the editor. No effect on calls.
+</ResponseField>
+
+<ResponseField name="behaviour" type="object">
+  Optional per-node overrides: `temperature` (0 to 2), `model` (a different model for this node; validation warns because it discards the prompt cache for that turn), `blockInterruptions`, `interruptionThreshold`, `responseEagerness`, `resumptionSpeed`, `reminderSeconds`, `reminderTimes`, `disableSilenceRepeat`, `skipUserResponse` (speak and continue without waiting; `conversation` nodes without `requiredFields` only), `overridesInterrupts` and `excludeFromHistory`. A field you leave out uses the flow's setting.
+</ResponseField>
+
+<ResponseField name="onError" type="string">
+  `fallback` (default), `end` or `transfer`. What happens when the node fails and no error edge handles it.
+</ResponseField>
+
+<ResponseField name="maxTurns" type="number">
+  Default `8`. How many caller turns a `conversation` or `wait` node may use before the flow forces its fallback edge. Must be at least `1`.
+</ResponseField>
+
+<ResponseField name="timeoutMs" type="number">
+  Optional node timeout in milliseconds.
+</ResponseField>
+
+| `type` | What it does | `config` |
+| --- | --- | --- |
+| `conversation` | The agent talks to the caller toward an objective. | `objective` (required), `prompt`, `requiredFields` (variable keys to collect), `exitCriteria`, `allowedDigressions`, `skipIfSatisfied`, `clearFieldsOnReentry` (`true` or a list of variable keys), `confirmBeforeExit`, `knowledgeBases` (IDs), `abilities` (`[{ toolName }]` the model may call during the node) |
+| `say` | Says fixed text. | `text` (required), `interruptible` |
+| `decision` | Routes only on its `condition` edges, with no config. | none |
+| `classify` | The router picks one option. | `question`, `options`: array of `{ handle, description }`, at least 2, unique handles |
+| `tool` | Runs one action. | `toolName` (required, from the list below), `arguments`, `resultVariable` (a declared variable), `retry` (`attempts` 0 to 3, `backoffMs` 0 to 5000) |
+| `end` | Ends the call. | `message`, `disposition`, `messageMode` (`instruction`, the default, writes a closing line from `message`; `verbatim` says it exactly) |
+| `wait` | Listens without speaking and collects fields. | `requiredFields` (required, non-empty), `prompt` |
+| `subflow` | Hands the call to another node flow. | `nodeGraphId` (required), `returnAfter` (come back when it finishes) |
+| `code` | Runs your JavaScript over the call variables. | `code` (required), `referenceVariables`, `arguments`, `resultVariable` |
+| `parallel` | Runs several actions at once and joins. | `tools`: at least 2 of `{ toolName, arguments, resultVariable }`, `joinPolicy` (`all_success` or `any_success`) |
+| `ivr` | Navigates a phone menu at pickup, before the graph starts. Entry only: no edges into it, and at most one per graph. | `mode` (`sequence` or `auto`), `keySequence` (up to 10 steps of `0-9*#`, 1 to 32 characters each), `priorityList`, `holdQueue` (`enabled`, `maxWaitSeconds` 15 to 900), `screeningAction` (`respond` or `hangup`) |
+
+`tool` and `parallel` actions can use these `toolName` values: `realtime_api`, `execute_code_action`, `search_knowledge_base`, `transfer_call`, `end_call`, `get_time_for_timezone`, `next_available_callback_time`, `trigger_workflow`, and the ServiceTitan actions `lookup_servicetitan_customer`, `check_servicetitan_availability`, `create_servicetitan_booking_request`, `book_servicetitan_job`, `add_servicetitan_note`, `find_servicetitan_location`, `get_servicetitan_job_questions`, `create_servicetitan_job` and `update_servicetitan_job_summary`. Prefer an `end` node over the `end_call` action: validation warns about `end_call`.
+
+## Edges
+
+<ResponseField name="id" type="string" required>
+  Unique edge ID.
+</ResponseField>
+
+<ResponseField name="source" type="string" required>
+  The `nodeId` the edge leaves.
+</ResponseField>
+
+<ResponseField name="target" type="string" required>
+  The `nodeId` the edge enters.
+</ResponseField>
+
+<ResponseField name="kind" type="string">
+  Who decides the edge: `auto` (default; always taken, no model call), `condition` (checked against call state, no model call), `intent` (the router reads `label`) or `fallback` (taken when nothing else matches or a limit is hit).
+</ResponseField>
+
+<ResponseField name="sourceHandle" type="string">
+  Which output of the source node the edge leaves through. Required for `classify` (an option `handle`), `tool`, `code` and `parallel` (`success` or `error`) and `subflow` with `returnAfter` (`returned` or `error`). For `ivr` it is `human`, `exhausted` or `voicemail`. Not allowed on other node types. Each handle takes one edge.
+</ResponseField>
+
+<ResponseField name="label" type="string">
+  Required on `intent` edges: describe the caller's situation, for example `wants a different date`.
+</ResponseField>
+
+<ResponseField name="condition" type="object">
+  Required on `condition` edges: `{ conditions: [...], error_message }`. Each condition is `{ conditional_variable, operator, value, connector }`. Conditions chain left to right with each condition's `connector` (`AND` by default, or `OR`), with no precedence.
+
+  `operator` is one of `exists` (default), `not_empty`, `equals`, `not_equals`, `equals_ci`, `not_equals_ci`, `contains`, `not_contains`, `greater_than`, `less_than`. `equals` is case-sensitive, the `_ci` versions are not, and `contains` is a case-insensitive substring test. `conditional_variable` and `value` accept placeholders such as `{{_variable.x}}`, `{{_dynamic_variable.x}}`, `{{_response.x}}`, `{{_metadata.x}}` and `{{_time_context.currentDate}}` (also `currentTime`, `currentDay`).
+</ResponseField>
+
+<ResponseField name="priority" type="number">
+  Default `0`. Lower runs first among `condition` edges out of one node.
+</ResponseField>
+
+## Minimal valid graph
+
+A start node, an end node and one edge. This passes validation with no problems, so it can be published as is:
+
+```json
+{
+  "startNodeId": "start",
+  "nodes": [
+    {
+      "nodeId": "start",
+      "type": "conversation",
+      "name": "Greeting",
+      "config": {
+        "objective": "Greet the caller, say the business name, and ask how you can help today."
+      }
+    },
+    {
+      "nodeId": "done",
+      "type": "end",
+      "name": "End call",
+      "config": {
+        "message": "Thank the caller and end the call politely.",
+        "disposition": "completed"
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start", "target": "done", "kind": "auto" }
+  ]
+}
+```
+
+A flow created with no template and no nodes starts as just the `start` node above, with no edge. That is not publishable yet: a node that is not an `end` node needs at least one outgoing edge (`NO_OUTGOING`).
+
+## Validation problems
+
+[Validate](/v1/api-reference/endpoints/flows/node-flows/validate) and [Publish](/v1/api-reference/endpoints/flows/node-flows/publish) return problems as `{ code, severity, nodeId?, edgeId?, params? }`. An `error` blocks publishing and a `warning` does not. The codes are stable identifiers, not sentences.
+
+| Code | Severity | Meaning |
+| --- | --- | --- |
+| `NO_NODES` | error | The graph has no nodes. |
+| `NODE_ID_MISSING`, `DUPLICATE_NODE_ID` | error | A node has no `nodeId`, or two nodes share one. |
+| `NO_START_NODE`, `START_NODE_MISSING`, `START_NODE_TERMINAL` | error | `startNodeId` is missing, points at no node, or points at an `end` node. |
+| `UNKNOWN_NODE_TYPE` | error | `type` is not one of the types above. |
+| `VARIABLE_KEY_MISSING`, `DUPLICATE_VARIABLE_KEY`, `ENUM_WITHOUT_VALUES` | error | A variable has no key, repeats a key, or is an `enum` with no values. |
+| `UNDECLARED_VARIABLE`, `REQUIRED_FIELD_UNDECLARED`, `CLEAR_FIELDS_UNDECLARED`, `TOOL_RESULT_VARIABLE_UNDECLARED` | error | A node or `{{_variable.x}}` placeholder uses a variable that is not in `variables`. |
+| `CONVERSATION_WITHOUT_OBJECTIVE`, `SAY_WITHOUT_TEXT`, `WAIT_WITHOUT_FIELDS`, `CODE_EMPTY` | error | A required config field is empty. |
+| `DECISION_WITHOUT_CONDITIONS` | error | A `decision` node has no `condition` edge. |
+| `CLASSIFY_WITHOUT_OPTIONS`, `CLASSIFY_OPTION_HANDLE_MISSING`, `CLASSIFY_DUPLICATE_HANDLE` | error | A `classify` node has fewer than 2 options, an option without a handle, or a repeated handle. |
+| `TOOL_WITHOUT_NAME`, `TOOL_NOT_ALLOWED`, `ABILITY_NOT_ALLOWED`, `PARALLEL_NEEDS_TOOLS`, `PARALLEL_JOIN_POLICY_INVALID` | error | Invalid `tool`, `parallel` or `abilities` configuration. |
+| `SUBFLOW_WITHOUT_TARGET`, `SUBFLOW_HANDOFF_HAS_OUTGOING` | error | A `subflow` has no `nodeGraphId`, or has outgoing edges without `returnAfter`. |
+| `END_MESSAGE_MODE_INVALID`, `MAX_TURNS_INVALID`, `TEMPERATURE_OUT_OF_RANGE`, `ROUTER_CONFIDENCE_RANGE` | error | A value is outside its allowed range. |
+| `SKIP_USER_RESPONSE_WRONG_TYPE`, `SKIP_USER_RESPONSE_WITH_FIELDS` | error | `behaviour.skipUserResponse` on a node that cannot use it. |
+| `EDGE_ID_MISSING`, `UNKNOWN_EDGE_SOURCE`, `UNKNOWN_EDGE_TARGET` | error | An edge has no `id` or points at a node that does not exist. |
+| `TERMINAL_HAS_OUTGOING` | error | An edge leaves an `end` node. |
+| `HANDLE_MISSING`, `UNKNOWN_HANDLE`, `HANDLE_NOT_ALLOWED`, `HANDLE_MULTIPLE_EDGES`, `HANDLE_NOT_CONNECTED` | error | `sourceHandle` rules were broken, or a declared output has no edge. A `tool` or `code` `error` output may stay unconnected. |
+| `CONDITION_EDGE_WITHOUT_CONDITION`, `INTENT_EDGE_WITHOUT_LABEL` | error | A `condition` edge has no conditions, or an `intent` edge has no `label`. |
+| `NO_OUTGOING`, `MULTIPLE_FALLBACK`, `MISSING_FALLBACK` | error | A node has no way out, has more than one `fallback` edge, or has `condition` or `intent` edges and no `fallback`. |
+| `INTERRUPT_TARGET_MISSING` | error | An interrupt's `targetNodeId` does not exist. |
+| `IVR_*` (for example `IVR_NODE_HAS_INCOMING`, `IVR_NODE_DUPLICATE`, `IVR_SEQUENCE_REQUIRED`, `IVR_EDGE_HANDLE_INVALID`) | error | An `ivr` node breaks the rules in the table above. |
+| `NODE_NAME_MISSING`, `UNREACHABLE_NODE`, `NO_END_NODE`, `DUPLICATE_EDGE`, `END_WITHOUT_MESSAGE`, `CLASSIFY_NO_FALLBACK`, `COLLECTION_WITHOUT_FALLBACK`, `TOOL_ERROR_PATH_UNWIRED`, `END_CALL_TOOL_NODE`, `PER_NODE_MODEL_COSTS_PROMPT_CACHE`, `INTERRUPT_WITHOUT_PATTERNS`, `NON_SPEAKING_CYCLE`, `CHAIN_DEPTH_NEAR_LIMIT`, `RETRY_INVALID` and others | warning | Worth fixing but does not block publishing. |
+| `ABILITY_NOT_CONNECTED` | warning | Returned by Validate only: a `conversation` ability needs an integration the call flow has not connected. |
+
+## Error responses
+
+Errors from these routes are JSON with a `code`, and sometimes `problems` and `params`:
+
+```json
+{ "code": "NODE_GRAPH_NOT_FOUND" }
+```
+
+A missing `x-workspace-id` returns `400` with `{ "code": "WORKSPACE_ID_REQUIRED" }`. A graph ID that does not exist in your workspace returns `404` with `NODE_GRAPH_NOT_FOUND`. A malformed graph ID is not checked up front and returns `500`. Unexpected failures return `500` with a route-specific code such as `NODE_GRAPH_UPDATE_FAILED`. Authentication and permission failures come from the shared API layer, as on every other endpoint.
+
+## All routes
+
+Base URL: `https://api.trillet.ai`. Every route needs `x-api-key` and `x-workspace-id`.
+
+| Method and path | Permission | What it does |
+| --- | --- | --- |
+| `POST /v2/api/node-graphs` | `pathway:create` | [Create Node Flow](/v1/api-reference/endpoints/flows/node-flows/create): create a graph and its companion call flow. |
+| `GET /v2/api/node-graphs` | `pathway:view` | [List Node Flows](/v1/api-reference/endpoints/flows/node-flows/list): paginated summaries, without the graph body. |
+| `GET /v2/api/node-graphs/{id}` | `pathway:view` | [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get): the graph, the effective graph and the companion call flow. |
+| `PUT /v2/api/node-graphs/{id}` | `pathway:edit` | [Update Node Flow](/v1/api-reference/endpoints/flows/node-flows/update): write the live fields without validating, merging into any open draft. |
+| `PATCH /v2/api/node-graphs/{id}/draft` | `pathway:edit` | [Save Draft](/v1/api-reference/endpoints/flows/node-flows/save-draft): autosave a draft. Never validates. |
+| `POST /v2/api/node-graphs/{id}/validate` | `pathway:view` | [Validate](/v1/api-reference/endpoints/flows/node-flows/validate): check the effective graph, or one you send. |
+| `POST /v2/api/node-graphs/{id}/publish` | `pathway:edit` | [Publish](/v1/api-reference/endpoints/flows/node-flows/publish): validate, compile and make the graph live. |
+| `GET /v2/api/node-graphs/templates` | `pathway:view` | Lists the starter templates: `{ templates: [{ key, name, description, category, nodeCount }] }`. The keys are `receptionist`, `appointment_booking` and `lead_qualification`. Pass a key as `template` to Create. |
+| `DELETE /v2/api/node-graphs/{id}/draft` | `pathway:edit` | Discards the draft. Returns `{ graph, effective }`. |
+| `GET /v2/api/node-graphs/{id}/versions` | `pathway:view` | Lists saved versions, newest first, as metadata only: `{ publishedVersion, publishedAt, versions: [{ _id, version, note, createdBy, createdAt }] }`. Publishing saves the outgoing version automatically, and the last 20 are kept. |
+| `POST /v2/api/node-graphs/{id}/versions/{version}/restore` | `pathway:edit` | Copies a saved version into the draft and returns `{ restoredVersion, hasDraft }`. The live graph does not change until you publish. `404` with `VERSION_NOT_FOUND` if there is no such version. |
+| `POST /v2/api/node-graphs/{id}/duplicate` | `pathway:create` | Copies the graph's live fields into a new unpublished graph named `<name> (copy)`. Returns `201` with the new graph. The draft and version history are not copied. The call flow for the copy is created the first time you get or publish it. |
+| `POST /v2/api/node-graphs/{id}/archive` | `pathway:edit` | Sets the graph to `archived`, archives the companion call flow and removes the graph's code runtime. Returns the graph. An archived flow is restored from the dashboard, and cannot be published while archived. |
+| `DELETE /v2/api/node-graphs/{id}` | `pathway:delete` | Deletes the graph and its companion call flow. Returns `{ "deleted": true }`. `409` with `NODE_GRAPH_IN_USE` (and `params.pathwayCount`) if another active call flow still points at the graph. |
+| `POST /v2/api/node-graphs/{id}/simulate` | `pathway:view` | Less commonly used. Walks the effective graph through scripted caller turns with the models mocked, without placing a call. Optional body: `turns` (array), `routerScript` (array), `initialState` (object), `timeContext` (object), `direction` (`inbound` or `outbound`). A wrong type returns `400` with `INVALID_SIMULATE_BODY` and a `problem` string. |
+| `POST /v2/api/node-graphs/{id}/test-code` | `pathway:edit` | Less commonly used. Runs one `code` node's JavaScript against values you supply. Body: `code` (string, required), `variables` (object), `timeoutMs` (default 5000, capped at 10000), `secretAliases` (object). Returns `200` with `{ ok, result, elapsedMs }`, or `{ ok: false, error, detail, elapsedMs }` when the script fails. `400` with `CODE_REQUIRED` if `code` is missing. |
+| `GET /v2/api/node-graphs/{id}/runs` | `pathway:view` | Less commonly used. Recent run records for the graph, newest first, without the event trace: `{ runs }`. Query `limit` (default 25, maximum 100). |
+| `GET /v2/api/node-graphs/{id}/runs/{runId}` | `pathway:view` | Less commonly used. One run with its full event trace: `{ run }`. `404` with `NODE_GRAPH_RUN_NOT_FOUND`. |
+| `POST /v2/api/node-graphs/{id}/apply-live` | `pathway:edit` | Less commonly used. Applies one change to the live graph and publishes it as a new version in one step, keeping unpublished draft edits. Body: `{ graph: { ...fields } }`. `400` with `NODE_GRAPH_INVALID` and `problems` if the result is not publishable, `409` with `NODE_GRAPH_DRAFT_CONFLICT` and `params.conflicts` if the draft changed the same items. |

@@ -1,0 +1,125 @@
+---
+title: "Update Node Flow"
+api: "PUT /v2/api/node-graphs/{id}"
+description: "Write the graph's live fields without validating."
+---
+
+Replaces the fields you send and leaves the others as they are. Each field is replaced as a whole: send the complete `nodes` array, not just the node you changed. Read the current graph with [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get), change it and send it back.
+
+This route does **not** validate the graph, and it does not change what calls run. Calls use the last published version, so run [Validate](/v1/api-reference/endpoints/flows/node-flows/validate) and then [Publish](/v1/api-reference/endpoints/flows/node-flows/publish) to put your change live.
+
+If the graph has an open draft, the fields you send are merged into the draft as well, so a publish does not bring back an older draft over your update. Draft fields you did not send are kept.
+
+<Note>
+  This route changes the graph only. Voice, model, phone numbers, transfers, webhooks, post-call analysis and other settings belong to the companion call flow: use [Update Call Flow](/v1/api-reference/endpoints/flows/call-flows/update) with the call flow ID from [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get).
+</Note>
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The graph `_id`.
+</ParamField>
+
+### Request Body
+
+Send any of these. Other fields are ignored. Shapes are described in [Graph fields](/v1/api-reference/endpoints/flows/node-flows/overview#graph-fields).
+
+<ParamField body="name" type="string">
+  The flow's name. The companion call flow takes the new name when you publish.
+</ParamField>
+
+<ParamField body="description" type="string">
+  A description of the flow.
+</ParamField>
+
+<ParamField body="startNodeId" type="string">
+  The first node.
+</ParamField>
+
+<ParamField body="variables" type="array">
+  Replaces the declared variables.
+</ParamField>
+
+<ParamField body="globals" type="object">
+  Replaces `persona`, `guardrails`, `knowledgeBases` and `interrupts` together. Knowledge bases you add must belong to your workspace.
+</ParamField>
+
+<ParamField body="router" type="object">
+  Replaces the router settings.
+</ParamField>
+
+<ParamField body="nodes" type="array">
+  Replaces all nodes.
+</ParamField>
+
+<ParamField body="edges" type="array">
+  Replaces all edges.
+</ParamField>
+
+<ParamField body="dataSources" type="array">
+  Replaces the data sources.
+</ParamField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `400` | `{"code": "KNOWLEDGE_BASE_NOT_IN_WORKSPACE", "params": {"knowledgeBaseIds": [...]}}` | A knowledge base you add is not in your workspace |
+| `404` | `{"code": "NODE_GRAPH_NOT_FOUND"}` | No graph with that ID in the workspace |
+| `500` | `{"code": "NODE_GRAPH_UPDATE_FAILED"}` | Unexpected server error |
+
+### Response Fields
+
+The body is the updated graph, in the same shape as [Create Node Flow](/v1/api-reference/endpoints/flows/node-flows/create#response-fields).
+
+<RequestExample>
+
+```bash Rename and rewire
+curl -X PUT "https://api.trillet.ai/v2/api/node-graphs/{id}" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Front desk v2",
+    "globals": {
+      "persona": "You are the friendly front desk assistant for Acme Plumbing.",
+      "guardrails": "Never quote prices.",
+      "knowledgeBases": [],
+      "interrupts": []
+    }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "_id": "a1a1a1a1a1a1a1a1a1a1a1a1",
+  "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
+  "name": "Front desk v2",
+  "status": "draft",
+  "startNodeId": "start",
+  "globals": {
+    "persona": "You are the friendly front desk assistant for Acme Plumbing.",
+    "guardrails": "Never quote prices.",
+    "knowledgeBases": [],
+    "interrupts": []
+  },
+  "hasDraft": false,
+  "publishedVersion": 0,
+  "updatedAt": "2025-01-03T11:20:00Z"
+}
+```
+
+In the example, `nodes`, `edges` and the other fields are left out.
+
+</ResponseExample>

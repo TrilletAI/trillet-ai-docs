@@ -301,6 +301,20 @@
             ]
           },
           {
+            "group": "Node Flows",
+            "icon": "diagram-project",
+            "pages": [
+              "v1/api-reference/endpoints/flows/node-flows/overview",
+              "v1/api-reference/endpoints/flows/node-flows/create",
+              "v1/api-reference/endpoints/flows/node-flows/list",
+              "v1/api-reference/endpoints/flows/node-flows/get",
+              "v1/api-reference/endpoints/flows/node-flows/update",
+              "v1/api-reference/endpoints/flows/node-flows/save-draft",
+              "v1/api-reference/endpoints/flows/node-flows/validate",
+              "v1/api-reference/endpoints/flows/node-flows/publish"
+            ]
+          },
+          {
             "group": "Message Flows",
             "icon": "diagram-project",
             "pages": [

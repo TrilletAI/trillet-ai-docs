@@ -493,6 +493,10 @@ The updated call flow, with one extra field, `numberSyncFailures`.
   Phone numbers bound to the flow whose telephony settings could not be updated after a `direction` change, as `{ phoneNumberId, phoneNumber }`. Empty when everything synced.
 </ResponseField>
 
+## Post-call analysis
+
+Set the fields to extract from every call after it ends with `settings.postCallAnalysis` (see [Request Body](#request-body)). Each field is saved under its `name` in `analyzedData` on [Get Call](/v1/api-reference/endpoints/calls/call-history/get). The array you send replaces the flow's whole list, so send every field you want to keep. For a full request, open the **Set post-call analysis fields** curl example in the request panel.
+
 
 <RequestExample>
 ```json Change only the inbound greeting
