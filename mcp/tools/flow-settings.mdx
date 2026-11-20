@@ -57,11 +57,11 @@ Flags: `writes` `idempotent`
 | --- | --- | --- | --- |
 | `flow_id` | string | yes |  |
 | `end_call_on_silence` | integer | no | Seconds of caller silence before the agent checks in to ask if anyone is there (whole seconds, 5 to 30). Not the hang-up timer. |
-| `silence_reminder_retries` | number | no |  |
-| `max_call_duration` | number | no | Seconds (default 1800) |
+| `silence_reminder_retries` | number | no | Times the agent checks in before it hangs up: 0 (never), 1, 2, or 3. Default 1. |
+| `max_call_duration` | number | no | Seconds, whole numbers from 10 to 1800 (default 1800) |
 | `max_call_duration_message` | string | no |  |
 | `reminder_messages` | string[] | no |  |
-| `post_call_analysis_model` | string | no | Default "gemini-2.5-flash" |
+| `post_call_analysis_model` | string | no | One of `gemini-2.5-flash`, `gpt-4o`, `gpt-4o-mini`, or `gpt-4.1`. Default "gemini-2.5-flash" |
 | `disable_metadata` | boolean | no | Stop auto-appending call metadata to in-call API requests (required for strict APIs) |
 | `redact_transcription` | boolean | no |  |
 | `enable_llm_cache` | boolean | no | CAUTION: also defers \{\{var\}\} substitution to speak-time |
@@ -73,6 +73,8 @@ Flags: `writes` `idempotent`
 | `time_context_enabled` | boolean | no | Agent knows current date/time (on unless explicitly false) |
 | `utilize_prior_calls_context` | boolean | no |  |
 | `workspace_id` | string | no | Run this call in another workspace: its id or its name (see trillet_list_workspaces). Omit to use the default (TRILLET_WORKSPACE_ID, the workspace picked when the connector was approved, or the one set with trillet_switch_workspace). |
+
+The silence check-ins must fit inside the maximum call length. `end_call_on_silence` × `silence_reminder_retries` (counted as 1 when it is 0), plus the wait before hanging up after the last check-in (10, 20, or 30 seconds; default 10), can't be longer than `max_call_duration`. Trillet rejects a change that breaks any of these limits and says which one.
 
 ## `trillet_set_speech_settings`
 

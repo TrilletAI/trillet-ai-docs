@@ -51,11 +51,14 @@ TrilletAI provides a **custom node** for [n8n](https://n8n.io) to let you trigge
 ### Installation Steps
 
 1. Ensure `n8n` is installed on your machine. If not, follow [n8n installation guide](https://docs.n8n.io/).
-2. Open your terminal and install the TrilletAI node package:
+2. Install the Trillet community node package, `n8n-nodes-trilletai`. In n8n, go to **Settings > Community Nodes** and install it by name, or install it from your terminal:
 
 ```bash
-npm install n8n-trillet-nodes
+npm install n8n-nodes-trilletai
 ```
+
+3. Add the **TrilletAI** node to your workflow and create a **TrilletAI API** credential with your **API Key** and **Workspace ID**.
+4. In the node, pick the **Outbound Call** operation and fill in **To (Phone Number)** and **Call Agent ID**.
 
 ---
 
@@ -72,6 +75,10 @@ npm install n8n-trillet-nodes
 />
 
 The Trillet AI Web SDK allows you to integrate **AI-powered voice agents** directly into your website or web application. This enables users to interact with your Trillet AI agents via voice or text calls, ideal for embedding real-time AI conversations in client-facing apps, demos, or custom workflows. The SDK handles real-time audio and supports features like transcription, audio analysis, and event emitting.
+
+<Tip>
+  Don't need your own UI? Open the call flow, click **Website widget** in the header, design the widget, then click **Add to website** and paste the two lines of code it gives you. See [Voice Agent Widget](/documentation/web-integration/voice-agent) or [Text Chat Widget](/documentation/web-integration/text-agent).
+</Tip>
 
 ### Installation
 
@@ -196,7 +203,7 @@ const current = agent.getCurrentTranscript(); // Partial transcripts
 />
 
 <Note>
-  **Important:** `startPublicCall()` only works when the call flow has **Public Access** turned on and that change is published. The quickest way: open the call flow, click **Website widget** in the header, then **Get embed code**, and use **Turn on Public Access** and **Publish changes** in that dialog. The same switch is also under **Settings > Advanced Settings > Security & Privacy > HIPAA & Compliance**. Without it the call is refused with 403 `Public access not allowed for this agent`.
+  **Important:** `startPublicCall()` only works when the call flow has **Public Access** turned on and that change is published. The quickest way: open the call flow, click **Website widget** in the header, then **Add to website**, and use **Turn on public access** and **Publish changes** in the **Add to your website** sheet. The same switch is also under **Settings > Advanced Settings > Security & Privacy > HIPAA & Compliance**. Without it the call is refused with 403 `Public access not allowed for this agent`.
 </Note>
 
 ### Examples

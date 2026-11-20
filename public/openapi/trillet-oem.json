@@ -258,6 +258,16 @@
               }
             }
           },
+          "400": {
+            "description": "`invalid_external_id` when the ID starts or ends with a space, or `invalid_request` when it is longer than 128 characters.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },

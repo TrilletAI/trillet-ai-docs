@@ -80,6 +80,14 @@ description: "Retrieve a specific message flow."
   The timestamp when the message flow was last updated.
 </ResponseField>
 
+### Errors
+
+| Status | Body | When |
+|---|---|---|
+| `403` | `{"error": "Insufficient permissions"}` | Your role lacks the `message_pathway:view` permission |
+| `404` | `{"message": "Pathway not found"}` | No message flow with that ID exists in this workspace, or the ID is malformed |
+| `500` | `{"message": "Error fetching pathway"}` | Unexpected server error. Safe to retry |
+
 <ResponseExample>
 ```json
 {
