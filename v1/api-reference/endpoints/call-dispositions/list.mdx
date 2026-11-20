@@ -1,8 +1,10 @@
 ---
 title: "List Call Dispositions"
 api: "GET /v1/api/call-dispositions"
-description: "Retrieve a paginated list of call dispositions with filtering options."
+description: "List call disposition records, newest first, with filters."
 ---
+
+A call disposition record tracks one contact in a [batch call](/v1/api-reference/endpoints/calls/batch/overview) with smart callbacks turned on. See [Get Call Disposition](/v1/api-reference/endpoints/call-dispositions/get) for the record's fields.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -11,57 +13,58 @@ Workspace identifier for the API.
 
 ## Query Parameters
 
+All filters are optional and can be combined. Text filters ignore case.
+
 <ParamField query="page" type="number" default="1">
-Page number for pagination.
+Page number.
 </ParamField>
 
 <ParamField query="limit" type="number" default="50">
-Number of records per page.
+Records per page.
 </ParamField>
 
 <ParamField query="phoneNumber" type="string">
-Filter by phone number.
+Records whose phone number contains this text.
 </ParamField>
 
 <ParamField query="batchId" type="string">
-Filter by batch call ID.
+Records whose batch ID contains this text.
 </ParamField>
 
 <ParamField query="agentId" type="string">
-Filter by agent ID.
+Records for this agent ID. A value that isn't a valid ID matches nothing.
 </ParamField>
 
 <ParamField query="status" type="string">
-Filter by disposition status.
-</ParamField>
-
-<ParamField query="disposition" type="string">
-Filter by disposition type.
+Records with this exact status: `active`, `inactive`, `cancelled` or `completed`.
 </ParamField>
 
 <ParamField query="attempt" type="number">
-Filter by attempt number.
+Records whose `currentAttempt` equals this number. `-1` finds records with no further attempts.
 </ParamField>
 
-<ParamField query="search" type="string">
-Search across dispositions.
+<ParamField query="disposition" type="string">
+Records where any attempt had this outcome, written exactly as stored. Outcomes include `No Answer`, `Voicemail`, `Dead Air`, `IVR`, `Partial Complete: Call Back`, `Completed Call`, `Not Interested`, `Not Eligible`, `Call Transfer: Success`, `Call Transfer: Failure`, `Abusive Customer`, `Remove Number`, `Can't Understand`, `Disconnected Number`, `Invalid Number`, `Declined`, `Number Not Reached`, `System Error` and `Unknown Error`. Encode spaces and colons in the URL.
 </ParamField>
 
 <ParamField query="timezone" type="string">
-Timezone for date formatting (e.g., "America/New_York").
+Records whose timezone contains this text, for example `America/New_York` or `Sydney`. This is a filter: times in the response are not converted.
+</ParamField>
+
+<ParamField query="search" type="string">
+Records whose phone number or batch ID contains this text. A full agent ID also matches that agent's records.
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="data" type="object">
-Paginated disposition data.
-
+<Expandable title="properties">
 <ResponseField name="dispositions" type="array">
-Array of call disposition objects.
+The records on this page, newest first. Each has the fields described in [Get Call Disposition](/v1/api-reference/endpoints/call-dispositions/get).
 </ResponseField>
 
 <ResponseField name="total" type="number">
-Total number of matching dispositions.
+Number of records that match the filters.
 </ResponseField>
 
 <ResponseField name="page" type="number">
@@ -73,10 +76,24 @@ Records per page.
 </ResponseField>
 
 <ResponseField name="totalPages" type="number">
-Total number of pages.
+Number of pages.
+</ResponseField>
+</Expandable>
 </ResponseField>
 
-</ResponseField>
+## Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "Workspace ID is required"}` | The `x-workspace-id` header is missing |
+
+<RequestExample>
+```bash cURL
+curl "https://api.trillet.ai/v1/api/call-dispositions?status=active&disposition=No%20Answer&limit=20" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+</RequestExample>
 
 <ResponseExample>
 ```json
@@ -84,20 +101,40 @@ Total number of pages.
   "data": {
     "dispositions": [
       {
-        "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-        "phoneNumber": "+14155551234",
-        "disposition": "callback_scheduled",
-        "status": "pending",
-        "scheduledAt": "2024-06-02T14:00:00.000Z",
-        "attempt": 1,
-        "agentId": "665a1b2c3d4e5f6a7b8c9d0f",
-        "batchId": "665a1b2c3d4e5f6a7b8c9d10",
-        "createdAt": "2024-06-01T10:00:00.000Z"
+        "_id": "c5c5c5c5c5c5c5c5c5c5c5c5",
+        "agentId": "a1a1a1a1a1a1a1a1a1a1a1a1",
+        "batchId": "k3j9x0a1bq",
+        "workspaceId": "aaaaaaaaaaaaaaaaaaaaaaaa",
+        "phoneNumber": "+14155550123",
+        "jobId": "41",
+        "currentAttempt": 1,
+        "maxAttempts": 3,
+        "status": "active",
+        "dispositionHistory": [
+          {
+            "outcome": "No Answer",
+            "notes": "The call was not answered.",
+            "callHistoryId": "d8d8d8d8d8d8d8d8d8d8d8d8",
+            "createdAt": "2026-11-07T09:48:54.799Z",
+            "updatedAt": "2026-11-07T09:48:54.799Z"
+          }
+        ],
+        "timezone": "America/New_York",
+        "nextCallTime": "86400000,1d 0h 0m 0s",
+        "currentTimeOfGivenTimezone": "2026-11-07T04:48:55",
+        "logs": [],
+        "OfficeHoursSettings": {
+          "enabled": false,
+          "timezone": "America/New_York"
+        },
+        "createdAt": "2026-11-07T09:48:54.728Z",
+        "updatedAt": "2026-11-07T09:48:55.807Z",
+        "__v": 1
       }
     ],
-    "total": 25,
+    "total": 1,
     "page": 1,
-    "limit": 50,
+    "limit": 20,
     "totalPages": 1
   }
 }
