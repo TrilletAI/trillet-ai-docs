@@ -71,8 +71,8 @@ The bound message flow as a full object, or `null`.
 The bound message agent as a full object, or `null`.
 </ResponseField>
 
-<ResponseField name="recordingEnabled" type="boolean">
-Whether calls on this number are recorded.
+<ResponseField name="recordingEnabled" type="boolean" deprecated>
+Deprecated and has no effect: recording is set on the agent's call flow, not on the number. Only numbers configured before the change still return it.
 </ResponseField>
 
 <ResponseField name="officeHours" type="object">
@@ -152,7 +152,6 @@ When the number was added (ISO 8601). `updatedAt` is also returned.
     },
     "messagePathwayId": null,
     "omniFlowAgentId": null,
-    "recordingEnabled": true,
     "transferCallerIdMode": "from-transferee",
     "metadataTags": {},
     "label": "Front desk",

@@ -29,8 +29,8 @@ The number's `_id` from [List Phone Numbers](/v1/api-reference/endpoints/phone-n
 The call agent to bind to this number. `null` unassigns the current agent.
 </ParamField>
 
-<ParamField body="recordingEnabled" type="boolean">
-Whether calls on this number are recorded.
+<ParamField body="recordingEnabled" type="boolean" deprecated>
+Deprecated and ignored. Recording is set on the agent's call flow, not on the number. The field is still accepted so existing requests keep working, and will be removed in a later release.
 </ParamField>
 
 <ParamField body="officeHours" type="object | null">
@@ -106,7 +106,6 @@ When a request is refused, nothing is changed.
 ```json
 {
   "agentId": "a5a5a5a5a5a5a5a5a5a5a5a5",
-  "recordingEnabled": true,
   "officeHours": {
     "enabled": true,
     "start": "09:00",
@@ -141,7 +140,6 @@ When a request is refused, nothing is changed.
     "_id": "a6a6a6a6a6a6a6a6a6a6a6a6",
     "name": "Front Desk Call Flow"
   },
-  "recordingEnabled": true,
   "officeHours": {
     "enabled": true,
     "start": "09:00",

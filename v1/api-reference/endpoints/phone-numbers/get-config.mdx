@@ -6,9 +6,9 @@ description: "Retrieve the agent, call flow and settings bound to a phone number
 
 The fields returned depend on what the number is used for (`flowType`):
 
-- `call`: the call agent, recording, office hours, transfer caller ID and the other call fields below.
-- `message`: the message agent and message flow. No recording or office hours.
-- Anything else (`both`, or nothing bound yet): only `phoneNumberId`, `status`, `metadataTags`, `recordingPublic` and `officeHours`.
+- `call`: the call agent, office hours, transfer caller ID and the other call fields below.
+- `message`: the message agent and message flow. No office hours.
+- Anything else (`both`, or nothing bound yet): only `phoneNumberId`, `status`, `metadataTags` and `officeHours`.
 
 <Note>
 Your role needs the `phone_number:view` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
@@ -59,14 +59,6 @@ The message flow's channel. `message` numbers only.
 The number's status: `ready` (no call agent bound yet), `active` (bound to an agent with a call flow), `reserved` or `error`.
 </ResponseField>
 
-<ResponseField name="recording" type="boolean">
-Whether call recording is on for this number. `call` numbers only.
-</ResponseField>
-
-<ResponseField name="recordingPublic" type="boolean">
-Whether recordings for this number are publicly reachable.
-</ResponseField>
-
 <ResponseField name="officeHours" type="object | null">
 Office hours: `enabled`, `start` and `end` (`HH:MM`), `timezone` (IANA), `allowedDays` (for example `["Mon","Tue"]`) and `blockedDates`.
 </ResponseField>
@@ -103,9 +95,7 @@ Map of alias to workspace secret name. Names only, never secret values. `call` n
   "direction": "bidirectional",
   "pathwayName": "Front Desk Call Flow",
   "status": "active",
-  "recording": true,
   "agentName": "Front Desk",
-  "recordingPublic": false,
   "officeHours": {
     "enabled": true,
     "start": "09:00",

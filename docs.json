@@ -69,6 +69,11 @@
   },
   "redirects": [
     {
+      "source": "/v1/api-reference/endpoints/calls/get-recording",
+      "destination": "/v1/api-reference/endpoints/recordings/get",
+      "permanent": true
+    },
+    {
       "source": "/introduction",
       "destination": "/documentation/introduction",
       "permanent": true
@@ -212,8 +217,7 @@
               "v1/api-reference/endpoints/calls/call-history/get-phoneNumber",
               "v1/api-reference/endpoints/calls/call-history/metrics",
               "v1/api-reference/endpoints/calls/call-history/metrics-daily",
-              "v1/api-reference/endpoints/calls/call-history/phonebook",
-              "v1/api-reference/endpoints/calls/get-recording"
+              "v1/api-reference/endpoints/calls/call-history/phonebook"
             ]
           },
           {
