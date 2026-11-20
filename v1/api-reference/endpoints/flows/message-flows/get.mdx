@@ -43,7 +43,7 @@ description: "Retrieve a specific message flow."
 </ResponseField>
 
 <ResponseField name="folderId" type="object">
-  The folder the flow is in, as `{ _id, name, icon, color }`, or `null`.
+  The folder the flow is in, as `{ _id, name, icon, color }`. Left out when the flow isn't in a folder.
 </ResponseField>
 
 <ResponseField name="settings" type="object">
@@ -97,7 +97,6 @@ description: "Retrieve a specific message flow."
   "direction": "bidirectional",
   "description": "Example message flow for SMS marketing",
   "agent": { "_id": "c9c9c9c9c9c9c9c9c9c9c9c9", "name": "SMS Agent" },
-  "folderId": null,
   "settings": {
     "knowledgeBases": [],
     "security": {}

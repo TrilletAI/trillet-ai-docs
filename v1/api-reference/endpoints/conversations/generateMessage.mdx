@@ -50,6 +50,7 @@ Accepted but not used.
 
 ### Requirements
 
+- The message flow must have a non-empty `initiationMessage`. It is the text this call sends. [Create Message Flow](/v1/api-reference/endpoints/flows/message-flows/create) lists the field as optional, but Generate Message needs it. Set it with [Update Message Flow](/v1/api-reference/endpoints/flows/message-flows/update) if it is empty.
 - The flow must have an agent, and that agent must have a phone number bound to it (for SMS flows).
 - The workspace needs a wallet balance of at least 1 to send an SMS.
 

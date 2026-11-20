@@ -390,7 +390,7 @@ The updated call flow, with one extra field, `numberSyncFailures`.
 </ResponseField>
 
 <ResponseField name="folderId" type="string">
-  The folder the call flow is in, or `null`.
+  The folder the call flow is in. Left out when the call flow isn't in a folder.
 </ResponseField>
 
 <ResponseField name="name" type="string">
@@ -567,7 +567,6 @@ curl -X PUT "https://api.trillet.ai/v1/api/call-flows/{id}" \
 {
   "_id": "c2c2c2c2c2c2c2c2c2c2c2c2",
   "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
-  "folderId": null,
   "name": "Customer Support Flow",
   "direction": "bidirectional",
   "description": "Handles inbound support calls",

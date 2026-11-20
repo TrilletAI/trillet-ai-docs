@@ -1,0 +1,63 @@
+---
+title: "Delete Node Flow"
+api: "DELETE /v2/api/node-graphs/{id}"
+description: "Delete a node flow and its companion call flow."
+---
+
+Deleting a node flow also deletes its companion call flow (the `pathway._id` from [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get)). After that, the graph no longer shows in [List Node Flows](/v1/api-reference/endpoints/flows/node-flows/list) and [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get) returns `404`.
+
+A node flow can't be deleted while another call flow (not its own companion) still uses it. Archive or delete that call flow first.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The graph `_id` (not the call flow ID).
+</ParamField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID required", "code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `403` | `{"error": "Insufficient permissions", ...}` | Your role can't delete call flows |
+| `404` | `{"code": "NODE_GRAPH_NOT_FOUND"}` | No graph with that ID in the workspace |
+| `409` | `{"code": "NODE_GRAPH_IN_USE", "params": {"pathwayCount": 1}}` | Another call flow still uses this graph. `pathwayCount` is how many |
+
+### Response Fields
+
+<ResponseField name="deleted" type="boolean">
+  Always `true`.
+</ResponseField>
+
+<RequestExample>
+
+```bash
+curl -X DELETE "https://api.trillet.ai/v2/api/node-graphs/{id}" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 Deleted
+{
+  "deleted": true
+}
+```
+
+```json 409 In use
+{
+  "code": "NODE_GRAPH_IN_USE",
+  "params": { "pathwayCount": 1 }
+}
+```
+
+</ResponseExample>

@@ -25,8 +25,8 @@ Description of the role and its intended use. Must not be empty.
 Permission keys to grant, in `category:action` form (e.g., `"agent:view"`, `"call_history:view"`). At least one is required. Each item must be a plain string, not an object. An unknown key returns `400` with `Invalid permission: <key>`. `agency_hub:*` permissions can only be granted in an agency (white-label) master workspace; elsewhere they return `403`. Use [List Permissions](/v1/api-reference/endpoints/roles/list-permissions) for the available keys.
 </ParamField>
 
-<ParamField body="userIds" type="array of strings" required>
-User IDs to assign this role to. Send an empty array `[]` to create the role without assigning anyone.
+<ParamField body="userIds" type="array of strings">
+User IDs to assign this role to. Leave it out, or send `[]`, to create the role without assigning anyone.
 </ParamField>
 
 ## Response

@@ -31,8 +31,8 @@ Updated description for the role. Must not be empty.
 The complete new set of permission keys, in `category:action` form (e.g., `"agent:view"`). This replaces the role's permissions; it is not merged with them. At least one key is required when the field is sent. Use [List Permissions](/v1/api-reference/endpoints/roles/list-permissions) for the available keys.
 </ParamField>
 
-<ParamField body="userIds" type="array of strings" required>
-User IDs to assign this role to, in addition to the users who already hold it. Send `[]` to assign no one new.
+<ParamField body="userIds" type="array of strings">
+User IDs to assign this role to, in addition to the users who already hold it. Leave it out, or send `[]`, to assign no one new.
 </ParamField>
 
 <Note>

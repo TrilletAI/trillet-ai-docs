@@ -311,7 +311,8 @@
               "v1/api-reference/endpoints/flows/node-flows/update",
               "v1/api-reference/endpoints/flows/node-flows/save-draft",
               "v1/api-reference/endpoints/flows/node-flows/validate",
-              "v1/api-reference/endpoints/flows/node-flows/publish"
+              "v1/api-reference/endpoints/flows/node-flows/publish",
+              "v1/api-reference/endpoints/flows/node-flows/delete"
             ]
           },
           {

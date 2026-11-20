@@ -52,7 +52,7 @@ If the flow has unpublished changes from the call flow editor (an active draft),
 </ResponseField>
 
 <ResponseField name="folderId" type="object">
-  The folder the flow is in, as `{ _id, name, icon, color }`, or `null`.
+  The folder the flow is in, as `{ _id, name, icon, color }`. Left out when the flow isn't in a folder.
 </ResponseField>
 
 <ResponseField name="archivedAt" type="string">
@@ -138,7 +138,6 @@ If the flow has unpublished changes from the call flow editor (an active draft),
     "name": "Customer Support Flow",
     "phoneNumberIds": []
   },
-  "folderId": null,
   "archivedAt": null,
   "promptType": "simple",
   "flowData": {
