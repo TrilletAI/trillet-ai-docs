@@ -4,6 +4,12 @@ api: "GET /v1/api/twilio/available-countries"
 description: "Retrieve a list of countries where phone numbers are available for purchase."
 ---
 
+<Note>
+Your role needs the `phone_number:view` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
+
+US, CA and AU are always listed. GB is listed only when UK numbers are offered on the platform, so read the response rather than assuming it is there.
+
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
@@ -15,7 +21,7 @@ Workspace identifier for the API.
 Array of available countries.
 
 <ResponseField name="code" type="string">
-Country code (e.g., "US", "CA", "AU", "GB").
+Two-letter country code: `US`, `CA`, `AU`, and `GB` when UK numbers are offered.
 </ResponseField>
 
 <ResponseField name="name" type="string">
@@ -23,7 +29,7 @@ Full country name.
 </ResponseField>
 
 <ResponseField name="available" type="boolean">
-Whether phone numbers are currently available in this country.
+Always `true`. Only countries you can buy numbers in are listed.
 </ResponseField>
 
 </ResponseField>
