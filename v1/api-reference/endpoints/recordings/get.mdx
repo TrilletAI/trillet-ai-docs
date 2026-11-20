@@ -1,26 +1,46 @@
 ---
 title: "Get Recording"
 api: "GET /v2/api/recordings/{callHistoryId}"
-description: "Stream the audio recording for a specific call. Returns the recording file with appropriate audio headers."
+description: "Stream the audio recording of a call in your workspace."
 ---
+
+This is the URL that [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) and [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get) return as `recordingUrl`. Send the same authentication headers as any other API request.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-The unique identifier of the workspace being accessed.
+The workspace the call belongs to.
 </ParamField>
 
 ## Path Parameters
 
 <ParamField path="callHistoryId" type="string" required>
-The call history ID to retrieve the recording for.
+The call history record ID (the `_id` from [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list)).
 </ParamField>
 
 ## Response
 
-The response streams the audio file directly with the following headers:
+On success the response is the audio file itself, streamed with these headers:
 
-- `Content-Type`: `audio/mp3` or `video/mp4` depending on the recording format
-- `Content-Disposition`: `inline; filename="recording.mp3"`
+- `Content-Type`: `audio/ogg`
+- `Content-Disposition`: `inline`
 - `Cache-Control`: `private, max-age=3600`
 
-The audio file is streamed directly and can be played in a browser or downloaded.
+Recordings are Ogg audio. Browsers can play the response in an `<audio>` element, or you can save it as a `.ogg` file.
+
+A call has a recording only if recording was on for its call flow when the call took place, and HIPAA mode was off.
+
+## Errors
+
+| Status | Body | When |
+|---|---|---|
+| `404` | `{"error": "Call history not found"}` | No call with that ID exists in this workspace |
+| `404` | `{"error": "No recording available for this call"}` | The call exists but was not recorded |
+
+<RequestExample>
+```bash cURL
+curl https://api.trillet.ai/v2/api/recordings/d8d8d8d8d8d8d8d8d8d8d8d8 \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  --output call-recording.ogg
+```
+</RequestExample>
