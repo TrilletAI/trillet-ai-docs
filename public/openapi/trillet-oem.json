@@ -1944,7 +1944,7 @@
     },
     "responses": {
       "BadRequest": {
-        "description": "The request is malformed or a field is invalid. `error.param` names the field when there is one.",
+        "description": "The request is malformed, a field is invalid, or the body has a field the endpoint does not accept. `error.param` names the field when there is one.",
         "content": {
           "application/json": {
             "schema": {
@@ -1954,7 +1954,7 @@
         }
       },
       "Unauthorized": {
-        "description": "Authentication failed. A key that is unknown or revoked returns `invalid_api_key`, an\naccount without Trillet OEM returns `partner_not_enabled`, and a user session returns\n`partner_key_required`. A user API key (`x-api-key`) returns `partner_key_required` only when\nit also sends `x-workspace-id`. Without that header it is refused first with `400`\n`{\"error\": \"Workspace ID is required.\"}`. Handle a `401` by\nstatus, not only by `error.code`.\n",
+        "description": "Authentication failed. A key that is unknown or revoked returns `invalid_api_key`, an\naccount without Trillet OEM returns `partner_not_enabled`, and a partner key sent in\n`x-api-key` returns `partner_key_wrong_header`. No credential, a user session or a user API\nkey returns `partner_key_required`. Handle a `401` by\nstatus, not only by `error.code`.\n",
         "content": {
           "application/json": {
             "schema": {

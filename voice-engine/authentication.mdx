@@ -356,8 +356,8 @@ A tenant that is not yours returns `404` `tenant_not_found`, so a key can never 
 | `400` | `conflicting_credentials` | Both a partner key and an `x-api-key` were sent |
 | `400` | `tenant_required` | A standard endpoint was called without `x-workspace-id` |
 | `400` | `invalid_tenant` | `x-workspace-id` is not a valid tenant ID |
-| `400` | No code | A `/partner/v1` route was called with a user API key (`x-api-key`) and no `x-workspace-id`. The body is `{"error": "Workspace ID is required."}`, not the Trillet OEM format |
-| `401` | `partner_key_required` | A `/partner/v1` route was called with a user session, or with a user API key and `x-workspace-id`, instead of a partner key |
+| `401` | `partner_key_required` | A `/partner/v1` route was called without a partner key: with no credential, a user session or a user API key |
+| `401` | `partner_key_wrong_header` | A partner key was sent in `x-api-key`. Send it as `Authorization: Bearer tpk_...` |
 | `401` | `invalid_api_key` | The key is unknown or revoked |
 | `401` | `partner_not_enabled` | Trillet OEM is not enabled for this account |
 | `403` | `missing_scope` | The key lacks the scope this endpoint needs |
