@@ -250,6 +250,37 @@ Use `POST /v1/api/call` for outbound calls. See [Start an outbound call](#start-
 
 `GET /v2/api/recordings/{callHistoryId}` returns the audio file for a call in the tenant, or `404` when the call has no recording. `callHistoryId` is the `data.call.id` in [call events](/voice-engine/events#event-shape) and the `callHistoryId` in [per-call usage](/voice-engine/usage-and-billing#per-call). The [recording download](/voice-engine/events#recordings) on Trillet OEM returns the same file.
 
+**Business hours**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/call-flows/{id}/office-hours` | `resources:read` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours` | `resources:write` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours/dates/{date}` | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}/office-hours/dates/{date}` | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/office-hours/schedules` | `resources:write` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}` | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}` | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}/activate` | `resources:write` |
+
+See [Business hours](/voice-engine/call-flow-settings#business-hours).
+
+**Call flags, issues log and call reviews**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v2/api/call-flags` | `resources:read` |
+| `POST` | `/v2/api/call-flags` | `resources:write` |
+| `PATCH` | `/v2/api/call-flags/{id}` | `resources:write` |
+| `DELETE` | `/v2/api/call-flags/{id}` | `resources:write` |
+| `GET` | `/v1/api/issues` | `resources:read` |
+| `GET` | `/v2/api/call-reviews` | `resources:read` |
+| `GET` | `/v2/api/call-reviews/{reviewId}` | `resources:read` |
+| `GET` | `/v2/api/call-reviews/config/{pathwayId}` | `resources:read` |
+| `PUT` | `/v2/api/call-reviews/config/{pathwayId}` | `calls:write` |
+
+See [Support tools](/voice-engine/support-tools).
+
 **Workflows**
 
 | Method | Path | Scope |

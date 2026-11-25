@@ -53,13 +53,22 @@ curl https://api.trillet.ai/v1/api/agents \
 | Platform groundwork: tenant isolation, suspension that stops traffic, usage recorded per tenant, safe retries, hashed API keys | Built, in early access |
 | [Partner keys](/voice-engine/authentication), scopes and tenant restrictions | Built, in early access |
 | [Tenants](/voice-engine/tenants): create, update, suspend, resume, delete and restore | Built, in early access |
+| Tenant package, industry and further IDs of your own, with [list filters](/voice-engine/tenants#list-and-look-up-tenants) including phone number and name | Built, in early access |
+| [Feature switches](/voice-engine/tenants#feature-switches) per tenant: AI assistant and call reviews | Built, in early access |
 | [Phone numbers](/voice-engine/phone-numbers): partner-billed purchase, release, and bring your own (SIP or Twilio) | Built, in early access |
 | [Call flow settings](/voice-engine/call-flow-settings): greeting, speech, recording and call handling | Built, in early access |
+| [Business hours](/voice-engine/call-flow-settings#business-hours): weekly hours, closed dates, special hours and saved schedules | Built, in early access |
+| [Support tools](/voice-engine/support-tools): call details, issues log, call flags and call reviews | Built, in early access |
+| `Idempotency-Key` on every write, and a [request limit](/voice-engine/conventions#rate-limits) per key | Built, in early access |
 | Node flows created with a partner key start on `platform-llm` with recommended speech settings | Built, in early access |
 | [Signed events](/voice-engine/events), event log and redelivery | Built, in early access |
 | [Usage and spend caps](/voice-engine/usage-and-billing) | Built, in early access |
 | In-call events: `call.started`, `call.transferred`, `call.transfer_failed`, `tool.failed` and `call.blocked` | Built, in early access |
 | `sms.*` events | Planned |
+| One call that creates a customer and builds, tests and deploys its agent | Planned |
+| Managing a customer's users and roles by API, and packages that set them | Planned |
+| Changes across many tenants as one job | Planned |
+| Usage per agent | Planned |
 | Templates and rollouts | Planned |
 | Embedding | Planned |
 | Sandbox environment | Planned |

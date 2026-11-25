@@ -1,0 +1,124 @@
+---
+title: "Support tools"
+sidebarTitle: "Support tools"
+description: "Investigate a customer's calls with Trillet OEM: call details, the issues log, call flags and call reviews, by API."
+---
+
+<Note>
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
+
+When a customer asks about a call, your support team can look into it from your own tools. Everything on this page is a standard endpoint: use your partner key and send the tenant ID in `x-workspace-id`.
+
+| To | Use | Scope |
+|---|---|---|
+| Find the customer | [`GET /partner/v1/tenants`](/voice-engine/tenants#list-and-look-up-tenants) by your ID, phone number, package, industry or name | `tenants:read` |
+| Read one call | `GET /v2/api/call-history/{callHistoryId}` | `resources:read` |
+| See what has gone wrong lately | `GET /v1/api/issues` | `resources:read` |
+| Track a complaint | `/v2/api/call-flags` | `resources:read`, `resources:write` |
+| Check quality every week | `/v2/api/call-reviews` | `resources:read`, `calls:write` |
+
+## Call details
+
+`GET /v2/api/call-history` lists a tenant's calls and `GET /v2/api/call-history/{callHistoryId}` returns one call with everything recorded about it:
+
+| Field | Contents |
+|---|---|
+| `transcript` | What was said, turn by turn |
+| `summary` | A short summary of the call |
+| `analyzedData` | The details the agent captured, as set in the call flow's post-call analysis |
+| `recordingUrl` | The recording, when the call has one. `GET /v2/api/recordings/{callHistoryId}` returns the audio file. |
+| `callEndReason`, `postCallStatus`, `bookingOutcome`, `functionCalls` | How the call ended, and what the agent did during it |
+
+```bash
+curl https://api.trillet.ai/v2/api/call-history/c3c3c3c3c3c3c3c3c3c3c3c3 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9"
+```
+
+`callHistoryId` is the `data.call.id` in [call events](/voice-engine/events#event-shape).
+
+## Issues log
+
+`GET /v1/api/issues` lists what went wrong in a tenant recently: failed and blocked calls, bookings that were attempted but not made, failed workflow runs and agent builds that did not finish. The same problem happening again is one row with a count, not many rows.
+
+```bash
+curl "https://api.trillet.ai/v1/api/issues?days=14" \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9"
+```
+
+`days` is 1 to 30, default 7.
+
+| Field | Contents |
+|---|---|
+| `issues` | One entry per distinct problem, newest first. Each has `kind` (`call`, `booking`, `workflow` or `build`), `title`, `detail`, `at` (the latest time it happened), `firstAt`, `count`, and the call flow or workflow it belongs to. |
+| `counts` | Distinct problems per kind |
+| `total` | Distinct problems |
+| `occurrences` | Every time anything went wrong |
+
+The issues log is read on request. To be told as things happen, subscribe to [events](/voice-engine/events): `call.failed`, `call.blocked`, `tool.failed` and `workflow_run.failed`.
+
+## Call flags
+
+A flag marks one call for follow-up, with what happened, what should have happened, a status and a note. A call has one flag at most.
+
+```bash
+# Flag a call
+curl -X POST https://api.trillet.ai/v2/api/call-flags \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "callId": "c3c3c3c3c3c3c3c3c3c3c3c3",
+    "observedBehavior": "The agent quoted an old price for a service.",
+    "expectedBehavior": "Quote the current price list."
+  }'
+
+# Work on it, then close it
+curl -X PATCH https://api.trillet.ai/v2/api/call-flags/f1f1f1f1f1f1f1f1f1f1f1f1 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "resolved", "commentary": "Price list updated in the knowledge base." }'
+```
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/v2/api/call-flags` | Lists flags. Filters: `status`, `search`, `dateRange` (JSON with `start` and `end`), `page`, `limit` (500 at most). `?callId=` returns the flag for one call, or `null`. |
+| `POST` | `/v2/api/call-flags` | `callId` (the call history ID), `observedBehavior` and `expectedBehavior` are required. `409` when the call is already flagged. |
+| `PATCH` | `/v2/api/call-flags/{id}` | `status` (`flagged`, `in_progress` or `resolved`) and `commentary`. The note is one field: a new value replaces the old one. |
+| `DELETE` | `/v2/api/call-flags/{id}` | Removes a flag raised by mistake |
+
+Flag changes emit `call.flagged`, `call.flag_updated` and `call.flag_removed`. See [Events](/voice-engine/events#event-types).
+
+## Call reviews
+
+A call review reads a sample of a call flow's calls each week, scores them against the flow's criteria and reports what to fix.
+
+Two settings decide whether reviews run:
+
+1. **The tenant has call reviews.** Set with [`PATCH /partner/v1/tenants/{tenantId}/features`](/voice-engine/tenants#feature-switches). While it is off, the endpoints below return `404`.
+2. **The call flow is reviewed.** Set per call flow with the config endpoint.
+
+```bash
+# Switch weekly reviews on for one call flow
+curl -X PUT https://api.trillet.ai/v2/api/call-reviews/config/b7b7b7b7b7b7b7b7b7b7b7b7 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Content-Type: application/json" \
+  -d '{ "enabled": true }'
+```
+
+| Method | Path | Notes | Scope |
+|---|---|---|---|
+| `GET` | `/v2/api/call-reviews/config/{pathwayId}` | The call flow's review settings. `{pathwayId}` is the call flow ID. | `resources:read` |
+| `PUT` | `/v2/api/call-reviews/config/{pathwayId}` | Any subset of the settings, including `enabled`. Applies from the next review. | `calls:write` |
+| `GET` | `/v2/api/call-reviews?pathwayId=` | The call flow's last 20 reviews, newest first | `resources:read` |
+| `GET` | `/v2/api/call-reviews/{reviewId}` | One review with its findings | `resources:read` |
+
+Call reviews are a paid add-on, which is why changing the config needs the `calls:write` scope. They are not available for call flows in HIPAA mode.
+
+## Help from Trillet
+
+Trillet staff can be given access to one tenant on request, to help investigate or to build with you. It does not take one of your seats.

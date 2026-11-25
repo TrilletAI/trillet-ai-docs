@@ -6,6 +6,34 @@ description: "Dated changes to Trillet OEM, the white-label voice AI API for EHR
 
 Changes to the Trillet OEM API and its documentation, newest first. Within `/partner/v1` changes are additive, so existing integrations keep working. The `Trillet-Version` response header carries the date of the release that served each request.
 
+<Update label="November 2026" description="Trillet-Version: 2026-10-28" tags={["early access"]}>
+
+Finding and supporting customers, and safer retries. Everything here is additive.
+
+**Tenants**
+- `package`, `industry` and `externalRefs` on a [tenant](/voice-engine/tenants): your own labels, and up to 10 further IDs next to `externalId`.
+- [`GET /partner/v1/tenants`](/voice-engine/tenants#list-and-look-up-tenants) filters by `package`, `industry`, `externalRef`, `phoneNumber` and `q` (part of the name), and lists deleted tenants with `status=deleted`.
+- [Feature switches](/voice-engine/tenants#feature-switches) per tenant: `GET` and `PATCH /partner/v1/tenants/{tenantId}/features` for the AI assistant and call reviews.
+
+**Standard endpoints now open to partner keys**
+- [Business hours](/voice-engine/call-flow-settings#business-hours) of a call flow: weekly hours, closing a date, special hours for a date, and saved schedules you can switch between.
+- [Call flags](/voice-engine/support-tools#call-flags): flag a call, set its status and note, list and remove flags.
+- The [issues log](/voice-engine/support-tools#issues-log).
+- [Call reviews](/voice-engine/support-tools#call-reviews): reports, and the review settings of a call flow.
+
+**Events**
+- `call.flagged`, `call.flag_updated` and `call.flag_removed`.
+
+**Conventions**
+- `Idempotency-Key` is accepted on [every write](/voice-engine/conventions#idempotency), on `/partner/v1` and on the standard endpoints a partner key can call. It stays required where it was. Webhook endpoint creation and secret rotation do not take it.
+- A [request limit](/voice-engine/conventions#rate-limits) of 6,000 requests a minute per key, with `RateLimit-*` response headers and `Retry-After` on `429`.
+- `GET /partner/v1/tenants/{tenantId}/numbers` is paginated: 100 numbers a page at most. If a tenant has more, follow `hasMore` with `starting_after`.
+
+**Documentation**
+- New [Support tools](/voice-engine/support-tools) page.
+
+</Update>
+
 <Update label="October 28, 2026" description="Trillet-Version: 2026-10-28" tags={["early access"]}>
 
 First release to design partners in early access.
