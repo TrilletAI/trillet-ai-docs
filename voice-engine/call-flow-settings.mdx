@@ -114,6 +114,60 @@ The change applies to calls that start after it. Editors open on the flow in the
 
 The change is written to the live call flow. If the flow has an active draft, which test calls use, the same settings are copied onto that draft, so a test call hears the change and publishing the draft later does not put the old values back. `activeDraftUpdated` is `true` when a draft was updated.
 
+## Business hours
+
+A call flow's business hours are changed with standard endpoints, using your partner key and the tenant ID in `x-workspace-id`. Every change applies to the live call flow at once.
+
+| Method | Path | What it does | Scope |
+|---|---|---|---|
+| `GET` | `/v1/api/call-flows/{id}/office-hours` | Weekly hours, date exceptions, saved schedules and whether the flow is open now. `?at=` checks another moment (ISO date-time). | `resources:read` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours` | Change `perDay`, `timezone` or `holdOutboundCalls` | `resources:write` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours/dates/{date}` | Close one date, or give it special hours | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}/office-hours/dates/{date}` | Back to the normal weekly hours on that date | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/office-hours/schedules` | Save weekly hours under a name | `resources:write` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}` | Rename or change a saved schedule | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}` | Delete a saved schedule | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}/activate` | Switch to a saved schedule | `resources:write` |
+
+```bash
+# Closed on 25 December
+curl -X PUT https://api.trillet.ai/v1/api/call-flows/b7b7b7b7b7b7b7b7b7b7b7b7/office-hours/dates/2026-12-25 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Content-Type: application/json" \
+  -d '{ "closed": true }'
+
+# Short hours on 24 December
+curl -X PUT https://api.trillet.ai/v1/api/call-flows/b7b7b7b7b7b7b7b7b7b7b7b7/office-hours/dates/2026-12-24 \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Content-Type: application/json" \
+  -d '{ "start": "09:00", "end": "12:00" }'
+
+# New weekly hours
+curl -X PUT https://api.trillet.ai/v1/api/call-flows/b7b7b7b7b7b7b7b7b7b7b7b7/office-hours \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "x-workspace-id: d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "timezone": "Europe/Zurich",
+    "perDay": {
+      "Monday": { "enabled": true, "start": "07:30", "end": "18:00" },
+      "Tuesday": { "enabled": true, "start": "07:30", "end": "18:00" },
+      "Saturday": { "enabled": true, "start": "08:00", "end": "12:00" }
+    }
+  }'
+```
+
+- `perDay` is keyed by full English day name. It replaces the whole week: a day you leave out is closed. Each day has one opening period, which cannot run past midnight.
+- `timezone` is an IANA timezone, such as `Europe/Zurich`.
+- `holdOutboundCalls` holds outbound calls until the flow is open.
+- A date takes `{ "closed": true }` or `{ "start": "HH:MM", "end": "HH:MM" }`. Dates are `YYYY-MM-DD`. A call flow holds up to 366 date exceptions.
+- A saved schedule is `{ "name": "Winter", "perDay": { ... } }`. Leave `perDay` out to save the hours in use now. Add `"activate": true` to switch to it straight away. `{scheduleId}` also accepts the schedule's name. A call flow holds up to 20 schedules.
+- Changing the schedule that is in use changes the live hours too.
+
+Each agent has its own call flow, so a customer with one agent per language has one set of hours per agent. Apply a change to each of them.
+
 ## Errors
 
 | Status | Code | When |

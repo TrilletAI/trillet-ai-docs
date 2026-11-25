@@ -250,6 +250,37 @@ Use `POST /v1/api/call` for outbound calls. See [Start an outbound call](#start-
 
 `GET /v2/api/recordings/{callHistoryId}` returns the audio file for a call in the tenant, or `404` when the call has no recording. `callHistoryId` is the `data.call.id` in [call events](/voice-engine/events#event-shape) and the `callHistoryId` in [per-call usage](/voice-engine/usage-and-billing#per-call). The [recording download](/voice-engine/events#recordings) on Trillet OEM returns the same file.
 
+**Business hours**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v1/api/call-flows/{id}/office-hours` | `resources:read` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours` | `resources:write` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours/dates/{date}` | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}/office-hours/dates/{date}` | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/office-hours/schedules` | `resources:write` |
+| `PUT` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}` | `resources:write` |
+| `DELETE` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}` | `resources:write` |
+| `POST` | `/v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}/activate` | `resources:write` |
+
+See [Business hours](/voice-engine/call-flow-settings#business-hours).
+
+**Call flags, issues log and call reviews**
+
+| Method | Path | Scope |
+|---|---|---|
+| `GET` | `/v2/api/call-flags` | `resources:read` |
+| `POST` | `/v2/api/call-flags` | `resources:write` |
+| `PATCH` | `/v2/api/call-flags/{id}` | `resources:write` |
+| `DELETE` | `/v2/api/call-flags/{id}` | `resources:write` |
+| `GET` | `/v1/api/issues` | `resources:read` |
+| `GET` | `/v2/api/call-reviews` | `resources:read` |
+| `GET` | `/v2/api/call-reviews/{reviewId}` | `resources:read` |
+| `GET` | `/v2/api/call-reviews/config/{pathwayId}` | `resources:read` |
+| `PUT` | `/v2/api/call-reviews/config/{pathwayId}` | `calls:write` |
+
+See [Support tools](/voice-engine/support-tools).
+
 **Workflows**
 
 | Method | Path | Scope |
@@ -356,14 +387,14 @@ A tenant that is not yours returns `404` `tenant_not_found`, so a key can never 
 | `400` | `conflicting_credentials` | Both a partner key and an `x-api-key` were sent |
 | `400` | `tenant_required` | A standard endpoint was called without `x-workspace-id` |
 | `400` | `invalid_tenant` | `x-workspace-id` is not a valid tenant ID |
-| `400` | No code | A `/partner/v1` route was called with a user API key (`x-api-key`) and no `x-workspace-id`. The body is `{"error": "Workspace ID is required."}`, not the Trillet OEM format |
-| `401` | `partner_key_required` | A `/partner/v1` route was called with a user session, or with a user API key and `x-workspace-id`, instead of a partner key |
+| `401` | `partner_key_required` | A `/partner/v1` route was called without a partner key: with no credential, a user session or a user API key |
+| `401` | `partner_key_wrong_header` | A partner key was sent in `x-api-key`. Send it as `Authorization: Bearer tpk_...` |
 | `401` | `invalid_api_key` | The key is unknown or revoked |
 | `401` | `partner_not_enabled` | Trillet OEM is not enabled for this account |
 | `403` | `missing_scope` | The key lacks the scope this endpoint needs |
 | `403` | `route_not_available` | The standard endpoint is not available to partner keys |
 | `403` | `tenant_not_allowed` | The key is restricted and this tenant is not in its list (standard endpoints) |
 | `404` | `tenant_not_found` | The tenant does not exist or is not yours |
-| `429` | `rate_limited` | Too many invalid keys from your IP address in the last minute |
+| `429` | `rate_limited` | The key is over its request limit, or too many invalid keys came from this IP address in the last minute. See [Rate limits](/voice-engine/conventions#rate-limits). |
 
 Handle a `401` by its status, not only by `error.code`.

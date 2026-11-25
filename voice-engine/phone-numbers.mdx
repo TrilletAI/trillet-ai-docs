@@ -45,6 +45,8 @@ Each tenant needs at least one number for phone calls. You can buy numbers throu
 
 `billing` is present for numbers bought through Trillet OEM and `null` for your own numbers. `billing.monthlyPrice` is the monthly price in USD, `billing.nextChargeAt` is when the next month is charged, and `billing.status` is `active` or `past_due`.
 
+`GET /numbers` lists the tenant's numbers newest first, 100 a page at most, with `limit` and `starting_after` (see [Pagination](/voice-engine/conventions#pagination)). To find which tenant holds a number, use [`GET /tenants?phoneNumber=`](/voice-engine/tenants#list-and-look-up-tenants).
+
 `GET /numbers/{numberId}` for a number that is not in the tenant returns `404` `number_not_found`.
 
 ## Buy a number

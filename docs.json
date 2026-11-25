@@ -442,6 +442,7 @@
             "icon": "chart-line",
             "pages": [
               "voice-engine/events",
+              "voice-engine/support-tools",
               "voice-engine/usage-and-billing",
               "voice-engine/embedding",
               "voice-engine/compliance"
@@ -463,7 +464,9 @@
                   "voice-engine/api-reference/suspend-a-tenant",
                   "voice-engine/api-reference/resume-a-tenant",
                   "voice-engine/api-reference/delete-a-tenant",
-                  "voice-engine/api-reference/restore-a-deleted-tenant"
+                  "voice-engine/api-reference/restore-a-deleted-tenant",
+                  "voice-engine/api-reference/get-tenant-feature-switches",
+                  "voice-engine/api-reference/change-tenant-feature-switches"
                 ]
               },
               {

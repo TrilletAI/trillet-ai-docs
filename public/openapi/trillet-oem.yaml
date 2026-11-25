@@ -19,8 +19,15 @@ info:
     Trillet OEM is in early access. Details may change before general release. Within `/partner/v1`
     changes are additive: ignore fields and event types you do not recognise.
 
-    Any endpoint can also return `500` `api_error`. Repeated invalid keys from one IP address return
-    `429` `rate_limited`.
+    Every `POST`, `PATCH` and `DELETE` accepts an `Idempotency-Key` header, so a retry never runs
+    twice. Three endpoints require it (create a tenant, buy a number, register a number). Two do
+    not take it, because their response carries a secret that is shown once: add a webhook
+    endpoint and rotate its signing secret.
+
+    Each key is limited to 6,000 requests a minute unless a different limit is agreed for your
+    account. Responses carry `RateLimit-Limit`, `RateLimit-Remaining` and `RateLimit-Reset`
+    (seconds). Over the limit, and after repeated invalid keys from one IP address, the answer is
+    `429` `rate_limited`. Any endpoint can also return `500` `api_error`.
   contact:
     name: Trillet
     url: https://docs.trillet.ai/voice-engine/overview
@@ -107,7 +114,9 @@ paths:
       tags: [Tenants]
       operationId: listTenants
       summary: List tenants
-      description: Lists tenants, newest first. Deleted tenants are not listed. Needs `tenants:read`.
+      description: |
+        Lists tenants, newest first. Filters combine: a tenant must match all of them. Deleted
+        tenants are listed only with `status=deleted`. Needs `tenants:read`.
       parameters:
         - $ref: "#/components/parameters/Limit100"
         - name: starting_after
@@ -116,10 +125,37 @@ paths:
           schema: { type: string }
         - name: status
           in: query
-          schema: { type: string, enum: [active, suspended, provisioning_failed] }
+          description: "`deleted` lists deleted tenants, which no other listing returns."
+          schema: { type: string, enum: [active, suspended, provisioning_failed, deleted] }
         - name: externalId
           in: query
           schema: { type: string, maxLength: 128 }
+        - name: package
+          in: query
+          description: Tenants with exactly this `package`.
+          schema: { type: string, minLength: 1, maxLength: 64 }
+        - name: industry
+          in: query
+          description: Tenants with exactly this `industry`.
+          schema: { type: string, minLength: 1, maxLength: 64 }
+        - name: externalRef
+          in: query
+          description: |
+            One of the tenant's `externalRefs`, as `name:id`, for example
+            `crm_account_id:0015g00000XYZ`. The id is 1 to 128 characters. `constructor`,
+            `prototype` and `__proto__` are not names. Anything else returns `400` `invalid_external_ref`.
+          schema: { type: string, minLength: 3, maxLength: 200 }
+        - name: phoneNumber
+          in: query
+          description: |
+            The tenant that holds this number. Send the full number with country code; URL-encode
+            the plus sign (`%2B14155550100`) or leave it out. A number that is not a full number
+            returns `400` `invalid_phone_number`.
+          schema: { type: string, minLength: 7, maxLength: 20 }
+        - name: q
+          in: query
+          description: Part of the tenant's name, any case.
+          schema: { type: string, minLength: 1, maxLength: 100 }
       responses:
         "200":
           description: A page of tenants.
@@ -179,7 +215,11 @@ paths:
       tags: [Tenants]
       operationId: updateTenant
       summary: Update a tenant
-      description: Changes the name, metadata or monthly spend cap. Needs `tenants:write`.
+      description: |
+        Changes the name, package, industry, external references, metadata or monthly spend cap.
+        Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       requestBody:
         required: true
         content:
@@ -205,6 +245,8 @@ paths:
       description: |
         Releases the tenant's numbers, soft-deletes its flows, agents and knowledge bases, and
         soft-deletes the tenant. It can be restored for 30 days. Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The tenant, with status `deleted`.
@@ -227,6 +269,8 @@ paths:
         Stops the tenant's traffic and keeps everything else. Outbound calls, web calls and SMS are
         refused, new workflow runs are skipped, and inbound calls are answered and ended at once.
         Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       requestBody:
         required: false
         content:
@@ -259,6 +303,8 @@ paths:
       operationId: resumeTenant
       summary: Resume a tenant
       description: Restores a suspended tenant's traffic immediately. Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The tenant, with status `active`.
@@ -277,6 +323,8 @@ paths:
       operationId: restoreTenant
       summary: Restore a deleted tenant
       description: Brings a deleted tenant back within 30 days of deletion. Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The restored tenant.
@@ -297,6 +345,55 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /partner/v1/tenants/{tenantId}/features:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    get:
+      tags: [Tenants]
+      operationId: getTenantFeatures
+      summary: Get a tenant's feature switches
+      description: Whether the AI assistant and call reviews are on for this tenant. Needs `tenants:read`.
+      responses:
+        "200":
+          description: The tenant's feature switches.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantFeatures" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Tenants]
+      operationId: updateTenantFeatures
+      summary: Change a tenant's feature switches
+      description: |
+        Switches the AI assistant or call reviews on or off for one tenant. Send either field or
+        both. Needs `tenants:write`.
+
+        `callReviews: true` returns `409` `feature_unavailable` when call reviews are not enabled
+        on your own account.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TenantFeaturesUpdate" }
+            example:
+              aiAssistant: false
+              callReviews: true
+      responses:
+        "200":
+          description: The tenant's feature switches after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TenantFeatures" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /partner/v1/tenants/{tenantId}/numbers:
     parameters:
       - $ref: "#/components/parameters/TenantId"
@@ -304,7 +401,15 @@ paths:
       tags: [Phone numbers]
       operationId: listTenantNumbers
       summary: List a tenant's numbers
-      description: Returns every number in the tenant in one page. Needs `resources:read`.
+      description: Lists the tenant's numbers, newest first, 100 a page at most. Needs `resources:read`.
+      parameters:
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 100 }
+        - name: starting_after
+          in: query
+          description: The `id` of the last number on the previous page.
+          schema: { $ref: "#/components/schemas/ObjectId" }
       responses:
         "200":
           description: The tenant's numbers.
@@ -441,6 +546,8 @@ paths:
       description: |
         A bought number goes back to the carrier and stops renewing. Your own number is detached
         from Trillet. Needs `numbers:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The number was released.
@@ -623,6 +730,8 @@ paths:
         Accepts the same fields as create plus `status`. Setting `status: "enabled"` re-enables an
         endpoint that was disabled after failing. Needs `webhooks:write` and a key that is not
         restricted to some tenants.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       requestBody:
         required: true
         content:
@@ -652,6 +761,8 @@ paths:
       operationId: deleteWebhookEndpoint
       summary: Delete a webhook endpoint
       description: Needs `webhooks:write` and a key that is not restricted to some tenants.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The endpoint was deleted.
@@ -707,6 +818,8 @@ paths:
         Sends an `endpoint.test` event to this endpoint only. The endpoint must be enabled and
         subscribed to `endpoint.test` or `*`. Needs `webhooks:write` and a key that is not restricted
         to some tenants.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "202":
           description: The test event was queued.
@@ -806,6 +919,8 @@ paths:
       description: |
         Sends an event again. Without `endpointId`, it goes to every enabled endpoint subscribed to
         its type. Needs `webhooks:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       requestBody:
         required: false
         content:
@@ -1013,17 +1128,16 @@ components:
 
   responses:
     BadRequest:
-      description: "The request is malformed or a field is invalid. `error.param` names the field when there is one."
+      description: "The request is malformed, a field is invalid, or the body has a field the endpoint does not accept. `error.param` names the field when there is one."
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
     Unauthorized:
       description: |
         Authentication failed. A key that is unknown or revoked returns `invalid_api_key`, an
-        account without Trillet OEM returns `partner_not_enabled`, and a user session returns
-        `partner_key_required`. A user API key (`x-api-key`) returns `partner_key_required` only when
-        it also sends `x-workspace-id`. Without that header it is refused first with `400`
-        `{"error": "Workspace ID is required."}`. Handle a `401` by
+        account without Trillet OEM returns `partner_not_enabled`, and a partner key sent in
+        `x-api-key` returns `partner_key_wrong_header`. No credential, a user session or a user API
+        key returns `partner_key_required`. Handle a `401` by
         status, not only by `error.code`.
       content:
         application/json:
@@ -1151,6 +1265,16 @@ components:
         name: { type: string }
         status: { type: string, enum: [active, suspended, deleted, provisioning_failed] }
         region: { type: string, enum: [us, au] }
+        package:
+          type: [string, "null"]
+          description: Your own label for the plan or package this customer is on.
+        industry:
+          type: [string, "null"]
+          description: Your own label for the customer's industry.
+        externalRefs:
+          type: object
+          additionalProperties: { type: string }
+          description: Further IDs of your own for this customer, by name. Not unique. Names are not `constructor`, `prototype` or `__proto__`.
         metadata:
           type: object
           additionalProperties: true
@@ -1166,7 +1290,10 @@ components:
         name: Harbour Dental
         status: active
         region: us
-        metadata: { plan: pro }
+        package: plus
+        industry: dental
+        externalRefs: { crm_account_id: 0015g00000XYZ }
+        metadata: { accountManager: sam }
         limits: { monthlySpendCap: 500 }
         suspendedAt: null
         suspendedReason: null
@@ -1195,6 +1322,23 @@ components:
           type: string
           enum: [us, au]
           description: Defaults to your partner account's region. Decides where call data is stored.
+        package:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 64
+          description: Your own label for the plan or package, with no leading or trailing spaces.
+        industry:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 64
+          description: Your own label for the industry, with no leading or trailing spaces.
+        externalRefs:
+          type: [object, "null"]
+          additionalProperties: { type: string, minLength: 1, maxLength: 128 }
+          description: |
+            Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to
+            64 letters, digits, underscores, dots or hyphens, and not `constructor`, `prototype` or
+            `__proto__`.
         metadata:
           type: object
           additionalProperties: true
@@ -1205,6 +1349,23 @@ components:
       additionalProperties: false
       properties:
         name: { type: string, minLength: 1, maxLength: 100 }
+        package:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 64
+          description: Your own label for the plan or package, with no leading or trailing spaces. `null` clears it.
+        industry:
+          type: [string, "null"]
+          minLength: 1
+          maxLength: 64
+          description: Your own label for the industry, with no leading or trailing spaces. `null` clears it.
+        externalRefs:
+          type: [object, "null"]
+          additionalProperties: { type: string, minLength: 1, maxLength: 128 }
+          description: |
+            Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to
+            64 letters, digits, underscores, dots or hyphens, and not `constructor`, `prototype` or
+            `__proto__`. Replaces the whole set; `null` or `{}` clears it.
         metadata:
           type: object
           additionalProperties: true
@@ -1220,6 +1381,46 @@ components:
           items: { $ref: "#/components/schemas/Tenant" }
         hasMore: { type: boolean }
 
+    TenantFeatures:
+      type: object
+      required: [object, tenantId, aiAssistant, callReviews]
+      properties:
+        object: { type: string, const: tenant_features }
+        tenantId: { $ref: "#/components/schemas/ObjectId" }
+        aiAssistant:
+          type: object
+          required: [enabled]
+          properties:
+            enabled: { type: boolean, description: On unless you switch it off. }
+        callReviews:
+          type: object
+          required: [enabled, source]
+          properties:
+            enabled: { type: boolean }
+            source:
+              type: string
+              enum: [tenant, partner, default, unavailable]
+              description: |
+                Where the value comes from: set on this tenant, inherited from your account, the
+                default, or `unavailable` when call reviews are not offered on this deployment.
+      example:
+        object: tenant_features
+        tenantId: d9d9d9d9d9d9d9d9d9d9d9d9
+        aiAssistant: { enabled: true }
+        callReviews: { enabled: true, source: tenant }
+    TenantFeaturesUpdate:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        aiAssistant:
+          type: boolean
+          description: Whether the in-app AI assistant is available in this tenant.
+        callReviews:
+          type: [boolean, "null"]
+          description: |
+            Whether this tenant has call reviews. `null` clears the tenant's own setting, so your
+            account's setting applies again.
     PhoneNumber:
       type: object
       required: [object, id, tenantId, phoneNumber, external]
@@ -1398,6 +1599,9 @@ components:
         - booking.cancelled
         - booking.rescheduled
         - recording.available
+        - call.flagged
+        - call.flag_updated
+        - call.flag_removed
         - sms.received
         - sms.sent
         - sms.failed
