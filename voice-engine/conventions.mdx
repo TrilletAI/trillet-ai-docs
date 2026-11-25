@@ -71,7 +71,7 @@ Every other error has the same shape:
 
 | Status | `type` | Meaning |
 |---|---|---|
-| `400` | `invalid_request_error` | The request is malformed or a field is invalid (`invalid_request`, or a specific code such as `invalid_external_id`) |
+| `400` | `invalid_request_error` | The request is malformed, a field is invalid, or the body has a field the endpoint does not accept (`invalid_request`, or a specific code such as `invalid_external_id`). `error.param` names the field. |
 | `401` | `authentication_error` | Authentication failed. See [Authentication](/voice-engine/authentication#authentication-errors). |
 | `402` | `invalid_request_error` | `insufficient_funds`: your account cannot pay for a number purchase |
 | `403` | `permission_error` | The key is not allowed to do this |

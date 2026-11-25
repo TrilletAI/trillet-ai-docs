@@ -52,6 +52,8 @@ curl "https://api.trillet.ai/v1/api/issues?days=14" \
 
 | Field | Contents |
 |---|---|
+| `success` | `true` |
+| `days` | The window that was read, 1 to 30 |
 | `issues` | One entry per distinct problem, newest first. Each has `kind` (`call`, `booking`, `workflow` or `build`), `title`, `detail`, `at` (the latest time it happened), `firstAt`, `count`, and the call flow or workflow it belongs to. |
 | `counts` | Distinct problems per kind |
 | `total` | Distinct problems |

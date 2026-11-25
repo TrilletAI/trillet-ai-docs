@@ -223,7 +223,7 @@
           {
             "name": "externalRef",
             "in": "query",
-            "description": "One of the tenant's `externalRefs`, as `name:id`, for example\n`crm_account_id:0015g00000XYZ`. Anything else returns `400` `invalid_external_ref`.\n",
+            "description": "One of the tenant's `externalRefs`, as `name:id`, for example\n`crm_account_id:0015g00000XYZ`. The id is 1 to 128 characters. `constructor`,\n`prototype` and `__proto__` are not names. Anything else returns `400` `invalid_external_ref`.\n",
             "schema": {
               "type": "string",
               "minLength": 3,
@@ -450,7 +450,12 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/tenants/{tenantId}/suspend": {
@@ -510,7 +515,12 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/tenants/{tenantId}/resume": {
@@ -546,7 +556,12 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/tenants/{tenantId}/restore": {
@@ -602,7 +617,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/tenants/{tenantId}/features": {
@@ -1025,7 +1045,12 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/tenants/{tenantId}/call-flows/{callFlowId}/settings": {
@@ -1392,7 +1417,12 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       },
       "delete": {
         "tags": [
@@ -1439,7 +1469,12 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/webhook-endpoints/{id}/rotate-secret": {
@@ -1556,7 +1591,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/events": {
@@ -1771,7 +1811,12 @@
               }
             }
           }
-        }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKeyOptional"
+          }
+        ]
       }
     },
     "/partner/v1/tenants/{tenantId}/calls/{callId}/recording": {
@@ -2111,7 +2156,7 @@
     },
     "responses": {
       "BadRequest": {
-        "description": "The request is malformed or a field is invalid. `error.param` names the field when there is one.",
+        "description": "The request is malformed, a field is invalid, or the body has a field the endpoint does not accept. `error.param` names the field when there is one.",
         "content": {
           "application/json": {
             "schema": {
@@ -2121,7 +2166,7 @@
         }
       },
       "Unauthorized": {
-        "description": "Authentication failed. A key that is unknown or revoked returns `invalid_api_key`, an\naccount without Trillet OEM returns `partner_not_enabled`, and a user session returns\n`partner_key_required`. A user API key (`x-api-key`) returns `partner_key_required` only when\nit also sends `x-workspace-id`. Without that header it is refused first with `400`\n`{\"error\": \"Workspace ID is required.\"}`. Handle a `401` by\nstatus, not only by `error.code`.\n",
+        "description": "Authentication failed. A key that is unknown or revoked returns `invalid_api_key`, an\naccount without Trillet OEM returns `partner_not_enabled`, and a partner key sent in\n`x-api-key` returns `partner_key_wrong_header`. No credential, a user session or a user API\nkey returns `partner_key_required`. Handle a `401` by\nstatus, not only by `error.code`.\n",
         "content": {
           "application/json": {
             "schema": {
@@ -2397,7 +2442,7 @@
             "additionalProperties": {
               "type": "string"
             },
-            "description": "Further IDs of your own for this customer, by name. Not unique."
+            "description": "Further IDs of your own for this customer, by name. Not unique. Names are not `constructor`, `prototype` or `__proto__`."
           },
           "metadata": {
             "type": "object",
@@ -2524,7 +2569,7 @@
               "minLength": 1,
               "maxLength": 128
             },
-            "description": "Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to\n64 letters, digits, underscores, dots or hyphens.\n"
+            "description": "Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to\n64 letters, digits, underscores, dots or hyphens, and not `constructor`, `prototype` or\n`__proto__`.\n"
           },
           "metadata": {
             "type": "object",
@@ -2573,7 +2618,7 @@
               "minLength": 1,
               "maxLength": 128
             },
-            "description": "Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to\n64 letters, digits, underscores, dots or hyphens. Replaces the whole set; `null` clears it.\n"
+            "description": "Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to\n64 letters, digits, underscores, dots or hyphens, and not `constructor`, `prototype` or\n`__proto__`. Replaces the whole set; `null` or `{}` clears it.\n"
           },
           "metadata": {
             "type": "object",

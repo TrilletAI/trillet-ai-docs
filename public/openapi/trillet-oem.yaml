@@ -142,7 +142,8 @@ paths:
           in: query
           description: |
             One of the tenant's `externalRefs`, as `name:id`, for example
-            `crm_account_id:0015g00000XYZ`. Anything else returns `400` `invalid_external_ref`.
+            `crm_account_id:0015g00000XYZ`. The id is 1 to 128 characters. `constructor`,
+            `prototype` and `__proto__` are not names. Anything else returns `400` `invalid_external_ref`.
           schema: { type: string, minLength: 3, maxLength: 200 }
         - name: phoneNumber
           in: query
@@ -244,6 +245,8 @@ paths:
       description: |
         Releases the tenant's numbers, soft-deletes its flows, agents and knowledge bases, and
         soft-deletes the tenant. It can be restored for 30 days. Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The tenant, with status `deleted`.
@@ -266,6 +269,8 @@ paths:
         Stops the tenant's traffic and keeps everything else. Outbound calls, web calls and SMS are
         refused, new workflow runs are skipped, and inbound calls are answered and ended at once.
         Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       requestBody:
         required: false
         content:
@@ -298,6 +303,8 @@ paths:
       operationId: resumeTenant
       summary: Resume a tenant
       description: Restores a suspended tenant's traffic immediately. Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The tenant, with status `active`.
@@ -316,6 +323,8 @@ paths:
       operationId: restoreTenant
       summary: Restore a deleted tenant
       description: Brings a deleted tenant back within 30 days of deletion. Needs `tenants:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The restored tenant.
@@ -537,6 +546,8 @@ paths:
       description: |
         A bought number goes back to the carrier and stops renewing. Your own number is detached
         from Trillet. Needs `numbers:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The number was released.
@@ -719,6 +730,8 @@ paths:
         Accepts the same fields as create plus `status`. Setting `status: "enabled"` re-enables an
         endpoint that was disabled after failing. Needs `webhooks:write` and a key that is not
         restricted to some tenants.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       requestBody:
         required: true
         content:
@@ -748,6 +761,8 @@ paths:
       operationId: deleteWebhookEndpoint
       summary: Delete a webhook endpoint
       description: Needs `webhooks:write` and a key that is not restricted to some tenants.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "200":
           description: The endpoint was deleted.
@@ -803,6 +818,8 @@ paths:
         Sends an `endpoint.test` event to this endpoint only. The endpoint must be enabled and
         subscribed to `endpoint.test` or `*`. Needs `webhooks:write` and a key that is not restricted
         to some tenants.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       responses:
         "202":
           description: The test event was queued.
@@ -902,6 +919,8 @@ paths:
       description: |
         Sends an event again. Without `endpointId`, it goes to every enabled endpoint subscribed to
         its type. Needs `webhooks:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
       requestBody:
         required: false
         content:
@@ -1109,17 +1128,16 @@ components:
 
   responses:
     BadRequest:
-      description: "The request is malformed or a field is invalid. `error.param` names the field when there is one."
+      description: "The request is malformed, a field is invalid, or the body has a field the endpoint does not accept. `error.param` names the field when there is one."
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
     Unauthorized:
       description: |
         Authentication failed. A key that is unknown or revoked returns `invalid_api_key`, an
-        account without Trillet OEM returns `partner_not_enabled`, and a user session returns
-        `partner_key_required`. A user API key (`x-api-key`) returns `partner_key_required` only when
-        it also sends `x-workspace-id`. Without that header it is refused first with `400`
-        `{"error": "Workspace ID is required."}`. Handle a `401` by
+        account without Trillet OEM returns `partner_not_enabled`, and a partner key sent in
+        `x-api-key` returns `partner_key_wrong_header`. No credential, a user session or a user API
+        key returns `partner_key_required`. Handle a `401` by
         status, not only by `error.code`.
       content:
         application/json:
@@ -1256,7 +1274,7 @@ components:
         externalRefs:
           type: object
           additionalProperties: { type: string }
-          description: Further IDs of your own for this customer, by name. Not unique.
+          description: Further IDs of your own for this customer, by name. Not unique. Names are not `constructor`, `prototype` or `__proto__`.
         metadata:
           type: object
           additionalProperties: true
@@ -1319,7 +1337,8 @@ components:
           additionalProperties: { type: string, minLength: 1, maxLength: 128 }
           description: |
             Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to
-            64 letters, digits, underscores, dots or hyphens.
+            64 letters, digits, underscores, dots or hyphens, and not `constructor`, `prototype` or
+            `__proto__`.
         metadata:
           type: object
           additionalProperties: true
@@ -1345,7 +1364,8 @@ components:
           additionalProperties: { type: string, minLength: 1, maxLength: 128 }
           description: |
             Up to 10 further IDs of your own, by name, for example a CRM account ID. Names are 1 to
-            64 letters, digits, underscores, dots or hyphens. Replaces the whole set; `null` clears it.
+            64 letters, digits, underscores, dots or hyphens, and not `constructor`, `prototype` or
+            `__proto__`. Replaces the whole set; `null` or `{}` clears it.
         metadata:
           type: object
           additionalProperties: true

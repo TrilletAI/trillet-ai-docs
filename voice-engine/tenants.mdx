@@ -93,7 +93,7 @@ curl -X POST https://api.trillet.ai/partner/v1/tenants \
   Your label for the industry, 1 to 64 characters with no leading or trailing spaces.
 </ParamField>
 <ParamField body="externalRefs" type="object">
-  Up to 10 further IDs, as `{ "name": "id" }`. Names are 1 to 64 letters, digits, underscores, dots or hyphens. Each ID is 1 to 128 characters.
+  Up to 10 further IDs, as `{ "name": "id" }`. Names are 1 to 64 letters, digits, underscores, dots or hyphens. `constructor`, `prototype` and `__proto__` are not names. Each ID is 1 to 128 characters.
 </ParamField>
 <ParamField body="metadata" type="object">
   Your own data, up to 8 KB.
@@ -132,7 +132,7 @@ curl https://api.trillet.ai/partner/v1/tenants/by-external-id/cust_8842 \
 |---|---|
 | `status` | `active`, `suspended`, `provisioning_failed` or `deleted` |
 | `externalId` | The tenant with exactly this `externalId` |
-| `externalRef` | Tenants with this entry in `externalRefs`, written `name:id`, for example `externalRef=crm_account_id:0015g00000XYZ`. Anything else returns `400` `invalid_external_ref`. |
+| `externalRef` | Tenants with this entry in `externalRefs`, written `name:id`, for example `externalRef=crm_account_id:0015g00000XYZ`. The id is 1 to 128 characters. Anything else returns `400` `invalid_external_ref`. |
 | `package` | Tenants with exactly this `package` |
 | `industry` | Tenants with exactly this `industry` |
 | `phoneNumber` | The tenant that holds this number. Send the full number with country code. URL-encode the plus sign (`%2B15125550142`) or leave it out. A number that is not a full number returns `400` `invalid_phone_number`. |
