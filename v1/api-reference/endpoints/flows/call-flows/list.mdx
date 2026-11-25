@@ -39,7 +39,7 @@ The response is a plain array with one full call flow document per item, the sam
 </ResponseField>
 
 <ResponseField name="folderId" type="object">
-  The folder the flow is in, as `{ _id, name, icon, color }`, or `null`.
+  The folder the flow is in, as `{ _id, name, icon, color }`. Left out when the flow isn't in a folder.
 </ResponseField>
 
 <ResponseField name="isActive" type="boolean">
@@ -82,7 +82,6 @@ In the example, the agent objects and `settings` are shortened.
       "name": "Customer Support Flow",
       "phoneNumberIds": []
     },
-    "folderId": null,
     "isActive": true,
     "archivedAt": null,
     "promptType": "simple",

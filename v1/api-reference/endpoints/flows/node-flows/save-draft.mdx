@@ -1,0 +1,78 @@
+---
+title: "Save Node Flow Draft"
+api: "PATCH /v2/api/node-graphs/{id}/draft"
+description: "Autosave work in progress to the graph's draft. Never validates."
+---
+
+Stores a draft of the graph without touching the live version. It is built for continuous saving while the graph is incomplete, so it **never validates**: anything you send is stored, even a graph that cannot be published. Validation happens in [Validate](/v1/api-reference/endpoints/flows/node-flows/validate) and [Publish](/v1/api-reference/endpoints/flows/node-flows/publish).
+
+The draft is **replaced** by what you send. Send every draft field you want to keep, because fields left out of this request are dropped from the draft and fall back to the live values. The draft does not change what calls run. [Publish](/v1/api-reference/endpoints/flows/node-flows/publish) promotes it to live, and `DELETE /v2/api/node-graphs/{id}/draft` discards it.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The graph `_id`.
+</ParamField>
+
+### Request Body
+
+Any of `name`, `description`, `startNodeId`, `variables`, `globals`, `router`, `nodes`, `edges` and `dataSources`, as described in [Graph fields](/v1/api-reference/endpoints/flows/node-flows/overview#graph-fields). Other fields are ignored. A knowledge base you add must belong to your workspace.
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `400` | `{"code": "KNOWLEDGE_BASE_NOT_IN_WORKSPACE", "params": {"knowledgeBaseIds": [...]}}` | A knowledge base you add is not in your workspace |
+| `404` | `{"code": "NODE_GRAPH_NOT_FOUND"}` | No graph with that ID in the workspace |
+| `500` | `{"code": "NODE_GRAPH_DRAFT_SAVE_FAILED"}` | Unexpected server error |
+
+### Response Fields
+
+<ResponseField name="hasDraft" type="boolean">
+  Always `true` after a successful save.
+</ResponseField>
+
+<ResponseField name="lastDraftSavedAt" type="string">
+  When the draft was saved.
+</ResponseField>
+
+<RequestExample>
+
+```bash
+curl -X PATCH "https://api.trillet.ai/v2/api/node-graphs/{id}/draft" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "startNodeId": "start",
+    "nodes": [
+      {
+        "nodeId": "start",
+        "type": "conversation",
+        "name": "Greeting",
+        "config": { "objective": "Greet the caller and ask how you can help today." }
+      }
+    ],
+    "edges": []
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "hasDraft": true,
+  "lastDraftSavedAt": "2025-01-03T11:25:00Z"
+}
+```
+
+</ResponseExample>

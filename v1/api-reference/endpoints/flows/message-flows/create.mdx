@@ -100,7 +100,7 @@ description: "Create a new message flow with full settings."
 </ParamField>
 
 <ParamField body="initiationMessage" type="string">
-  The first message the flow sends when it starts a conversation, used by Generate Message.
+  The first message the flow sends when it starts a conversation. Optional here, but [Generate Message](/v1/api-reference/endpoints/conversations/generateMessage) needs it: set it before you use that endpoint with this flow.
 </ParamField>
 
 <ParamField body="prompt" type="string">

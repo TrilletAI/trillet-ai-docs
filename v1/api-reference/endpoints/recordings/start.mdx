@@ -1,41 +1,65 @@
 ---
 title: "Start Recording"
 api: "POST /v2/api/recordings/start-recording"
-description: "Start recording an active call."
+description: "Start recording a call that is in progress."
 ---
+
+Starts recording a live outbound or web call made by one of your agents.
+
+<Note>
+You usually don't need this endpoint. Calls on a flow with recording turned on are recorded automatically from the start. This endpoint can't record a call whose flow has recording off: it follows the same flow setting.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+The workspace the call flow and agent belong to.
 </ParamField>
 
 ## Request Body
 
 <ParamField body="pathwayId" type="string" required>
-The call flow pathway ID associated with the call.
+The ID of the call flow the call is running on. It must be in this workspace.
 </ParamField>
 
 <ParamField body="roomName" type="string" required>
-The call session room name of the active call to start recording.
+The room name of the live call (`roomName` in call history). The room must belong to one of this workspace's agents: outbound rooms start with the agent ID, and web call rooms start with `web-` followed by the agent ID. Inbound call rooms (starting with `call-`) can't be recorded through this endpoint.
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="message" type="string">
-Confirmation message.
+Always `"Recording started successfully"`.
 </ResponseField>
 
-<ResponseField name="result" type="object">
-Recording result details for the call session.
-</ResponseField>
+<Note>
+A recording is only made when the call flow has recording turned on and HIPAA mode is off. If recording is off, or HIPAA mode is on, the request still returns `200` with the same message, but nothing is recorded.
+</Note>
+
+## Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "Invalid workspace ID", "message": "x-workspace-id must be a valid workspace identifier."}` | The `x-workspace-id` header is missing or not a valid ID |
+| `404` | `{"error": "Call flow not found"}` | No call flow with `pathwayId` exists in this workspace |
+| `404` | `{"error": "Room not found"}` | The room doesn't belong to one of this workspace's agents |
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.trillet.ai/v2/api/recordings/start-recording \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pathwayId": "b2b2b2b2b2b2b2b2b2b2b2b2",
+    "roomName": "a1a1a1a1a1a1a1a1a1a1a1a1-k3j9x0a1bq"
+  }'
+```
+</RequestExample>
 
 <ResponseExample>
 ```json
 {
-  "message": "Recording started successfully",
-  "result": {
-    "egressId": "EG_abc123"
-  }
+  "message": "Recording started successfully"
 }
 ```
 </ResponseExample>

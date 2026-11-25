@@ -1,8 +1,10 @@
 ---
 title: "Update Call Disposition"
 api: "PUT /v1/api/call-dispositions/{id}"
-description: "Update a call disposition, such as rescheduling a callback."
+description: "Move a contact's next smart callback to a new time."
 ---
+
+This endpoint only reschedules the next callback. It can't change a record's status, outcome or notes.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -12,45 +14,67 @@ Workspace identifier for the API.
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-The unique identifier of the call disposition to update.
+The record's `_id`, from [List Call Dispositions](/v1/api-reference/endpoints/call-dispositions/list).
 </ParamField>
 
 ## Request Body
 
-<ParamField body="scheduledAt" type="string">
-New scheduled callback time in ISO format.
-</ParamField>
+The body is the new callback time on its own, **not** a JSON object. Send it as a JSON string with `Content-Type: application/json`, for example `"2026-12-01T10:00:00"`, or as plain text with `Content-Type: text/plain`.
 
-<ParamField body="status" type="string">
-Updated status for the disposition.
-</ParamField>
+- Format: `yyyy-MM-ddTHH:mm:ss`, with no offset. It is read as local time in the record's `timezone`.
+- A time less than a minute away, or in the past, is moved to one minute from now.
+- If the record has no callback queued (`jobId` is `null`), the new time is saved on the record but no call is placed.
 
-<ParamField body="notes" type="string">
-Updated notes for the disposition.
-</ParamField>
+## Response
 
-## Response Fields
+The updated record, with the fields described in [Get Call Disposition](/v1/api-reference/endpoints/call-dispositions/get). `nextCallTime` and `currentTimeOfGivenTimezone` show the new schedule.
 
-<ResponseField name="success" type="boolean">
-Whether the update was successful.
-</ResponseField>
+## Errors
 
-<ResponseField name="disposition" type="object">
-The updated disposition object.
-</ResponseField>
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "Workspace ID is required"}` | The `x-workspace-id` header is missing |
+| `400` | `{"error": "dateTime is required in body"}` | The body is empty |
+| `404` | `{"error": "Call disposition not found"}` | No record with that ID exists in this workspace |
+
+<RequestExample>
+```bash cURL
+curl -X PUT https://api.trillet.ai/v1/api/call-dispositions/c5c5c5c5c5c5c5c5c5c5c5c5 \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '"2026-12-01T10:00:00"'
+```
+</RequestExample>
 
 <ResponseExample>
 ```json
 {
-  "success": true,
-  "disposition": {
-    "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-    "phoneNumber": "+14155551234",
-    "disposition": "callback_scheduled",
-    "status": "pending",
-    "scheduledAt": "2024-06-03T10:00:00.000Z",
-    "attempt": 1
-  }
+  "_id": "c5c5c5c5c5c5c5c5c5c5c5c5",
+  "agentId": "a1a1a1a1a1a1a1a1a1a1a1a1",
+  "batchId": "k3j9x0a1bq",
+  "workspaceId": "aaaaaaaaaaaaaaaaaaaaaaaa",
+  "phoneNumber": "+14155550123",
+  "jobId": "41",
+  "currentAttempt": 1,
+  "maxAttempts": 3,
+  "status": "active",
+  "dispositionHistory": [
+    {
+      "outcome": "No Answer",
+      "notes": "The call was not answered.",
+      "callHistoryId": "d8d8d8d8d8d8d8d8d8d8d8d8",
+      "createdAt": "2026-11-07T09:48:54.799Z",
+      "updatedAt": "2026-11-07T09:48:54.799Z"
+    }
+  ],
+  "timezone": "America/New_York",
+  "nextCallTime": "1987200000,23d 0h 0m 0s",
+  "currentTimeOfGivenTimezone": "2026-11-08T10:00:00",
+  "logs": [],
+  "createdAt": "2026-11-07T09:48:54.728Z",
+  "updatedAt": "2026-11-08T15:00:00.000Z",
+  "__v": 1
 }
 ```
 </ResponseExample>

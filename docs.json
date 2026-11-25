@@ -82,16 +82,6 @@
       "source": "/quickstart",
       "destination": "/documentation/quickstart",
       "permanent": true
-    },
-    {
-      "source": "/changelog/changelog",
-      "destination": "https://trillet.ai/changelog",
-      "permanent": true
-    },
-    {
-      "source": "/changelog",
-      "destination": "https://trillet.ai/changelog",
-      "permanent": true
     }
   ],
   "navigation": {
@@ -158,7 +148,15 @@
       {
         "tab": "Change Log",
         "icon": "clock",
-        "href": "https://trillet.ai/changelog"
+        "groups": [
+          {
+            "group": "Changes",
+            "icon": "clock-rotate-left",
+            "pages": [
+              "changelog/changelog"
+            ]
+          }
+        ]
       },
       {
         "tab": "API Reference V1",
@@ -304,6 +302,21 @@
               "v1/api-reference/endpoints/flows/call-flows/delete",
               "v1/api-reference/endpoints/flows/call-flows/knowledgebase-upload",
               "v1/api-reference/endpoints/flows/call-flows/knowledgebase-delete"
+            ]
+          },
+          {
+            "group": "Node Flows",
+            "icon": "diagram-project",
+            "pages": [
+              "v1/api-reference/endpoints/flows/node-flows/overview",
+              "v1/api-reference/endpoints/flows/node-flows/create",
+              "v1/api-reference/endpoints/flows/node-flows/list",
+              "v1/api-reference/endpoints/flows/node-flows/get",
+              "v1/api-reference/endpoints/flows/node-flows/update",
+              "v1/api-reference/endpoints/flows/node-flows/save-draft",
+              "v1/api-reference/endpoints/flows/node-flows/validate",
+              "v1/api-reference/endpoints/flows/node-flows/publish",
+              "v1/api-reference/endpoints/flows/node-flows/delete"
             ]
           },
           {

@@ -4,6 +4,8 @@ api: "POST /v1/api/call"
 description: "Send an AI-driven phone call to a given number."
 ---
 
+Authenticate with your API key in the `x-api-key` header, as described in [Authentication](/v1/api-reference/authentication). Call this endpoint from your server, not from a browser.
+
 ### Headers  
 
 <ParamField header="x-workspace-id" type="string" required>
@@ -13,7 +15,7 @@ description: "Send an AI-driven phone call to a given number."
 ### Request Body
 
 <ParamField body="to" type="string" required>
-  The number to call, in E.164 format, for example `+14155550123`. It must be a real, valid number: a number that only looks like E.164, such as `+14155550123`, is refused with `400` and code `INVALID_PHONE_NUMBER`. Digits without the `+` are accepted when they form a valid number with it.
+  The number to call, in E.164 format, for example `+14155550123`. It must be a real, valid number: a number that only looks like E.164, such as `+1234567890`, is refused with `400` and code `INVALID_PHONE_NUMBER`. Digits without the `+` are accepted when they form a valid number with it.
 </ParamField>
 
 <ParamField body="call_agent_id" type="string" required>

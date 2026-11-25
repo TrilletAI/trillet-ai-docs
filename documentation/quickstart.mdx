@@ -19,7 +19,7 @@ Some items only appear on certain plans. To build an AI phone agent, start with 
 
 ### Understanding Call Flows
 
-A call flow is the backbone of your AI agent. It holds the agent's instructions, voice, language model, greeting, tools and call settings, and it decides whether the agent makes calls, answers them, or both. You can think of it like a blueprint for your agent's calls.
+A call flow is the backbone of your AI agent. It holds the agent's instructions, voice, language model, greeting, tools and call settings, and it decides whether the agent only makes calls or both answers and makes them. You can think of it like a blueprint for your agent's calls.
 
 <img
   className="block dark:hidden rounded-xl"
@@ -53,7 +53,7 @@ If you pick a template, the wizard has two more steps:
 Trillet generates the agent and opens it in the call flow editor.
 
 <Note>
-The direction you pick in the wizard can be changed later. In the editor, open **Settings > Greeting & Conversation > Call direction** and choose inbound, outbound or both.
+The direction you pick in the wizard can be changed later. In the editor, open **Settings > Greeting & Conversation > Call direction** and choose **Inbound & outbound** or **Outbound only**. There is no inbound-only option: an agent that answers calls can also make them. In the API the same setting is `direction`, with the values `bidirectional` or `outbound`.
 </Note>
 
 ## 1.2 Prompting Your Agent
@@ -144,6 +144,10 @@ The Phone Numbers page gives you three ways to get a number:
 - Link an existing number from a provider such as Twilio, Telnyx or your own SIP trunk
 - Keep using your existing carrier rates
 - Manage everything from within Trillet
+
+<Note>
+  **SIP header mappings (Twilio):** on a Bring Your Own Twilio number, including numbers you already added, you can map incoming SIP headers to variables. Set the mappings on the number in the dashboard. On inbound calls the values show up as `headerVariables` on the call record (see [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get)). The post-call webhook sends them as `header_variables`, plus `twilio_call_sid`.
+</Note>
 
 <img
   className="block dark:hidden rounded-xl"
@@ -319,7 +323,7 @@ Now that you've set up your first AI agent, explore these advanced features:
 ## White-label
 
 <Note>
-Trillet supports white-label for agencies and enterprises that offer AI voice agents under their own name: your own domain, branded email notifications and workspaces in your brand. Set it up under [Settings](https://app.trillet.ai/settings).
+Trillet supports white-label for agencies and enterprises that offer AI voice agents under their own name: your own domain, branded email notifications and workspaces in your brand. Set it up in the [Agency](https://app.trillet.ai/agency) page in the sidebar (called **Studio** on some plans): **Branding** for your logo, colours and company name, **Domains & Email** for your own domain and branded emails, and **Workspaces** for client workspaces.
 </Note>
 
 ## Support & Resources

@@ -1,0 +1,100 @@
+---
+title: "Publish Node Flow"
+api: "POST /v2/api/node-graphs/{id}/publish"
+description: "Validate, compile and make a node flow live for new calls."
+---
+
+Takes the effective graph (the draft merged over the live fields), validates it, saves the outgoing version to the version history, compiles the graph and makes it live. The draft is cleared. The graph's `status` becomes `active` and `publishedVersion` goes up by one.
+
+<Warning>
+  Publishing takes effect immediately: new calls on the companion call flow use the published graph as soon as this request succeeds. A node flow that has never been published cannot take calls.
+</Warning>
+
+If the graph has validation errors, nothing is published and the response is `400` with the list of errors. Warnings do not block publishing and are returned in the response.
+
+Publishing also copies the graph's name to the companion call flow and adds the graph's `globals.knowledgeBases` to the call flow's `settings.knowledgeBases`.
+
+<Note>
+  `code` nodes run your JavaScript in an isolated runtime, and publishing uploads that code. If the upload is rejected for a reason a retry cannot fix, such as a syntax error, the publish fails with `CODE_DEPLOY_FAILED`. If it fails for a temporary reason, the publish succeeds and returns a `CODE_DEPLOY_PENDING` warning while the flow keeps running the last deployed code until the next attempt. Use [Test code](/v1/api-reference/endpoints/flows/node-flows/overview#all-routes) to try a code node before publishing.
+</Note>
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The graph `_id`.
+</ParamField>
+
+### Request Body
+
+<ParamField body="note" type="string">
+  An optional note. When you send one, the published graph is also saved in the version history with that note.
+</ParamField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `400` | `{"code": "NODE_GRAPH_INVALID", "problems": [...]}` | The graph has validation errors. `problems` lists only the errors. |
+| `400` | `{"code": "CODE_DEPLOY_FAILED", "problems": [...]}` | A `code` node's code could not be deployed and a retry cannot fix it |
+| `400` | `{"code": "CODE_DEPLOY_UNAVAILABLE", "problems": [...]}` | The graph has `code` nodes and code nodes cannot be run in this environment |
+| `404` | `{"code": "NODE_GRAPH_NOT_FOUND"}` | No graph with that ID in the workspace |
+| `409` | `{"code": "FLOW_ARCHIVED", "params": {"pathwayId", "message"}}` | The companion call flow is archived. Restore it in the dashboard first. |
+| `500` | `{"code": "NODE_GRAPH_PUBLISH_FAILED"}` | Unexpected server error |
+
+### Response Fields
+
+<ResponseField name="graph" type="object">
+  The published graph, in the same shape as [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get). `status` is `active`, `hasDraft` is `false` and `publishedVersion` is the new version number.
+</ResponseField>
+
+<ResponseField name="problems" type="array">
+  The warnings that survived the publish, each as `{ code, severity: "warning", nodeId?, edgeId?, params? }`. Empty when there are none.
+</ResponseField>
+
+<RequestExample>
+
+```bash
+curl -X POST "https://api.trillet.ai/v2/api/node-graphs/{id}/publish" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{ "note": "Added billing transfer" }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 200 Published
+{
+  "graph": {
+    "_id": "a1a1a1a1a1a1a1a1a1a1a1a1",
+    "name": "Front desk",
+    "status": "active",
+    "hasDraft": false,
+    "publishedVersion": 1,
+    "publishedAt": "2025-01-03T12:00:00Z"
+  },
+  "problems": [
+    { "code": "NODE_NAME_MISSING", "severity": "warning", "nodeId": "start" }
+  ]
+}
+```
+
+```json 400 Not publishable
+{
+  "code": "NODE_GRAPH_INVALID",
+  "problems": [
+    { "code": "NO_OUTGOING", "severity": "error", "nodeId": "start" }
+  ]
+}
+```
+
+</ResponseExample>

@@ -1,0 +1,237 @@
+---
+title: "Create Node Flow"
+api: "POST /v2/api/node-graphs"
+description: "Create a node flow: a graph plus its companion call flow and agent."
+---
+
+Creates the graph and, with it, a companion call flow (`promptType: "nodes"`) with a default agent. The response is the graph only. To get the call flow's ID, call [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get) and read `pathway._id`. See the [overview](/v1/api-reference/endpoints/flows/node-flows/overview) for how the two relate.
+
+The graph is created as a `draft` and is not live. Nothing in the request body is validated, so you can create an incomplete graph and fix it later. Use [Validate](/v1/api-reference/endpoints/flows/node-flows/validate) and [Publish](/v1/api-reference/endpoints/flows/node-flows/publish) when you are ready.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Request Body
+
+All fields are optional.
+
+<ParamField body="name" type="string">
+  The flow's name. Defaults to `Untitled node flow`. The companion call flow gets the same name.
+</ParamField>
+
+<ParamField body="description" type="string">
+  A description of the flow.
+</ParamField>
+
+<ParamField body="template" type="string" enum={['receptionist', 'appointment_booking', 'lead_qualification']}>
+  Start from a template. Any graph field you also send replaces that field of the template. An unknown key returns `400` with `NODE_GRAPH_TEMPLATE_NOT_FOUND`.
+</ParamField>
+
+<ParamField body="startNodeId" type="string">
+  The first node. Send it whenever you send `nodes`, because it is not guessed.
+</ParamField>
+
+<ParamField body="nodes" type="array">
+  The graph's nodes. If you send no `template` and no nodes (or an empty array), the flow starts with a single `start` node. See [Nodes](/v1/api-reference/endpoints/flows/node-flows/overview#nodes).
+</ParamField>
+
+<ParamField body="edges" type="array">
+  The graph's edges. See [Edges](/v1/api-reference/endpoints/flows/node-flows/overview#edges).
+</ParamField>
+
+<ParamField body="variables" type="array">
+  Declared call variables. See [Graph fields](/v1/api-reference/endpoints/flows/node-flows/overview#graph-fields).
+</ParamField>
+
+<ParamField body="globals" type="object">
+  `persona`, `guardrails`, `knowledgeBases` and `interrupts`. Knowledge bases must belong to your workspace.
+</ParamField>
+
+<ParamField body="router" type="object">
+  Router settings.
+</ParamField>
+
+<ParamField body="dataSources" type="array">
+  Stored as sent.
+</ParamField>
+
+<ParamField body="llmModel" type="string">
+  Partner API keys only: the model for the flow's agent, checked like an agent create. Ignored for other keys.
+</ParamField>
+
+Other fields in the body are ignored.
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `400` | `{"code": "NODE_GRAPH_TEMPLATE_NOT_FOUND"}` | `template` is not a known key |
+| `400` | `{"code": "KNOWLEDGE_BASE_NOT_IN_WORKSPACE", "params": {"knowledgeBaseIds": [...]}}` | A knowledge base in `globals` or a node is not in your workspace |
+| `400` | `{"code", "field", "message"}` | Partner keys only: `llmModel` is not allowed |
+| `502` | `{"code": "NODE_FLOW_AGENT_CREATE_FAILED"}` | The agent or call flow could not be created. The graph is removed, so nothing is left behind. |
+| `500` | `{"code": "NODE_GRAPH_CREATE_FAILED"}` | Unexpected server error, including a graph the database cannot store |
+
+### Response Fields
+
+The response status is `201`. The body is the graph document.
+
+<ResponseField name="_id" type="string">
+  The graph ID. Use it in every `/v2/api/node-graphs/{id}` route.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+  The workspace that owns the graph.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The flow's name.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  The flow's description.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `draft` on create. Becomes `active` when published and `archived` when archived.
+</ResponseField>
+
+<ResponseField name="startNodeId" type="string">
+  The first node.
+</ResponseField>
+
+<ResponseField name="variables" type="array">
+  The declared variables.
+</ResponseField>
+
+<ResponseField name="globals" type="object">
+  `persona`, `guardrails`, `knowledgeBases` and `interrupts`.
+</ResponseField>
+
+<ResponseField name="router" type="object">
+  Router settings, with defaults filled in.
+</ResponseField>
+
+<ResponseField name="nodes" type="array">
+  The nodes, with defaults such as `onError` and `maxTurns` filled in.
+</ResponseField>
+
+<ResponseField name="edges" type="array">
+  The edges.
+</ResponseField>
+
+<ResponseField name="hasDraft" type="boolean">
+  `false` on create.
+</ResponseField>
+
+<ResponseField name="publishedVersion" type="number">
+  `0` until the first publish.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  When the graph was created.
+</ResponseField>
+
+The document also carries server-owned fields such as `draftData`, `compiled`, `versions`, `stats` and `updatedAt`.
+
+<RequestExample>
+
+```bash From a template
+curl -X POST "https://api.trillet.ai/v2/api/node-graphs" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Front desk",
+    "template": "receptionist"
+  }'
+```
+
+```bash With your own graph
+curl -X POST "https://api.trillet.ai/v2/api/node-graphs" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Front desk",
+    "startNodeId": "start",
+    "nodes": [
+      {
+        "nodeId": "start",
+        "type": "conversation",
+        "name": "Greeting",
+        "config": { "objective": "Greet the caller and ask how you can help today." }
+      },
+      {
+        "nodeId": "done",
+        "type": "end",
+        "name": "End call",
+        "config": { "message": "Thank the caller and end the call politely.", "disposition": "completed" }
+      }
+    ],
+    "edges": [
+      { "id": "e1", "source": "start", "target": "done", "kind": "auto" }
+    ]
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201 Created
+{
+  "_id": "a1a1a1a1a1a1a1a1a1a1a1a1",
+  "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
+  "name": "Front desk",
+  "description": "",
+  "status": "draft",
+  "startNodeId": "start",
+  "variables": [],
+  "globals": { "persona": "", "guardrails": "", "knowledgeBases": [], "interrupts": [] },
+  "router": {
+    "model": "",
+    "maxCandidates": 8,
+    "historyTurns": 4,
+    "confidenceFloor": 0.5,
+    "sequential": false,
+    "speculative": false,
+    "timeoutMs": 2500
+  },
+  "nodes": [
+    {
+      "nodeId": "start",
+      "type": "conversation",
+      "name": "Greeting",
+      "config": { "objective": "Greet the caller and ask how you can help today." },
+      "onError": "fallback",
+      "maxTurns": 8
+    },
+    {
+      "nodeId": "done",
+      "type": "end",
+      "name": "End call",
+      "config": { "message": "Thank the caller and end the call politely.", "disposition": "completed" },
+      "onError": "fallback",
+      "maxTurns": 8
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "start", "target": "done", "kind": "auto", "priority": 0 }
+  ],
+  "dataSources": [],
+  "hasDraft": false,
+  "publishedVersion": 0,
+  "createdAt": "2025-01-03T11:00:00Z",
+  "updatedAt": "2025-01-03T11:00:00Z"
+}
+```
+
+```json 400 Unknown template
+{ "code": "NODE_GRAPH_TEMPLATE_NOT_FOUND" }
+```
+
+</ResponseExample>

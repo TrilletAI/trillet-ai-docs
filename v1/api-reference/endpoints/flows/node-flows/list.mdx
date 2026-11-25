@@ -1,0 +1,104 @@
+---
+title: "List Node Flows"
+api: "GET /v2/api/node-graphs"
+description: "List the workspace's node flows, paginated, without the graph body."
+---
+
+Returns summaries only. To read nodes and edges, use [Get Node Flow](/v1/api-reference/endpoints/flows/node-flows/get). To see the companion call flow IDs, use Get Node Flow too, or [List Call Flows](/v1/api-reference/endpoints/flows/call-flows/list) and read `nodeGraphId` on flows with `promptType` of `nodes`.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="page" type="number" default="1">
+  Page number.
+</ParamField>
+
+<ParamField query="limit" type="number" default="25">
+  Items per page.
+</ParamField>
+
+<ParamField query="status" type="string" enum={['draft', 'active', 'archived']}>
+  Only return graphs with this status. Leave it out to return all of them.
+</ParamField>
+
+Results are sorted by `updatedAt`, newest first.
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `500` | `{"code": "NODE_GRAPH_LIST_FAILED"}` | Unexpected server error |
+
+### Response Fields
+
+<ResponseField name="docs" type="array">
+  The graphs on this page. Each is the graph document without `nodes`, `edges`, `draftData`, `compiled`, `versions` and `dataSources`. It keeps `_id`, `name`, `description`, `status`, `startNodeId`, `variables`, `globals`, `router`, `hasDraft`, `lastDraftSavedAt`, `publishedAt`, `publishedVersion`, `stats`, `createdAt` and `updatedAt`.
+</ResponseField>
+
+<ResponseField name="totalDocs" type="number">
+  Total graphs matching the query.
+</ResponseField>
+
+<ResponseField name="limit" type="number">
+  Page size.
+</ResponseField>
+
+<ResponseField name="page" type="number">
+  Current page.
+</ResponseField>
+
+<ResponseField name="totalPages" type="number">
+  Number of pages.
+</ResponseField>
+
+The response also includes the usual paging fields: `pagingCounter`, `hasPrevPage`, `hasNextPage`, `prevPage` and `nextPage`.
+
+<RequestExample>
+
+```bash
+curl -X GET "https://api.trillet.ai/v2/api/node-graphs?status=active&limit=10" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID"
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json
+{
+  "docs": [
+    {
+      "_id": "a1a1a1a1a1a1a1a1a1a1a1a1",
+      "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
+      "name": "Front desk",
+      "description": "",
+      "status": "active",
+      "startNodeId": "start",
+      "variables": [],
+      "hasDraft": false,
+      "publishedVersion": 3,
+      "publishedAt": "2025-01-05T09:30:00Z",
+      "createdAt": "2025-01-03T11:00:00Z",
+      "updatedAt": "2025-01-05T09:30:00Z"
+    }
+  ],
+  "totalDocs": 1,
+  "limit": 10,
+  "page": 1,
+  "totalPages": 1,
+  "pagingCounter": 1,
+  "hasPrevPage": false,
+  "hasNextPage": false,
+  "prevPage": null,
+  "nextPage": null
+}
+```
+
+</ResponseExample>

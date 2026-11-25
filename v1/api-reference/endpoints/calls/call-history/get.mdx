@@ -96,7 +96,24 @@ The record has the same shape as one item of `data` in [List Call Histories](/v1
   Why the call ended, or `"Unknown"`. Phone calls only.
 </ResponseField>
 
+<ResponseField name="twilioCallSid" type="string">
+  Twilio call SID for calls on Twilio numbers, or `null`.
+</ResponseField>
+
+<ResponseField name="headerVariables" type="array">
+  Values of mapped SIP headers for inbound calls on Bring Your Own Twilio numbers, as `{ key, value }` objects. `[]` when none.
+</ResponseField>
+
 See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) for the remaining fields (`charged_duration`, `error`, `hasTelephonyCost`, `publicRecordingUrl`, `batchId`, `pendingReason`, `variables`, `dynamic_variables`, `llm`/`stt`/`tts`, `bookingOutcome` and others).
+
+### Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "Workspace ID is required", "code": "WORKSPACE_ID_REQUIRED"}` | The `x-workspace-id` header is missing |
+| `400` | `{"error": "Invalid call history ID", "code": "CALL_HISTORY_ID_INVALID"}` | `callHistoryId` is not a 24-character hex ID |
+| `404` | `{"error": "Call history record not found", "code": "CALL_HISTORY_NOT_FOUND"}` | No call with that ID exists in this workspace |
+| `500` | `{"error": "Could not fetch call history", "code": "CALL_HISTORY_FETCH_FAILED"}` | Unexpected server error. Safe to retry |
 
 <ResponseExample>
 ```json
@@ -138,6 +155,8 @@ See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) f
   "hipaaCompliance": false,
   "functionCalls": [],
   "dynamic_variables": {},
+  "twilioCallSid": "CA0123456789abcdef0123456789abcdef",
+  "headerVariables": [{ "key": "store_id", "value": "1042" }],
   "llm": { "model": "gpt-4.1" },
   "stt": {},
   "tts": {},

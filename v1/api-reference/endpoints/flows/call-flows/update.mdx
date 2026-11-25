@@ -204,6 +204,43 @@ Configuration settings for the call flow.
     The silence sequence must fit inside the call: `endCallOnSilence × max(silenceReminderRetries, 1) + endCallAfterReminder` must be no more than `maxCallDuration`. Numbers must be sent as numbers, not strings.
   </ParamField>
 
+  <ParamField body="postCallAnalysis" type="array">
+    The fields extracted from every call after it ends (Post-call analysis in the editor). Results are returned in `analyzedData` on [Get Call](/v1/api-reference/endpoints/calls/call-history/get), keyed by each field's `name`.
+
+    **This array replaces the flow's whole list.** To add, edit or remove one field, get the flow with [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get), change its `settings.postCallAnalysis`, and send the complete array back. A field you leave out is removed. `[]` removes them all; `null` is ignored and changes nothing.
+
+    `summary`, `call_disposition` and `call_sentiment` are always added by the platform, so you don't need to define them.
+
+    <Expandable title="postCallAnalysis">
+      <ParamField body="name" type="string" required>
+        The key the result is saved under in `analyzedData`, for example `appointment_booked`. Use a unique name per field. A field with a blank name is skipped.
+      </ParamField>
+      <ParamField body="description" type="string">
+        What to extract and how to decide it. The analysis model reads this together with the transcript, so write rules here, for example "true only if the caller confirmed a date and time". `{{variable}}` placeholders are filled from the call's dynamic variables.
+      </ParamField>
+      <ParamField body="type" type="string" enum={['text', 'boolean', 'number', 'selector']} default="text">
+        The type of value returned. An unrecognised type is treated as `text`.
+      </ParamField>
+      <ParamField body="options" type="array">
+        For `selector` only: the allowed values. The result is always one of these, or `null`. Match them to the values any downstream system expects.
+      </ParamField>
+    </Expandable>
+
+    Changes apply to calls analysed after the update is saved. For a node flow, send this to the flow's call flow id, the same as any other call flow; the fields are not part of the node graph.
+  </ParamField>
+
+  <ParamField body="postCallAnalysisEmailSettings" type="object">
+    Email each call's post-call analysis results.
+    <Expandable title="postCallAnalysisEmailSettings">
+      <ParamField body="enabled" type="boolean" default="false">
+        Whether the email is sent.
+      </ParamField>
+      <ParamField body="emails" type="array">
+        Recipient addresses. This array replaces the stored list.
+      </ParamField>
+    </Expandable>
+  </ParamField>
+
   <ParamField body="knowledgeBaseFiles" type="array">
     Files uploaded with [Upload Call Flow Knowledge File](/v1/api-reference/endpoints/flows/call-flows/knowledgebase-upload). This array replaces the stored list, so include the files the flow already has.
     <Expandable title="knowledgeBaseFiles">
@@ -313,6 +350,10 @@ With `expectedUpdatedAt`, `true` saves even if the flow has changed since.
 </Note>
 
 <Note>
+On a node flow (`promptType: "nodes"`), the conversation is defined by the node graph, not by `prompt`. A `prompt` sent here is saved and returns `200`, but calls on a node flow do not use it.
+</Note>
+
+<Note>
 If the flow has unpublished changes from the call flow editor, [Get Call Flow](/v1/api-reference/endpoints/flows/call-flows/get) returns the draft merged over the live flow. This endpoint writes to the live flow.
 </Note>
 
@@ -349,7 +390,7 @@ The updated call flow, with one extra field, `numberSyncFailures`.
 </ResponseField>
 
 <ResponseField name="folderId" type="string">
-  The folder the call flow is in, or `null`.
+  The folder the call flow is in. Left out when the call flow isn't in a folder.
 </ResponseField>
 
 <ResponseField name="name" type="string">
@@ -452,6 +493,10 @@ The updated call flow, with one extra field, `numberSyncFailures`.
   Phone numbers bound to the flow whose telephony settings could not be updated after a `direction` change, as `{ phoneNumberId, phoneNumber }`. Empty when everything synced.
 </ResponseField>
 
+## Post-call analysis
+
+Set the fields to extract from every call after it ends with `settings.postCallAnalysis` (see [Request Body](#request-body)). Each field is saved under its `name` in `analyzedData` on [Get Call](/v1/api-reference/endpoints/calls/call-history/get). The array you send replaces the flow's whole list, so send every field you want to keep. For a full request, open the **Set post-call analysis fields** curl example in the request panel.
+
 
 <RequestExample>
 ```json Change only the inbound greeting
@@ -487,6 +532,34 @@ The updated call flow, with one extra field, `numberSyncFailures`.
   "customWelcomeMessage": "Thanks for calling Acme Plumbing, how can I help you?"
 }
 ```
+```bash Set post-call analysis fields
+curl -X PUT "https://api.trillet.ai/v1/api/call-flows/{id}" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "settings": {
+      "postCallAnalysis": [
+        {
+          "name": "appointment_booked",
+          "description": "true only if the caller confirmed a date and time for the appointment",
+          "type": "boolean"
+        },
+        {
+          "name": "service_type",
+          "description": "The service the caller asked about",
+          "type": "selector",
+          "options": ["plumbing", "hvac", "electrical", "other"]
+        },
+        {
+          "name": "callback_number",
+          "description": "The number the caller asked to be called back on, if different from the caller ID",
+          "type": "text"
+        }
+      ]
+    }
+  }'
+```
 </RequestExample>
 
 <ResponseExample>
@@ -494,7 +567,6 @@ The updated call flow, with one extra field, `numberSyncFailures`.
 {
   "_id": "c2c2c2c2c2c2c2c2c2c2c2c2",
   "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
-  "folderId": null,
   "name": "Customer Support Flow",
   "direction": "bidirectional",
   "description": "Handles inbound support calls",

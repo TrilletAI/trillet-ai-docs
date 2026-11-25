@@ -1,8 +1,14 @@
 ---
 title: "Delete Call Disposition"
 api: "DELETE /v1/api/call-dispositions/{id}"
-description: "Delete or cancel a call disposition."
+description: "Cancel a contact's queued callback, or delete a finished record."
 ---
+
+What happens depends on the record:
+
+- **A callback is queued:** the callback is cancelled. The record is kept with `status: "cancelled"`.
+- **The queued callback has already run:** the record is kept and marked `status: "completed"`.
+- **No further attempts were due** (`currentAttempt` is `-1`, or no callback is queued): the record is deleted.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -12,19 +18,26 @@ Workspace identifier for the API.
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-The unique identifier of the call disposition to delete.
+The record's `_id`, from [List Call Dispositions](/v1/api-reference/endpoints/call-dispositions/list).
 </ParamField>
 
 ## Response Fields
 
-<ResponseField name="success" type="boolean">
-Whether the deletion was successful.
+<ResponseField name="message" type="string">
+What happened: `"Job cancelled successfully"`, `"Job already completed."` or `"Record deleted successfully."`.
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "Workspace ID is required"}` | The `x-workspace-id` header is missing |
+| `404` | `{"message": "No call-disposition found for id <id>."}` | No record with that ID exists in this workspace |
 
 <ResponseExample>
 ```json
 {
-  "success": true
+  "message": "Job cancelled successfully"
 }
 ```
 </ResponseExample>

@@ -341,7 +341,7 @@ When a request is refused, the flow is not created.
 </ResponseField>
 
 <ResponseField name="folderId" type="string">
-  The identifier of the folder where the call flow is organized.
+  The identifier of the folder where the call flow is organized. Left out when the call flow isn't in a folder.
 </ResponseField>
 
 <ResponseField name="name" type="string">
@@ -490,7 +490,6 @@ When a request is refused, the flow is not created.
 {
   "_id": "c2c2c2c2c2c2c2c2c2c2c2c2",
   "workspaceId": "c1c1c1c1c1c1c1c1c1c1c1c1",
-  "folderId": null,
   "name": "Customer Support Flow",
   "direction": "bidirectional",
   "description": "Handles inbound support calls",

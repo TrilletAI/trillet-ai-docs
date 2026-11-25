@@ -9,6 +9,34 @@ Add an AI chat widget to your website with the Trillet Web SDK (`@trillet-ai/web
 
 
 
+## No-code option: Website widget
+
+If you don't need your own UI, the portal builds a ready-made chat widget for you and gives you two lines of code to paste.
+
+<Steps>
+  <Step title="Design the widget">
+    Open your call flow and click **Website widget** in the editor header. Save the agent first if it is new: the code needs its ID. Under **Conversation**, pick **Chat** (or **Chat and voice**), adjust the look and words, then click **Save**.
+  </Step>
+  <Step title="Add it to your website">
+    Click **Add to website**. The **Add to your website** sheet has three steps:
+
+    1. **Let website visitors connect**: click **Turn on public access**, then **Publish changes**.
+    2. **Websites it can run on**: add each site under **Add a website**. Leave the list empty to let the widget run on any website.
+    3. **Paste the code**: click **Copy code** and paste it just before `</body>` on every page.
+  </Step>
+</Steps>
+
+The code looks like this, with your own IDs filled in:
+
+```html
+<script src="https://unpkg.com/@trillet-ai/web-sdk/dist/widget.umd.js" async type="text/javascript"></script>
+<trillet-widget agent-id="your-agent-id" workspace-id="your-workspace-id"></trillet-widget>
+```
+
+Design changes you save later reach your website on its next page load. You don't need to paste the code again.
+
+To build your own UI instead, follow the steps below and use the Web SDK.
+
 ## Prerequisites
 
 <Steps>
@@ -19,10 +47,10 @@ Add an AI chat widget to your website with the Trillet Web SDK (`@trillet-ai/web
     Navigate to **Call Flows** in the sidebar. Each call flow card displays its **Agent ID** - copy it from the card.
   </Step>
   <Step title="Enable public access and publish">
-    Open your call flow and click **Website widget** in the editor header, then **Get embed code**. In that dialog, click **Turn on Public Access**, then **Publish changes**. Public Access only counts once it is published: a draft-only change is ignored, and `startPublicCall()` is refused with 403 `Public access not allowed for this agent`. (The same switch is also under **Settings > Advanced Settings > Security & Privacy > HIPAA & Compliance**.)
+    Open your call flow, click **Website widget** in the editor header, then **Add to website**. In the **Add to your website** sheet, click **Turn on public access**, then **Publish changes**. Public Access only counts once it is published: a draft-only change is ignored, and `startPublicCall()` is refused with 403 `Public access not allowed for this agent`. (The same switch is also under **Settings > Advanced Settings > Security & Privacy > HIPAA & Compliance**.)
   </Step>
   <Step title="Add your site to Domains (recommended)">
-    Go to **Settings > Domains** (under **Workspace > Developer**) and add the domain where you'll embed the widget, for example `yoursite.com`. You can also add it from the **Get embed code** dialog. The change takes effect immediately.
+    Go to **Settings > Domains** (under **Workspace > Developer**) and add the domain where you'll embed the widget, for example `yoursite.com`. You can also add it under **Websites it can run on** in the **Add to your website** sheet. The change takes effect immediately.
 
     While your workspace has **no** domains listed, public calls are allowed from any site. Once you add **one**, calls from every other site are refused with 403 `Origin not allowed`, so list every site that embeds the widget, including staging. `localhost` and your workspace's own whitelabel portal domain are always allowed.
   </Step>

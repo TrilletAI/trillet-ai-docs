@@ -1,7 +1,7 @@
 ---
 title: "Export Call Dispositions CSV"
 api: "GET /v1/api/call-dispositions/export-csv"
-description: "Export call dispositions as a CSV file."
+description: "Download call disposition records as a CSV file."
 ---
 
 ## Headers
@@ -11,30 +11,48 @@ Workspace identifier for the API.
 
 ## Query Parameters
 
-<ParamField query="phoneNumber" type="string">
-Filter by phone number.
-</ParamField>
-
-<ParamField query="batchId" type="string">
-Filter by batch call ID.
-</ParamField>
+Without filters, the export contains every record in the workspace, newest first. This endpoint accepts fewer filters than [List Call Dispositions](/v1/api-reference/endpoints/call-dispositions/list): only the four below are applied.
 
 <ParamField query="agentId" type="string">
-Filter by agent ID.
-</ParamField>
-
-<ParamField query="status" type="string">
-Filter by disposition status.
+Only records for this agent ID.
 </ParamField>
 
 <ParamField query="disposition" type="string">
-Filter by disposition type.
+Only records where any attempt had this outcome, written exactly as stored, for example `No Answer` or `Partial Complete: Call Back`.
 </ParamField>
 
-<ParamField query="timezone" type="string">
-Timezone for date formatting in the CSV.
+<ParamField query="dateRange" type="string">
+Only records created in this range. A JSON object with `startDate` and `endDate` (ISO 8601), URL-encoded, for example `{"startDate":"2026-11-01T00:00:00Z","endDate":"2026-11-30T23:59:59Z"}`.
+</ParamField>
+
+<ParamField query="search" type="string">
+Only records whose phone number or call notes contain this text (case-insensitive).
 </ParamField>
 
 ## Response
 
-The response is a CSV file with `Content-Type: text/csv` headers containing all matching dispositions with columns for phone number, disposition type, status, scheduled time, attempt number, agent, and notes.
+A CSV file (UTF-8 with a byte-order mark), with `Content-Type: text/csv` and `Content-Disposition: attachment; filename=call_dispositions_<date>.csv`. With no matching records, the file has only the header row.
+
+| Column | Contents |
+|---|---|
+| Phone Number | The contact's phone number |
+| Agent ID | The agent making the calls |
+| Current Attempt | `currentAttempt` (`-1` when no further attempts will be made) |
+| Max Attempts | `maxAttempts` |
+| Status | `active`, `inactive`, `cancelled` or `completed` |
+| Created At | When the record was created (ISO 8601) |
+| Updated At | When the record last changed (ISO 8601) |
+| Timezone | The record's timezone |
+| Current Time Of Given Timezone | Local time when the next callback was scheduled |
+| Latest Disposition | Outcome of the most recent attempt |
+| Latest Notes | Notes from the most recent attempt |
+| All Dispositions | Every attempt, separated by ` \| `, each as `<outcome> (<notes>) [call <callHistoryId>] @<time>` |
+
+<RequestExample>
+```bash cURL
+curl "https://api.trillet.ai/v1/api/call-dispositions/export-csv?disposition=No%20Answer" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  --output call_dispositions.csv
+```
+</RequestExample>

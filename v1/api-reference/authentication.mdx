@@ -31,7 +31,7 @@ curl https://api.trillet.ai/v1/api/workspaces \
 
 ## Obtaining API Keys
 
-Generate an API key under the Settings tab.
+Generate an API key in [Settings > API Keys](https://app.trillet.ai/settings?section=api-keys).
 
 An API key belongs to the user who created it. It has no permissions or limits of its own: every request made with it acts as that user, with that user's role, in whichever workspace `x-workspace-id` names. The key works in every workspace the user belongs to. If the user isn't a member of the workspace you name, the request fails with `403`.
 
@@ -40,12 +40,12 @@ An API key belongs to the user who created it. It has no permissions or limits o
 </Tip>
 
 <Note>
-  Get your API key from the [Trillet Settings Dashboard](https://app.trillet.ai/settings).
+  Get your API key from the [API Keys section of Trillet Settings](https://app.trillet.ai/settings?section=api-keys).
 </Note>
 
 ## Security Best Practices
 
-1. Keep API keys on your server. A browser or mobile app should use a short-lived SDK token from [Create SDK Token](/v1/api-reference/endpoints/calls/sdk/auth).
+1. Keep API keys on your server, never in a browser or mobile app. To run a web call in the browser, start it from your server with [Connect a Web Call](/v1/api-reference/endpoints/calls/web/connect) and pass only the `connection` URL and token from its response to the client.
 2. Rotate API keys periodically.
 3. Use different API keys for development and production.
 4. Watch key usage for unexpected traffic.
