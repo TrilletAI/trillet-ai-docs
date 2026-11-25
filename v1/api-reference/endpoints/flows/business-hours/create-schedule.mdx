@@ -1,0 +1,73 @@
+---
+title: "Save a Schedule"
+api: "POST /v1/api/call-flows/{id}/office-hours/schedules"
+description: "Save a named week that you can switch to later in one call."
+---
+
+A schedule is a complete named copy of a week, kept on the shelf. It contains only the recurring week, never dates.
+
+## Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique ID of the call flow.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string" required>
+A name for the schedule, up to 60 characters, for example `Storm` or `Winter hours`.
+</ParamField>
+
+<ParamField body="perDay" type="object">
+The week to save. **Omit this to snapshot the flow's current weekly hours** under the given name.
+</ParamField>
+
+<ParamField body="activate" type="boolean" default="false">
+Switch to the new schedule in the same call.
+</ParamField>
+
+<Warning>
+A flow holds at most 20 saved schedules.
+</Warning>
+
+<RequestExample>
+```bash Save the current week
+curl -X POST 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours/schedules' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID' \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Normal"}'
+```
+
+```bash Save and switch to it
+curl -X POST 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours/schedules' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "Storm",
+    "activate": true,
+    "perDay": {
+      "Monday":    { "enabled": true,  "start": "10:00", "end": "16:00" },
+      "Saturday":  { "enabled": false, "start": "09:00", "end": "17:00" }
+    }
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "success": true,
+  "schedule": { "id": "a1b2c3", "name": "Storm", "perDay": {} },
+  "officeHours": {},
+  "version": "2d4f6a81-90bc-4e1d-a3f7-5b8c0d1e2f34"
+}
+```
+</ResponseExample>

@@ -1,0 +1,65 @@
+---
+title: "Close a Date or Set Special Hours"
+api: "PUT /v1/api/call-flows/{id}/office-hours/dates/{date}"
+description: "Close one calendar date, or give it hours that differ from the normal week."
+---
+
+This is the endpoint for same-day changes: weather, staffing, a public holiday, a late opening.
+
+A date is either closed or has special hours, never both. Sending one replaces the other.
+
+## Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique ID of the call flow.
+</ParamField>
+
+<ParamField path="date" type="string" required>
+The calendar date as `YYYY-MM-DD`.
+</ParamField>
+
+## Request Body
+
+<ParamField body="closed" type="boolean">
+Send `true` to close the date entirely. When present and true, `start` and `end` are ignored.
+</ParamField>
+
+<ParamField body="start" type="string">
+Opening time for special hours, 24-hour `HH:MM`.
+</ParamField>
+
+<ParamField body="end" type="string">
+Closing time for special hours, 24-hour `HH:MM`. Must be later than `start`.
+</ParamField>
+
+<Note>
+Send either `{"closed": true}` or both `start` and `end`. Anything else is rejected with `400`.
+</Note>
+
+<Warning>
+A flow holds at most 366 date exceptions. Remove past dates rather than letting them accumulate.
+</Warning>
+
+<RequestExample>
+```bash Close the date
+curl -X PUT 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours/dates/2026-12-25' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID' \
+  -H 'Content-Type: application/json' \
+  -d '{"closed": true}'
+```
+
+```bash Special hours
+curl -X PUT 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours/dates/2026-12-24' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID' \
+  -H 'Content-Type: application/json' \
+  -d '{"start": "08:00", "end": "13:00"}'
+```
+</RequestExample>

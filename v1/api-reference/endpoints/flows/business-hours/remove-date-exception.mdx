@@ -1,0 +1,31 @@
+---
+title: "Remove a Date Exception"
+api: "DELETE /v1/api/call-flows/{id}/office-hours/dates/{date}"
+description: "Return one date to the normal weekly hours."
+---
+
+Clears whichever exception the date had, whether it was closed or had special hours. The date goes back to whatever the weekly hours say.
+
+## Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique ID of the call flow.
+</ParamField>
+
+<ParamField path="date" type="string" required>
+The calendar date as `YYYY-MM-DD`.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X DELETE 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours/dates/2026-12-24' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID'
+```
+</RequestExample>
