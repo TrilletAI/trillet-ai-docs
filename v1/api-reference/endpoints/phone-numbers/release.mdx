@@ -1,8 +1,17 @@
 ---
 title: "Release Phone Number"
 api: "POST /v1/api/twilio/release-number"
-description: "Release (cancel) a phone number from your workspace."
+description: "Release a phone number from your workspace, or cancel its renewal if it's a paid number."
 ---
+
+What happens depends on the number:
+
+- **Paid number with a subscription.** The number is **not** removed now. Its monthly renewal is cancelled, and the number keeps working until the end of the period you've already paid for. The response includes `scheduledReleaseAt`, the date it will be removed. To keep the number after all, call `POST /v1/api/twilio/phone-numbers/{phoneNumberSid}/cancel-release` before that date.
+- **Every other number** (numbers from your plan's free allowance, numbers you brought yourself, numbers with nothing left to bill) is released immediately.
+
+<Note>
+Your role needs the `phone_number:delete` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -11,25 +20,66 @@ Workspace identifier for the API.
 
 ## Request Body
 
-<ParamField body="phoneNumberId" type="string" required>
-The unique identifier of the phone number to release.
+<ParamField body="phoneNumberSid" type="string" required>
+The number's `sid` from [List Phone Numbers](/v1/api-reference/endpoints/phone-numbers/list). This is the provider's ID for the number (for a SIP number you brought yourself, it's the number in E.164 format). It is **not** the record `_id`: sending the `_id` returns `404`.
 </ParamField>
 
-## Response Fields
+## Response
+
+### Released immediately
 
 <ResponseField name="success" type="boolean">
-Whether the release was successful.
+`true`.
 </ResponseField>
 
-<ResponseField name="message" type="string">
-Confirmation message.
+<ResponseField name="phoneNumberSid" type="string">
+The `sid` you sent. Depending on the kind of number, the response can carry `phoneNumber` and `message` instead. Rely only on `success`.
 </ResponseField>
 
-<ResponseExample>
+### Renewal cancelled (paid number)
+
+The response is the Stripe subscription after the change (for example `id`, `status` and `cancel_at_period_end: true`), plus:
+
+<ResponseField name="scheduledReleaseAt" type="string">
+When the number will be removed, as an ISO 8601 time. `null` if Stripe returned no period end.
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
+| `403` | `{"error": "Phone number release is not allowed for SMB accounts. ..."}` | SMB accounts can't release numbers. Contact support |
+| `404` | `{"error": "Phone number not found"}` | No number with that `sid` in this workspace |
+| `500` | `{"error": "..."}` | The release failed at the provider or in Stripe |
+
+### Cancel a scheduled release
+
+`POST /v1/api/twilio/phone-numbers/{phoneNumberSid}/cancel-release` (no body) turns the renewal back on and returns the number with `scheduledReleaseAt: null`. It returns `400` with code `NO_SCHEDULED_RELEASE` when the number isn't scheduled for release, `400` with `RELEASE_DATE_PASSED` once the date has passed, and `404` with `NOT_FOUND` for an unknown number.
+
+<RequestExample>
 ```json
 {
+  "phoneNumberSid": "1293384261075731499"
+}
+```
+</RequestExample>
+
+<ResponseExample>
+```json Released immediately
+{
   "success": true,
-  "message": "Phone number released successfully"
+  "phoneNumberSid": "1293384261075731499"
+}
+```
+
+```json Renewal cancelled (trimmed)
+{
+  "id": "sub_1QabcDEFghIJklMN",
+  "object": "subscription",
+  "status": "active",
+  "cancel_at_period_end": true,
+  "scheduledReleaseAt": "2026-11-28T09:14:02.000Z"
 }
 ```
 </ResponseExample>

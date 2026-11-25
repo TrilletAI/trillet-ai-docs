@@ -4,6 +4,10 @@ api: "GET /v1/api/twilio/available-numbers"
 description: "Search for available phone numbers in a specific country."
 ---
 
+<Note>
+Your role needs the `phone_number:view` permission. Otherwise the request fails with `403 {"error": "Insufficient permissions"}`.
+</Note>
+
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
@@ -12,19 +16,29 @@ Workspace identifier for the API.
 ## Query Parameters
 
 <ParamField query="country" type="string" required>
-Country code to search for numbers (e.g., "US", "CA", "AU", "GB").
+Country code to search for numbers: `US`, `CA`, `AU`, or `GB` when it appears in [Available Countries](/v1/api-reference/endpoints/phone-numbers/available-countries). Any other country also needs an `addressSid` query parameter.
 </ParamField>
 
 <ParamField query="type" type="string" required>
-Type of phone number. Options: "local", "tollFree", "mobile". Not required for AU.
+`local` or `mobile`. Not required for AU. For `GB`, only `mobile` is available (`local` returns `400` with code `UK_LOCAL_NOT_AVAILABLE`).
+
+Toll-free numbers are not sold through the API. `tollFree` returns `403` with code `TOLL_FREE_NOT_AVAILABLE`, and toll-free numbers are removed from every result.
 </ParamField>
 
 <ParamField query="contains" type="string">
 Search for numbers containing specific digits or patterns.
 </ParamField>
 
+<ParamField query="areaCode" type="string">
+Only numbers with this area code. Toll-free area codes (800, 833, 844, 855, 866, 877, 888) return `403` with code `TOLL_FREE_NOT_AVAILABLE`.
+</ParamField>
+
+<ParamField query="inState" type="string">
+Only numbers in this state or region (for `GB`, a city).
+</ParamField>
+
 <ParamField query="limit" type="number">
-Maximum number of results to return.
+Maximum number of results to return. Defaults to 20 for US and CA.
 </ParamField>
 
 ## Response Fields
@@ -48,16 +62,36 @@ City or locality associated with the number.
 State or region associated with the number.
 </ResponseField>
 
+<ResponseField name="capabilities" type="object">
+`voice`, `SMS`, `MMS` and `fax`, each `true` or `false`.
+</ResponseField>
+
+<ResponseField name="isoCountry" type="string">
+Country code of the number.
+</ResponseField>
+
 </ResponseField>
 
 <ResponseField name="filters" type="object">
 Available filter options for the country.
 
 <ResponseField name="supported" type="array">
-List of supported filter types for the selected country.
+List of supported filter types for the selected country: `contains`, `limit`, `areaCode` and `inState` for US, CA, AU and GB.
 </ResponseField>
 
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Country and workspace ID are required."}` | `country` or `x-workspace-id` missing |
+| `400` | `{"error": "Type is required for non-AU countries."}` | `type` missing |
+| `400` | `{"error": "...", "code": "INVALID_COUNTRY"}` | `GB` isn't available on this deployment |
+| `400` | `{"error": "...", "code": "UK_LOCAL_NOT_AVAILABLE"}` | `GB` with `type` `local` |
+| `400` | `{"error": "AddressSid is required for this country."}` | Another country without `addressSid` |
+| `403` | `{"error": "...", "code": "TOLL_FREE_NOT_AVAILABLE"}` | Toll-free type or area code |
+| `500` | `{"error": "Failed to fetch available phone numbers."}` | The provider search failed |
 
 <ResponseExample>
 ```json
@@ -77,7 +111,7 @@ List of supported filter types for the selected country.
     }
   ],
   "filters": {
-    "supported": ["contains", "areaCode"]
+    "supported": ["contains", "limit", "areaCode", "inState"]
   }
 }
 ```

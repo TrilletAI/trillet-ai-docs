@@ -1,51 +1,78 @@
 ---
 title: "Update Workspace Name"
 api: "PUT /v1/api/workspaces/{workspaceId}"
-description: "Update the name of an existing workspace. Only the owner of the workspace is authorized to perform this action."
+description: "Rename a workspace, or change its display currency."
 ---
+
+Your role needs the `workspace:edit` permission. For a client workspace under an agency or Studio master, you also need `agency_hub:edit` on the master workspace.
+
+<Note>
+Send **either** `name` **or** `displayCurrency`. If `displayCurrency` is present, only the currency is updated and `name` is ignored.
+</Note>
 
 ### Path Parameters
 
 <ParamField path="workspaceId" type="string" required>
-  The unique identifier of the workspace to update.
+  The `_id` of the workspace to update.
 </ParamField>
 
 ### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
-  The workspace ID (should match the `workspaceId` path parameter).
+  A workspace where your role has `workspace:edit`. Permissions are checked against this header, so it's normally the same workspace as `workspaceId`.
 </ParamField>
 
 ### Request Body
 
-<ParamField body="name" type="string" required>
-  The new name for the workspace.
+<ParamField body="name" type="string">
+  The new name for the workspace. Leaving out both fields returns `200` with nothing changed.
 </ParamField>
 
-### Response Fields
+<ParamField body="displayCurrency" type="string">
+  The currency code to display amounts in, for example `usd` or `aud`. Stored in lowercase.
+</ParamField>
+
+### Response
+
+The full updated workspace object (the same shape as [Get Workspace by ID](/v1/api-reference/endpoints/workspace/get-workspace-by-id)), including:
 
 <ResponseField name="_id" type="string">
-  The unique identifier of the workspace.
+  The workspace ID.
 </ResponseField>
 
 <ResponseField name="name" type="string">
-  The updated name of the workspace.
+  The workspace name.
 </ResponseField>
-
 
 <ResponseField name="initials" type="string">
-  The initials assigned to the workspace.
+  The workspace initials.
 </ResponseField>
 
-
 <ResponseField name="teamMembers" type="array">
-  List of team members associated with the workspace.
+  The workspace's team members.
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
-  Timestamp when the workspace was created (ISO 8601 format).
+  When the workspace was created (ISO 8601).
 </ResponseField>
 
 <ResponseField name="updatedAt" type="string">
-  Timestamp when the workspace was last updated (ISO 8601 format).
+  When the workspace was last updated (ISO 8601).
 </ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `403` | `{"error": "Insufficient permissions", ...}` | Your role lacks `workspace:edit` |
+| `403` | `{"error": "Insufficient permissions to update workspace"}` | Client workspace and you lack `agency_hub:edit` on the master |
+| `404` | `{"error": "Workspace not found"}` | No workspace with that ID that you can see |
+| `500` | `{"error": "..."}` | Unexpected server error |
+
+<RequestExample>
+```json
+{
+  "name": "Sales Team"
+}
+```
+</RequestExample>

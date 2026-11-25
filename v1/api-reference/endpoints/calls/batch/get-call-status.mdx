@@ -12,55 +12,70 @@ description: "Get the status of an individual call within a batch operation"
 ### Path Parameters
 
 <ParamField path="batchId" type="string" required>
-  The unique identifier of the batch call operation
+  The 10-character batch ID.
 </ParamField>
 
 <ParamField path="jobId" type="string" required>
-  The unique identifier of the individual call job
+  The job's numeric ID, from the `id` field of [List Batch Calls](/v1/api-reference/endpoints/calls/batch/list-calls).
 </ParamField>
+
+<Note>
+  A status exists only once the job has started. A job that is still waiting in the queue returns `404 Call not found`. Statuses are kept for **7 days**. This endpoint reports the dial job, not the conversation: for the outcome, transcript and analysis use [Call History](/v1/api-reference/endpoints/calls/call-history/list) filtered by `batchId`.
+</Note>
 
 ### Response
 
-<ResponseField name="jobId" type="string">
-  The unique identifier of the call job
+<ResponseField name="jobId" type="string | number">
+  The numeric job ID.
+</ResponseField>
+
+<ResponseField name="batchId" type="string">
+  The batch the job belongs to.
 </ResponseField>
 
 <ResponseField name="status" type="string">
-  Current status of the individual call
-  - `waiting` - Call is queued and waiting to be processed
-  - `active` - Call is currently in progress
-  - `completed` - Call completed successfully
-  - `failed` - Call failed due to an error
+  - `active` - The call is being placed
+  - `completed` - The dial job finished. This doesn't mean the conversation succeeded.
+  - `failed` - The dial job failed; see `error`
+  - `cancelled` - The job was cancelled with Cancel Batch Job or Cancel Batch Contact
 </ResponseField>
 
-<ResponseField name="phone_number" type="string">
-  The phone number that was called
+<ResponseField name="phoneNumber" type="string">
+  The number that was called.
+</ResponseField>
+
+<ResponseField name="contact" type="string | null">
+  The row's `contact` or `name` column, if present. Other columns (such as the template's `contact_name`) are not copied here.
+</ResponseField>
+
+<ResponseField name="business" type="string | null">
+  The row's `business` or `company` column, if present.
 </ResponseField>
 
 <ResponseField name="startTime" type="number">
-  Timestamp when the call started (if applicable)
+  `active` jobs only. When the job started, in Unix milliseconds.
 </ResponseField>
 
 <ResponseField name="endTime" type="number">
-  Timestamp when the call ended (if completed or failed)
+  `completed`, `failed` and `cancelled` jobs. When the job ended, in Unix milliseconds.
 </ResponseField>
 
-<ResponseField name="duration" type="number">
-  Duration of the call in seconds (if completed)
+<ResponseField name="callDuration" type="number">
+  `completed` jobs only. Call duration from Call History, or `0` if it wasn't found.
+</ResponseField>
+
+<ResponseField name="roomName" type="string">
+  `completed` jobs only. The call's room name, when known.
 </ResponseField>
 
 <ResponseField name="error" type="string">
-  Error message if the call failed
-</ResponseField>
-
-<ResponseField name="result" type="object">
-  Call result data including conversation details (if completed)
+  `failed` jobs only. Why the job failed.
 </ResponseField>
 
 ### Example Usage
 
 ```bash
-curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls/call_123" \
+curl -X GET "https://api.trillet.ai/v1/api/batch-calls/k3j9x0a1bq/calls/4821" \
   -H "x-api-key: YOUR_API_KEY" \
   -H "x-workspace-id: YOUR_WORKSPACE_ID"
 ```
@@ -69,22 +84,14 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls
 
 ```json
 {
-  "jobId": "call_123",
   "status": "completed",
-  "phone_number": "+1234567890",
-  "startTime": 1703097600000,
-  "endTime": 1703097642000,
-  "duration": 42,
-  "result": {
-    "callId": "call_abc123",
-    "transcript": "Hello John, this is an automated call...",
-    "outcome": "successful",
-    "metadata": {
-      "first_name": "John",
-      "last_name": "Doe",
-      "email": "john.doe@example.com"
-    }
-  }
+  "endTime": 1793284842000,
+  "phoneNumber": "+14155550123",
+  "contact": "John Smith",
+  "business": "Acme Dental",
+  "batchId": "k3j9x0a1bq",
+  "jobId": "4821",
+  "callDuration": 42
 }
 ```
 
@@ -92,12 +99,14 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls
 
 ```json
 {
-  "jobId": "call_124",
   "status": "failed",
-  "phone_number": "+1987654321",
-  "startTime": 1703097600000,
-  "endTime": 1703097615000,
-  "error": "Number busy - unable to connect after 3 attempts"
+  "error": "Call failed",
+  "endTime": 1793284815000,
+  "phoneNumber": "+14155550187",
+  "contact": "Jane Doe",
+  "business": "Acme Dental",
+  "batchId": "k3j9x0a1bq",
+  "jobId": "4822"
 }
 ```
 
@@ -105,30 +114,22 @@ curl -X GET "https://api.trillet.ai/v1/api/batch-calls/batch_7891011121314/calls
 
 ```json
 {
-  "jobId": "call_125",
+  "jobId": "4823",
+  "batchId": "k3j9x0a1bq",
   "status": "active",
-  "phone_number": "+1555666777",
-  "startTime": 1703097700000
+  "startTime": 1793284900000,
+  "phoneNumber": "+14155550199",
+  "contact": "Sam Lee",
+  "business": "Acme Dental"
 }
 ```
 
 ### Error Responses
-
-<ResponseField name="status" type="string">
-  Will be "not_found" if the call doesn't exist
-</ResponseField>
 
 <ResponseField name="error" type="string">
   Error message describing what went wrong
 </ResponseField>
 
 **Common Error Codes:**
-- `404` - Call not found with the specified job ID
+- `404` - `Call not found`: the job hasn't started yet, doesn't exist, isn't part of this batch, or its 7-day status has expired. `Batch not found` when the batch doesn't exist or belongs to another workspace.
 - `500` - Server error retrieving call status
-
-### Use Cases
-
-- Monitor individual call progress within a batch
-- Retrieve detailed results for completed calls
-- Debug failed calls to understand failure reasons
-- Track call timing and duration metrics

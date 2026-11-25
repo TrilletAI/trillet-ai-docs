@@ -4,6 +4,8 @@ api: "POST /v1/api/call"
 description: "Send an AI-driven phone call to a given number."
 ---
 
+Authenticate with your API key in the `x-api-key` header, as described in [Authentication](/v1/api-reference/authentication). Call this endpoint from your server, not from a browser.
+
 ### Headers  
 
 <ParamField header="x-workspace-id" type="string" required>
@@ -13,11 +15,23 @@ description: "Send an AI-driven phone call to a given number."
 ### Request Body
 
 <ParamField body="to" type="string" required>
-  The phone number to which the call will be made.
+  The number to call, in E.164 format, for example `+14155550123`. It must be a real, valid number: a number that only looks like E.164, such as `+1234567890`, is refused with `400` and code `INVALID_PHONE_NUMBER`. Digits without the `+` are accepted when they form a valid number with it.
 </ParamField>
 
 <ParamField body="call_agent_id" type="string" required>
-  The ID of the agent assigned to make the call.
+  The ID of the agent assigned to make the call. Required unless you send `call_flow_id` instead.
+</ParamField>
+
+<ParamField body="call_flow_id" type="string">
+  The ID of the call flow to call with, accepted in place of `call_agent_id`. The call runs on the agent that the call flow belongs to, and the portal lists both IDs together, so you can send whichever one you have.
+
+  Send one or the other. Sending both is allowed only when they refer to the same agent; if they do not, the request is rejected.
+
+  The call flow must be the live one for its agent. An archived or inactive call flow is rejected rather than silently falling back to the agent's current call flow.
+</ParamField>
+
+<ParamField body="from_phone_number_id" type="string" optional>
+  The `_id` of the phone number to call from. It must be one of the agent's numbers. When omitted, one of the agent's numbers is picked at random (WhatsApp numbers are used only when you name them here). An agent with no phone numbers can't place calls.
 </ParamField>
 
 <ParamField body="callback_url" type="string" optional>
@@ -25,25 +39,19 @@ description: "Send an AI-driven phone call to a given number."
 </ParamField>
 
 <ParamField body="dynamic_variables" type="object">
-  Dynamic variables that can be used to customize call scripts. Each key represents a variable that can be inserted into the call script dynamically. For example:
+  Values to fill in on this call, as a flat object of strings. The keys are your own: there is no fixed list, so name them to match what your call flow uses.
 
-  <Expandable title="Dynamic Variables Details">
-    <ParamField body="firstName" type="string">
-      First name of the person to address in the call.
-    </ParamField>
-    <ParamField body="lastName" type="string">
-      Last name of the person.
-    </ParamField>
-    <ParamField body="Zipcode" type="string">
-      Zip code for regional customization or information.
-    </ParamField>
-    <ParamField body="address" type="string">
-      Full address for detailed directions or service customization.
-    </ParamField>
-    <ParamField body="email" type="string">
-      Email address to reference or verify during the call.
-    </ParamField>
-  </Expandable>
+  To use a value, write its key in double curly braces, such as `{{first_name}}`, in any of these call flow settings:
+
+  - the call flow prompt
+  - the greeting, as either the custom message or the AI greeting prompt. Calls placed with this endpoint use the call flow's Outbound greeting.
+  - the voicemail message
+
+  Spell each key exactly as you send it, including upper and lower case, and put no spaces inside the braces. A `first_name` key fills in `{{first_name}}`, but not `{{firstName}}`, `{{First_Name}}` or `{{ first_name }}`.
+
+  Send every variable your call flow uses. An unfilled placeholder is spoken as written, except in the AI greeting prompt, where it is left out.
+
+  The request example on this page suits a call flow whose Outbound greeting is the custom message `{{greeting_text}}`, whose voicemail message is `{{voicemail_message}}`, and whose prompt refers to the person as `{{first_name}}`. Because the text is sent per call, each call can have its greeting and voicemail in a different language.
 </ParamField>
 
 <ParamField body="metadata" type="object" optional>
@@ -53,7 +61,32 @@ description: "Send an AI-driven phone call to a given number."
   </Expandable>
 </ParamField>
 
+<ParamField body="reject_outside_hours" type="boolean" default="false">
+  Refuse the call, instead of queueing it, when the call flow is outside its calling hours. The hours are checked when the request is received and again when the call is about to dial:
 
+  - If the call flow is outside its hours when the request is received, the API returns 409 with code `OUTSIDE_CALLING_HOURS`. No call is queued and nothing is added to Call History.
+  - If the hours close before the call dials, the call is marked Failed in Call History with `callEndReason` `outside_calling_hours`, and it is not queued again.
+
+  With the default, `false`, a call outside calling hours is queued for the next window. See [Calling hours](#calling-hours). Calls from a WhatsApp number do not use calling hours, so this option does not affect them. Send `true` or `false`; any other value returns 400.
+</ParamField>
+
+### Calling hours
+
+When the call flow has calling hours turned on, a call requested outside them is queued by default and dials when the next window opens. Until then it shows in Call History as Scheduled, with the reason "Outside office hours", and its call history record has `status` `pending` and `pendingReason` `office_hours`. If no window opens in the next 30 days, the call is marked Failed instead, with `callEndReason` `outside_calling_hours`. A queued call cannot be cancelled yet. To have the API refuse these calls instead, send `reject_outside_hours: true`.
+
+If our servers can't start a call the API accepted, for example because its call flow was deactivated after the request, the call is marked Failed in Call History. Its `status` is `failed`, `callEndReason` gives the reason, such as `no_active_call_flow`, and `error` explains it. These calls do not trigger `callback_url`. A system error while the call is connecting can leave it Scheduled instead.
+
+### Rate limit
+
+Outbound calls are limited per workspace, in a fixed 60-second window:
+
+- 1 call per minute for a workspace with no paid plan and no wallet top-up
+- 20 calls per minute for a workspace on Studio or Agency Plus, or one that has topped up its wallet
+- No limit on Enterprise pricing
+
+Calls placed by a [batch](/v1/api-reference/endpoints/calls/batch/overview) are counted separately. Over the limit, the call is rejected with `error` "Rate limit exceeded: You have limit of N calls per minute. Please wait S seconds before making another call." Wait the number of seconds in the message before retrying.
+
+To check on a call, read its record with [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get) using the `callId` from the response.
 
 ### Response Fields
 
@@ -63,6 +96,10 @@ description: "Send an AI-driven phone call to a given number."
 
 <ResponseField name="message" type="string">
   A message providing feedback about the call initiation process, typically confirming successful initiation or describing an error.
+</ResponseField>
+
+<ResponseField name="call_agent_id" type="string">
+  The agent the call was placed with. Useful when you sent a `call_flow_id` and want to confirm which agent it resolved to.
 </ResponseField>
 
 <ResponseField name="callId" type="string">
@@ -77,13 +114,64 @@ description: "Send an AI-driven phone call to a given number."
   The identifier of the background job scheduled to execute the outbound call.
 </ResponseField>
 
+<ResponseField name="error" type="string">
+  Returned when the call could not be initiated. Explains why, in text you can show to your users. Some 400 responses have no `error` and give the reason in `message` instead: a missing field, a field of the wrong type, or a `call_agent_id` and `call_flow_id` that refer to different agents.
+</ResponseField>
+
+<ResponseField name="code" type="string">
+  Returned with some errors, so you can handle them in code:
+
+  - `INVALID_PHONE_NUMBER` (400): `to` is not a valid phone number.
+  - `AGENT_FLOW_MISMATCH` (400): `call_agent_id` and `call_flow_id` refer to different agents.
+  - `CALL_FLOW_NOT_LIVE` (400): the `call_flow_id` you sent is archived or inactive.
+  - `AGENT_NOT_FOUND` (404): no agent or call flow with that ID in this workspace.
+  - `FREE_PLAN_OUTBOUND_BLOCKED` (403): outbound calling is not included on the free plan.
+  - `SERVICE_ENDED` (403): the account's plan has ended.
+  - `workspace_suspended` (403): the workspace's traffic is suspended.
+  - `OUTSIDE_CALLING_HOURS` (409): the call flow is outside its calling hours and you sent `reject_outside_hours: true`.
+  - `NO_ACTIVE_CALL_FLOW` (422): the agent has no live call flow. Use an agent whose call flow is live.
+  - `CALL_FLOW_INBOUND_ONLY` (422): the agent's call flow only takes inbound calls.
+
+  With these codes, no call is queued and nothing is added to Call History.
+
+  Before the call is checked, the workspace's balance is checked. These responses use a different body, `{"error", "code", "message"}`:
+
+  - `INSUFFICIENT_FUNDS` (400): the balance is spent. The body also has `balance` and `walletScope`.
+  - `WORKSPACE_ID_REQUIRED` (400): no `x-workspace-id`.
+  - `SPEND_CAP_REACHED` (402): the monthly spend cap has been reached.
+  - `WALLET_NOT_FOUND` (403): the workspace has no wallet.
+</ResponseField>
+
+<ResponseField name="next_available_at" type="string">
+  Returned with `OUTSIDE_CALLING_HOURS`. When the call flow's next calling window opens, as an ISO 8601 time in UTC. It is `null` when there is no calling window in the next 30 days.
+</ResponseField>
+
+<ResponseField name="timezone" type="string">
+  Returned with `OUTSIDE_CALLING_HOURS`. The call flow's IANA timezone, or `null`.
+</ResponseField>
+
+<RequestExample>
+```json Personalized greeting and voicemail
+{
+  "to": "+14155550123",
+  "call_agent_id": "e9e9e9e9e9e9e9e9e9e9e9e9",
+  "dynamic_variables": {
+    "first_name": "Maria",
+    "greeting_text": "Hi Maria, this is Alex from Acme Plumbing. Is now a good time to confirm your appointment for tomorrow?",
+    "voicemail_message": "Hi Maria, this is Alex from Acme Plumbing, calling to confirm your appointment for tomorrow. Please call us back when you can."
+  }
+}
+```
+</RequestExample>
+
 <ResponseExample>
 ```json
 {
   "status": "success",
-  "message": "Outbound call job scheduled for agent a1b2c3d4e5f6a7b8c9d0e1f2 to number +1234567890",
-  "callId": "f9e8d7c6b5a4f3e2d1c0b9a8",
-  "roomName": "a1b2c3d4e5f6a7b8c9d0e1f2-x7k2m9p4q1",
+  "message": "Outbound call job scheduled for agent e9e9e9e9e9e9e9e9e9e9e9e9 to number +14155550123",
+  "call_agent_id": "e9e9e9e9e9e9e9e9e9e9e9e9",
+  "callId": "f1f1f1f1f1f1f1f1f1f1f1f1",
+  "roomName": "e9e9e9e9e9e9e9e9e9e9e9e9-x7k2m9p4q1",
   "jobId": "123"
 }
 ```

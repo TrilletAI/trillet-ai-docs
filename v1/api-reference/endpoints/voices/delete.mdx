@@ -12,7 +12,7 @@ Workspace identifier for the API.
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-The unique identifier of the voice to delete.
+The custom voice's `id`, as returned by [Create Custom Voice](/v1/api-reference/endpoints/voices/create) or [List Custom Voices](/v1/api-reference/endpoints/voices/list-custom). Only custom voices created in this workspace can be deleted; catalog voices from Search Voices can't.
 </ParamField>
 
 ## Response Fields
@@ -20,6 +20,16 @@ The unique identifier of the voice to delete.
 <ResponseField name="success" type="boolean">
 Whether the deletion was successful.
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Workspace ID is required"}` | No `x-workspace-id` |
+| `404` | `{"error": "Voice not found or doesn't belong to this workspace"}` | The ID isn't a custom voice of this workspace |
+| `500` | `{"error": "..."}` | Anything else |
+
+Agents that still use a deleted voice are not updated. Give them another voice first.
 
 <ResponseExample>
 ```json

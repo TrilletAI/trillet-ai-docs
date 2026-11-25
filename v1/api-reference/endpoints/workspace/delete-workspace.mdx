@@ -1,33 +1,65 @@
 ---
 title: "Delete Workspace"
 api: "DELETE /v1/api/workspaces/{workspaceId}"
-description: "Delete an existing workspace. Only the owner of the workspace can delete it. Master workspaces and the user's only remaining workspace cannot be deleted."
+description: "Delete a workspace you own, along with its call flows, agents, knowledge bases and phone numbers. Master workspaces and your only remaining workspace can't be deleted."
 ---
+
+<Warning>
+Deleting a workspace also removes everything in it:
+
+- **Phone numbers.** Numbers from your plan's free allowance and numbers you brought yourself are released immediately and are **not** brought back by a restore. Paid numbers have their renewal cancelled and stay until the end of the period you've already paid for.
+- **Call flows, agents and knowledge bases** are deleted (soft-deleted, so a restore brings them back).
+- **The workspace wallet** is deleted with the workspace (also restorable).
+- **External members** lose their roles in the workspace, and their invitations are removed.
+
+Anyone whose current workspace was this one is moved to the parent (master) workspace.
+</Warning>
 
 ### Path Parameters
 
 <ParamField path="workspaceId" type="string" required>
-  The unique identifier of the workspace to delete.
+  The `_id` of the workspace to delete.
 </ParamField>
 
 ### Headers
 
 <ParamField header="x-workspace-id" type="string" required>
-  The workspace ID being accessed (should match the path parameter).
+  A workspace where your role has the `workspace:delete` permission. The permission is checked against this header, not the path, so this is normally your master workspace.
 </ParamField>
 
-### Description
+### Rules
 
-This endpoint allows the authenticated owner of a workspace to delete it, subject to the following restrictions:
-
-- The workspace **cannot be the master workspace**.
-- The workspace **cannot be the user's only remaining workspace**.
-- The requester **must be the owner** of the workspace (team members are not authorized).
-
-If the workspace contains external members, their access is revoked before deletion. The associated workspace wallet is also deleted as part of this operation.
+- You must be the **owner** of the workspace. Team members get `403`.
+- The workspace can't be your **master workspace**.
+- It can't be your **only** workspace.
 
 ### Response Fields
 
 <ResponseField name="success" type="boolean">
-  Indicates whether the workspace was successfully deleted.
+  `true` when the workspace was deleted.
 </ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `403` | `{"error": "Cannot delete your only workspace. You must have at least one workspace."}` | It's your only workspace (checked first) |
+| `403` | `{"error": "Cannot delete the master workspace"}` | It's your master workspace |
+| `403` | `{"error": "Only the workspace owner can delete the workspace"}` | You aren't the owner |
+| `403` | `{"error": "Insufficient permissions", ...}` | Your role in the `x-workspace-id` workspace lacks `workspace:delete` |
+| `404` | `{"error": "Workspace not found"}` | No workspace with that ID that you can see |
+| `500` | `{"error": "..."}` | Unexpected server error |
+
+### Restoring a deleted workspace
+
+The owner can restore a deleted workspace within **30 days** with `POST /v1/api/workspaces/{workspaceId}/restore` (no body, same `x-workspace-id` rule as delete). Its call flows, agents, knowledge bases and wallet come back, and paid numbers whose renewal was cancelled are renewed again where possible. The response is `{"success": true, "workspace": {...}, "numbers": {"reinstated": 1, "failed": 0}}`.
+
+Restore errors carry a `code`: `403 NOT_OWNER`, `400 MASTER_WORKSPACE`, `409 ALREADY_ACTIVE`, `410 RECOVERY_WINDOW_EXPIRED` (with `recoverableUntil`), `423 WORKSPACE_CHANGE_IN_PROGRESS` (retry shortly), and `404` if no deleted workspace with that ID exists. If restoring would take you over your plan's workspace limit, it returns `402` with `requiresPayment: true`.
+
+<ResponseExample>
+```json
+{
+  "success": true
+}
+```
+</ResponseExample>

@@ -1,8 +1,10 @@
 ---
 title: "Get Call Disposition"
 api: "GET /v1/api/call-dispositions/{id}"
-description: "Retrieve a specific call disposition by its ID."
+description: "Retrieve one call disposition record by its ID."
 ---
+
+A call disposition record tracks one contact in a [batch call](/v1/api-reference/endpoints/calls/batch/overview) with smart callbacks turned on: the outcome of each attempt, and when the next callback is due. A record is created after the contact's first call.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
@@ -12,60 +14,139 @@ Workspace identifier for the API.
 ## Path Parameters
 
 <ParamField path="id" type="string" required>
-The unique identifier of the call disposition.
+The record's `_id`, from [List Call Dispositions](/v1/api-reference/endpoints/call-dispositions/list).
 </ParamField>
 
 ## Response Fields
 
 <ResponseField name="_id" type="string">
-Unique identifier for the disposition.
+The record ID.
 </ResponseField>
 
 <ResponseField name="phoneNumber" type="string">
-Phone number associated with the disposition.
-</ResponseField>
-
-<ResponseField name="disposition" type="string">
-Disposition type (e.g., "callback_scheduled", "no_answer", "completed").
-</ResponseField>
-
-<ResponseField name="status" type="string">
-Current status of the disposition.
-</ResponseField>
-
-<ResponseField name="scheduledAt" type="string">
-Scheduled callback time (if applicable).
-</ResponseField>
-
-<ResponseField name="attempt" type="number">
-Attempt number for this call.
+The contact's phone number.
 </ResponseField>
 
 <ResponseField name="agentId" type="string">
-Agent ID that handled the call.
+The agent making the calls.
 </ResponseField>
 
 <ResponseField name="batchId" type="string">
-Batch call ID (if part of a batch).
+The batch the contact belongs to.
+</ResponseField>
+
+<ResponseField name="workspaceId" type="string">
+The workspace the record belongs to.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+- `active`: callbacks are still being placed.
+- `inactive`: no more callbacks. The contact reached a final outcome, used up `maxAttempts`, or a retry couldn't be placed.
+- `cancelled`: the queued callback was cancelled, by [Delete Call Disposition](/v1/api-reference/endpoints/call-dispositions/delete) or by stopping the batch.
+- `completed`: Delete Call Disposition was called after the last queued callback had already run.
+</ResponseField>
+
+<ResponseField name="currentAttempt" type="number">
+How many attempts have been made. `-1` means no further attempts will be made.
+</ResponseField>
+
+<ResponseField name="maxAttempts" type="number">
+The most attempts the contact will get, from the batch's `smartCallbackConfig`.
+</ResponseField>
+
+<ResponseField name="dispositionHistory" type="array">
+One entry per call, oldest first.
+
+<Expandable title="properties">
+<ResponseField name="outcome" type="string">
+The outcome of that call, for example `"No Answer"`, `"Voicemail"`, `"Partial Complete: Call Back"` or `"Completed Call"`. The full list is under the `disposition` filter in [List Call Dispositions](/v1/api-reference/endpoints/call-dispositions/list).
 </ResponseField>
 
 <ResponseField name="notes" type="string">
-Any notes from the call or disposition.
+A short summary of the call.
 </ResponseField>
+
+<ResponseField name="callHistoryId" type="string">
+The call history record for that call. `null` on attempts recorded before this field was added.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+When the outcome was recorded (ISO 8601).
+</ResponseField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="timezone" type="string">
+The timezone callback times are worked out in: the agent's office-hours timezone, or `UTC`.
+</ResponseField>
+
+<ResponseField name="nextCallTime" type="string">
+The delay before the next callback, as `"<milliseconds>,<readable>"` (for example `"7200000,0d 2h 0m 0s"`), measured from `currentTimeOfGivenTimezone`. `null` or empty when no callback is due.
+</ResponseField>
+
+<ResponseField name="currentTimeOfGivenTimezone" type="string">
+The local time, in `timezone`, when the next callback was scheduled (`yyyy-MM-ddTHH:mm:ss`). `null` when no callback is due.
+</ResponseField>
+
+<ResponseField name="jobId" type="string">
+The queued callback job, or `null` when none is queued.
+</ResponseField>
+
+<ResponseField name="logs" type="array">
+Internal log of queued callback jobs (`jobId`, `outcome`, `createdAt`).
+</ResponseField>
+
+<ResponseField name="OfficeHoursSettings" type="object">
+The office hours that callbacks are kept within, copied from the agent when the record was created.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+When the record was created (ISO 8601).
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+When the record last changed (ISO 8601).
+</ResponseField>
+
+## Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "Workspace ID is required"}` | The `x-workspace-id` header is missing |
+| `404` | `{"error": "Call disposition not found"}` | No record with that ID exists in this workspace |
 
 <ResponseExample>
 ```json
 {
-  "_id": "665a1b2c3d4e5f6a7b8c9d0e",
-  "phoneNumber": "+14155551234",
-  "disposition": "callback_scheduled",
-  "status": "pending",
-  "scheduledAt": "2024-06-02T14:00:00.000Z",
-  "attempt": 1,
-  "agentId": "665a1b2c3d4e5f6a7b8c9d0f",
-  "batchId": "665a1b2c3d4e5f6a7b8c9d10",
-  "notes": "Customer requested callback after 2pm",
-  "createdAt": "2024-06-01T10:00:00.000Z"
+  "_id": "c5c5c5c5c5c5c5c5c5c5c5c5",
+  "agentId": "a1a1a1a1a1a1a1a1a1a1a1a1",
+  "batchId": "k3j9x0a1bq",
+  "workspaceId": "aaaaaaaaaaaaaaaaaaaaaaaa",
+  "phoneNumber": "+14155550123",
+  "jobId": "41",
+  "currentAttempt": 1,
+  "maxAttempts": 3,
+  "status": "active",
+  "dispositionHistory": [
+    {
+      "outcome": "No Answer",
+      "notes": "The call was not answered.",
+      "callHistoryId": "d8d8d8d8d8d8d8d8d8d8d8d8",
+      "createdAt": "2026-11-07T09:48:54.799Z",
+      "updatedAt": "2026-11-07T09:48:54.799Z"
+    }
+  ],
+  "timezone": "America/New_York",
+  "nextCallTime": "86400000,1d 0h 0m 0s",
+  "currentTimeOfGivenTimezone": "2026-11-07T04:48:55",
+  "logs": [],
+  "OfficeHoursSettings": {
+    "enabled": false,
+    "timezone": "America/New_York"
+  },
+  "createdAt": "2026-11-07T09:48:54.728Z",
+  "updatedAt": "2026-11-07T09:48:55.807Z",
+  "__v": 1
 }
 ```
 </ResponseExample>

@@ -1,17 +1,54 @@
 ---
 title: "Create SDK Token"
 api: "POST /v1/api/calls/sdk/auth"
-description: "Mint a token for the browser SDK. The token is valid for 24 hours."
+description: "Mint an SDK token for a workspace. The token is valid for 24 hours."
 ---
 
-Use this when a web or mobile client needs to start a call without holding the workspace API key. The API key stays on your server. The client uses the returned token.
+Mints a signed SDK token tied to your API key and workspace.
+
+<Warning>
+No endpoint accepts this token yet. [Connect a Web Call](/v1/api-reference/endpoints/calls/web/connect) rejects it with `401 {"error": "Invalid token"}`. Until that changes, start web calls from your server with your API key, and keep the key off the client.
+</Warning>
 
 ### Headers
 
-<ParamField header="x-workspace-id" type="string" required>
-  Workspace identifier for the API.
+<ParamField header="x-api-key" type="string" required>
+  Your API key. This endpoint reads it directly: a dashboard session token is not enough, and the request fails with `400` without it.
 </ParamField>
 
-### Response
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API. The key's user must be a member of this workspace.
+</ParamField>
 
-The response includes an SDK token that expires 24 hours after it is minted.
+### Response Fields
+
+<ResponseField name="status" type="string">
+  `success`.
+</ResponseField>
+
+<ResponseField name="sdk_token" type="string">
+  The SDK token.
+</ResponseField>
+
+<ResponseField name="expires_in" type="number">
+  Seconds until the token expires: `86400` (24 hours).
+</ResponseField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"error": "Missing required headers: x-api-key and x-workspace-id are required"}` | A header is missing |
+| `401` | `{"error": "Unauthorized Api Key"}` | The API key is not valid |
+| `403` | `{"error": "Unauthorized API key. User is not included in the workspace."}` | The key's user isn't in that workspace |
+| `500` | `{"error": "Internal server error"}` | Server error |
+
+<ResponseExample>
+```json
+{
+  "status": "success",
+  "sdk_token": "eyJ3b3Jrc3BhY2VJZCI6IjY2NGExYjJj...",
+  "expires_in": 86400
+}
+```
+</ResponseExample>

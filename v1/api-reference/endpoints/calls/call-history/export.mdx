@@ -11,16 +11,26 @@ Workspace identifier for the API.
 
 ## Request Body
 
+Send a JSON body, even if it is only `{}`. Filters behave the same as on [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list), except that `callIds`, `dateRange` and `postAnalysis` are sent as JSON values, not strings.
+
 <ParamField body="includeTranscripts" type="boolean" default="false">
-Whether to include full call transcripts in the export.
+Adds a `Transcript` column.
 </ParamField>
 
 <ParamField body="includePostAnalysis" type="boolean" default="false">
-Whether to include post-call analysis data in the export.
+Adds one `analyzed_<key>` column per post-call analysis field.
 </ParamField>
 
-<ParamField body="limit" type="number">
-Maximum number of records to export.
+<ParamField body="includeDynamicVariables" type="boolean" default="false">
+Adds one `dynamic_<key>` column per dynamic variable.
+</ParamField>
+
+<ParamField body="includeResponseVariables" type="boolean" default="false">
+Adds one `response_<key>` column per response variable.
+</ParamField>
+
+<ParamField body="limit" type="integer">
+Maximum number of records to export, newest first. Ignored unless it is a positive integer; without it every matching record is exported.
 </ParamField>
 
 <ParamField body="batchId" type="string">
@@ -28,28 +38,68 @@ Filter by batch call ID.
 </ParamField>
 
 <ParamField body="agentId" type="string">
-Filter by agent ID.
+Filter by agent ID, or by agent name.
+</ParamField>
+
+<ParamField body="pathwayId" type="string">
+Filter by call flow ID.
 </ParamField>
 
 <ParamField body="status" type="string">
-Filter by call status.
+Filter by call status: `completed`, `pending`, `failed` or `blocked`.
 </ParamField>
 
 <ParamField body="direction" type="string">
-Filter by call direction.
+Filter by call direction: `inbound`, `outbound` or `web`.
+</ParamField>
+
+<ParamField body="callType" type="string">
+Filter by call type: `sip` or `web`.
+</ParamField>
+
+<ParamField body="callIds" type="array">
+Export only these call IDs.
+</ParamField>
+
+<ParamField body="search" type="string">
+Free-text search. At most 200 characters.
+</ParamField>
+
+<ParamField body="fromPhone" type="string">
+Partial match on the caller number (digits only). At most 200 characters.
+</ParamField>
+
+<ParamField body="toPhone" type="string">
+Partial match on the destination number (digits only). At most 200 characters.
+</ParamField>
+
+<ParamField body="isCallFromSmartCallback" type="boolean">
+Filter to calls that were (or were not) placed by a smart callback.
+</ParamField>
+
+<ParamField body="postAnalysis" type="array">
+Post-call analysis filters, same format as on List Call Histories.
 </ParamField>
 
 <ParamField body="dateRange" type="object">
-Date range filter.
+Filter on call start time. Send either `startDate` and `endDate`, or `start` and `end`.
 
 <Expandable title="properties">
 
 <ParamField body="startDate" type="string">
-Start date in ISO format.
+Start date, ISO 8601.
 </ParamField>
 
 <ParamField body="endDate" type="string">
-End date in ISO format.
+End date, ISO 8601.
+</ParamField>
+
+<ParamField body="start" type="number">
+Start time as Unix seconds (used when `startDate`/`endDate` are not sent).
+</ParamField>
+
+<ParamField body="end" type="number">
+End time as Unix seconds.
 </ParamField>
 
 </Expandable>
@@ -57,6 +107,17 @@ End date in ISO format.
 
 ## Response
 
-The response is streamed as a CSV file with `Content-Type: text/csv` and `Content-Disposition: attachment` headers.
+The response is streamed as a CSV file with `Content-Type: text/csv; charset=utf-8` and `Content-Disposition: attachment`. The filename is `call_history.csv`, or `call_history_with_transcripts.csv` when `includeTranscripts` is true.
 
-The CSV includes columns for call ID, phone numbers, direction, status, duration, agent, flow name, cost, summary, variables, and optionally transcript and post-analysis data.
+Columns, in order: Record ID, Call ID, Room Name, Agent Name, Call Flow Name, Start Time (UTC), End Time (UTC), Duration (s), Direction, From Phone Number, To Phone Number, Status, Twilio Call SID, Batch ID, Smart Callback, Recording Link, Analyzed Data (JSON), Cost, Has Telephony Cost, Summary, With AI Duration (s), Transferring Duration (s), With Transferee Duration (s), Agent Segments (JSON). Then `Transcript` and the `analyzed_`, `dynamic_` and `response_` columns when requested. The variable columns are discovered from the 50 most recent matching calls.
+
+<Note>
+`Cost` and `Has Telephony Cost` show `N/A` unless the caller's role has the `billing:view` permission.
+</Note>
+
+## Errors
+
+| Status | Body | When |
+|---|---|---|
+| `400` | `{"error": "<field> must be ..."}` | `search`, `fromPhone` or `toPhone` is not a string, is over 200 characters, or (phone filters) has no digits |
+| `500` | `{"error": "<message>"}` | Any other failure before streaming starts |

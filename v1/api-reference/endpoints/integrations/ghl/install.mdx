@@ -1,18 +1,20 @@
 ---
 title: "Install GoHighLevel"
 api: "GET /v1/api/crm/install"
-description: "Get the GoHighLevel OAuth authorization URL to connect your GHL CRM."
+description: "Get the GoHighLevel OAuth authorization URL to connect your GHL CRM to a call flow."
 ---
+
+Open the returned URL in a browser and approve access. GoHighLevel then redirects back to Trillet, which saves the connection on the call flow.
 
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
-Workspace identifier for the API.
+Workspace identifier for the API. The call flow must belong to this workspace (or one of its sub-workspaces).
 </ParamField>
 
 ## Query Parameters
 
 <ParamField query="pathwayId" type="string" required>
-The call flow pathway ID to connect GoHighLevel to.
+The `_id` of a saved call flow to connect GoHighLevel to.
 </ParamField>
 
 ## Response Fields
@@ -20,6 +22,16 @@ The call flow pathway ID to connect GoHighLevel to.
 <ResponseField name="url" type="string">
 The GoHighLevel OAuth authorization URL. Redirect the user to this URL to authorize the connection.
 </ResponseField>
+
+## Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"message": "pathwayId query parameter is required"}` | No `pathwayId` (note: `message`, not `error`) |
+| `400` | `{"error": "Flow must be saved before connecting GoHighLevel. Please save your flow first."}` | `pathwayId` isn't a valid ID |
+| `403` | `{"error": "You do not have access to this workspace."}` | You aren't a member of the `x-workspace-id` workspace |
+| `403` | `{"error": "Pathway does not belong to this workspace."}` | The flow belongs to another workspace |
+| `404` | `{"error": "Pathway not found"}` | No call flow with that ID |
 
 <ResponseExample>
 ```json

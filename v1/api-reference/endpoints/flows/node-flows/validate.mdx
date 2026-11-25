@@ -1,0 +1,120 @@
+---
+title: "Validate Node Flow"
+api: "POST /v2/api/node-graphs/{id}/validate"
+description: "Check a node flow for problems without saving or publishing."
+---
+
+Checks the effective graph (the draft merged over the live fields, or just the live fields if there is no draft) and lists every problem it finds. Nothing is saved. Run it before [Publish](/v1/api-reference/endpoints/flows/node-flows/publish): a graph is publishable when none of its problems has `severity` of `error`.
+
+To check a graph you have not saved, send it in `graph`. Its fields are laid over the effective graph for this check only. Fields you leave out come from the effective graph.
+
+Validate also reports one extra warning that Publish does not: `ABILITY_NOT_CONNECTED`, when a conversation node asks for an ability whose integration is not connected on the companion call flow.
+
+### Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+  Workspace identifier for the API.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The graph `_id`.
+</ParamField>
+
+### Request Body
+
+<ParamField body="graph" type="object">
+  Optional graph fields to check instead of the stored ones: any of `name`, `description`, `startNodeId`, `variables`, `globals`, `router`, `nodes`, `edges` and `dataSources`.
+</ParamField>
+
+### Errors
+
+| Status | Body | When |
+| --- | --- | --- |
+| `400` | `{"code": "WORKSPACE_ID_REQUIRED"}` | No `x-workspace-id` |
+| `404` | `{"code": "NODE_GRAPH_NOT_FOUND"}` | No graph with that ID in the workspace |
+| `500` | `{"code": "NODE_GRAPH_VALIDATE_FAILED"}` | Unexpected server error |
+
+A graph with problems is not an error: it returns `200` with the problems listed.
+
+### Response Fields
+
+<ResponseField name="problems" type="array">
+  Every problem found, errors and warnings.
+  <Expandable title="problem">
+    <ResponseField name="code" type="string">
+      A stable identifier such as `NO_OUTGOING`. See [Validation problems](/v1/api-reference/endpoints/flows/node-flows/overview#validation-problems).
+    </ResponseField>
+    <ResponseField name="severity" type="string">
+      `error` blocks publishing. `warning` does not.
+    </ResponseField>
+    <ResponseField name="nodeId" type="string">
+      The node the problem is on, when there is one.
+    </ResponseField>
+    <ResponseField name="edgeId" type="string">
+      The edge the problem is on, when there is one.
+    </ResponseField>
+    <ResponseField name="params" type="object">
+      Extra detail, for example `{ "key": "caller_reason" }`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="publishable" type="boolean">
+  `true` when no problem is an `error`.
+</ResponseField>
+
+<RequestExample>
+
+```bash Check the stored graph
+curl -X POST "https://api.trillet.ai/v2/api/node-graphs/{id}/validate" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```bash Check an unsaved graph
+curl -X POST "https://api.trillet.ai/v2/api/node-graphs/{id}/validate" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "x-workspace-id: YOUR_WORKSPACE_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "graph": {
+      "startNodeId": "start",
+      "nodes": [
+        {
+          "nodeId": "start",
+          "type": "conversation",
+          "name": "Greeting",
+          "config": { "objective": "Greet the caller." }
+        }
+      ],
+      "edges": []
+    }
+  }'
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json Not publishable
+{
+  "problems": [
+    { "code": "NO_OUTGOING", "severity": "error", "nodeId": "start" },
+    { "code": "NO_END_NODE", "severity": "warning" }
+  ],
+  "publishable": false
+}
+```
+
+```json Publishable
+{
+  "problems": [],
+  "publishable": true
+}
+```
+
+</ResponseExample>

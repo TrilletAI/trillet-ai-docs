@@ -4,55 +4,76 @@ api: "GET /v1/api/roles-and-permissions/permissions"
 description: "Retrieve all available permissions that can be assigned to roles."
 ---
 
+Requires the `role:view` permission in the workspace.
+
+Returns a single object keyed by category. Each category maps an action name to its permission key. The keys (the values, in `category:action` form) are what you send in `permissions` when you [create](/v1/api-reference/endpoints/roles/create) or [update](/v1/api-reference/endpoints/roles/update) a role.
+
 ## Headers
 <ParamField header="x-workspace-id" type="string" required>
 Workspace identifier for the API.
 </ParamField>
 
-## Response Fields
+## Response
 
-<ResponseField name="permissions" type="array">
-Array of permission objects grouped by category.
-
-<ResponseField name="key" type="string">
-Unique permission key (e.g., "agent_view", "call_history_export").
+<ResponseField name="{category}" type="object">
+One entry per category, for example `agent`, `pathway` (call flows), `message_pathway` (message flows), `knowledge_base` or `call_history`. Each maps an action (e.g., `view`) to the permission key (e.g., `agent:view`).
 </ResponseField>
 
-<ResponseField name="name" type="string">
-Human-readable permission name.
-</ResponseField>
+The current categories and keys are:
 
-<ResponseField name="description" type="string">
-Description of what the permission allows.
-</ResponseField>
+| Category | Permission keys |
+| --- | --- |
+| `workspace` | `workspace:create`, `workspace:view`, `workspace:edit`, `workspace:delete` |
+| `agent` | `agent:create`, `agent:view`, `agent:edit`, `agent:delete` |
+| `phone_number` | `phone_number:create`, `phone_number:view`, `phone_number:edit`, `phone_number:delete` |
+| `pathway` | `pathway:create`, `pathway:view`, `pathway:edit`, `pathway:delete` |
+| `message_pathway` | `message_pathway:create`, `message_pathway:view`, `message_pathway:edit`, `message_pathway:delete` |
+| `knowledge_base` | `knowledge_base:create`, `knowledge_base:view`, `knowledge_base:edit`, `knowledge_base:delete` |
+| `team` | `team:view`, `team:add_member`, `team:remove_member`, `team:edit` |
+| `billing` | `billing:view`, `billing:edit`, `billing:purchase` |
+| `api_keys` | `api_keys:view`, `api_keys:create`, `api_keys:delete` |
+| `role` | `role:create`, `role:view`, `role:edit`, `role:delete` |
+| `agency_hub` | `agency_hub:view`, `agency_hub:edit`, `agency_hub:manage_plans`, `agency_hub:manage_clients` (agency master workspaces only) |
+| `workflow` | `workflow:create`, `workflow:view`, `workflow:edit`, `workflow:delete` |
+| `call_history` | `call_history:view` |
+| `call_flags` | `call_flags:view`, `call_flags:manage` |
+| `ai_assistant` | `ai_assistant:use` |
 
-<ResponseField name="category" type="string">
-Permission category (e.g., "agents", "calls", "workspace", "flows").
-</ResponseField>
-
-</ResponseField>
+<Tip>
+  Read the list from this endpoint rather than hard-coding it. New permissions are added as features ship.
+</Tip>
 
 <ResponseExample>
 ```json
-[
-  {
-    "key": "agent_view",
-    "name": "View Agents",
-    "description": "View agent configurations and details",
-    "category": "agents"
+{
+  "workspace": {
+    "create": "workspace:create",
+    "view": "workspace:view",
+    "edit": "workspace:edit",
+    "delete": "workspace:delete"
   },
-  {
-    "key": "agent_create",
-    "name": "Create Agents",
-    "description": "Create new agents",
-    "category": "agents"
+  "agent": {
+    "create": "agent:create",
+    "view": "agent:view",
+    "edit": "agent:edit",
+    "delete": "agent:delete"
   },
-  {
-    "key": "call_history_view",
-    "name": "View Call History",
-    "description": "View call history records and transcripts",
-    "category": "calls"
+  "team": {
+    "view": "team:view",
+    "add_member": "team:add_member",
+    "remove_member": "team:remove_member",
+    "edit": "team:edit"
+  },
+  "call_history": {
+    "view": "call_history:view"
+  },
+  "call_flags": {
+    "view": "call_flags:view",
+    "manage": "call_flags:manage"
+  },
+  "ai_assistant": {
+    "use": "ai_assistant:use"
   }
-]
+}
 ```
 </ResponseExample>
