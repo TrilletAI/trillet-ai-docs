@@ -1,0 +1,68 @@
+---
+title: "Business Hours Overview"
+description: "How a call flow's business hours are modelled: the weekly week, saved schedules, and single-date exceptions."
+---
+
+Business hours belong to a call flow. A phone number is bound to one flow, so per-department or per-brand hours means one flow per department.
+
+Every write applies to the live flow immediately. Business hours never pass through a draft, so there is no publish step and no risk of an open editor tab republishing older hours.
+
+## The three layers
+
+Hours are resolved from three layers, each overriding the one above it.
+
+<Steps>
+  <Step title="The weekly hours">
+    Seven days, each open or closed, and if open a start and end time. This is the recurring pattern.
+  </Step>
+  <Step title="A saved schedule">
+    A complete named copy of a week, kept on the shelf. Activating one replaces the weekly hours in a single call. A schedule contains only the recurring week, never dates.
+  </Step>
+  <Step title="A date exception">
+    One calendar date, either closed all day or open with special hours. Always wins over the weekly hours for that date.
+  </Step>
+</Steps>
+
+Date exceptions are stored separately from the weekly hours, so **activating a schedule does not clear them**. A Christmas closure survives a switch to winter hours.
+
+## Turning the hours on
+
+A flow's hours only take effect while `holdOutboundCalls` is `true`. With it `false` the agent does not read the configured hours. Set it once per flow:
+
+```bash
+curl -X PUT 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID' \
+  -H 'Content-Type: application/json' \
+  -d '{"holdOutboundCalls": true}'
+```
+
+## What the hours affect
+
+- The agent is told whether the business is open or closed right now, so your prompt can behave differently when closed.
+- The agent only offers callback times that fall inside the hours.
+- Outbound calls placed outside the hours wait until the next open time rather than dialling.
+
+## Limits and rules
+
+| Rule | Value |
+|---|---|
+| Time format | 24-hour `HH:MM` |
+| Closing time | Must be later than the opening time. Hours past midnight are not supported |
+| Timezone | IANA name, for example `America/New_York` |
+| Saved schedules per flow | 20 |
+| Schedule name length | 60 characters |
+| Date exceptions per flow | 366 |
+
+## Concurrent writes
+
+Every response carries a `version`. Send it back in a write body and the write is refused with `409` and `code: "HOURS_CHANGED"` if the hours changed since you read them. Omit `version` and the write merges and retries instead, which is usually what you want for unattended automation.
+
+## Errors
+
+| Status | Meaning |
+|---|---|
+| `400` | Validation failed. The message names the field and the rule |
+| `404` | Unknown flow, unknown schedule, or a malformed flow id |
+| `409` `HOURS_CHANGED` | The `version` you sent is stale |
+| `409` `FLOW_ARCHIVED` | The flow is archived and read-only |

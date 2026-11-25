@@ -1,0 +1,115 @@
+---
+title: "Get Business Hours"
+api: "GET /v1/api/call-flows/{id}/office-hours"
+description: "Read a call flow's weekly hours, date exceptions, saved schedules, and whether it is open right now."
+---
+
+## Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique ID of the call flow.
+</ParamField>
+
+## Query Parameters
+
+<ParamField query="at" type="string">
+An ISO date-time. The returned `status` is evaluated at this moment instead of now, for example `2026-12-24T17:00:00-05:00`. Useful for checking what the agent would decide at a future time.
+</ParamField>
+
+## Response
+
+<ResponseField name="officeHours" type="object">
+<Expandable title="officeHours">
+  <ResponseField name="holdOutboundCalls" type="boolean">
+    Whether these hours are in use. While `false` the agent does not read them.
+  </ResponseField>
+  <ResponseField name="timezone" type="string">
+    IANA timezone the hours are read in, or `null` if never set.
+  </ResponseField>
+  <ResponseField name="perDay" type="object">
+    One entry per weekday, each with `enabled`, `start` and `end`. Always returned in full, whatever is stored.
+  </ResponseField>
+  <ResponseField name="dateExceptions" type="array">
+    Single-date exceptions, sorted by date. Each is `{ date, closed: true }` or `{ date, closed: false, start, end }`.
+  </ResponseField>
+  <ResponseField name="schedules" type="array">
+    Saved schedules, each `{ id, name, perDay }`.
+  </ResponseField>
+  <ResponseField name="activeScheduleId" type="string">
+    The schedule currently in force, or `null`.
+  </ResponseField>
+  <ResponseField name="status" type="object">
+    Where the business stands at `at`, or now.
+    <Expandable title="status">
+      <ResponseField name="state" type="string">
+        `open`, `closed`, or `unknown` when there is no usable timezone.
+      </ResponseField>
+      <ResponseField name="reason" type="string">
+        `weekly`, `date_override`, `blocked_date`, `day_off`, or `no_timezone`.
+      </ResponseField>
+      <ResponseField name="closesAt" type="string">
+        ISO time the business next closes, when open.
+      </ResponseField>
+      <ResponseField name="opensAt" type="string">
+        ISO time the business next opens, when closed.
+      </ResponseField>
+      <ResponseField name="summary" type="string">
+        A sentence for display, for example `Open now, closes 8:00 PM`.
+      </ResponseField>
+    </Expandable>
+  </ResponseField>
+</Expandable>
+</ResponseField>
+
+<ResponseField name="officeHoursSettings" type="object">
+The hours exactly as stored. Prefer `officeHours` unless you are round-tripping the raw object.
+</ResponseField>
+
+<ResponseField name="version" type="string">
+Send this back as `version` on a write to be told when the hours have changed since this read.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "officeHours": {
+    "holdOutboundCalls": true,
+    "timezone": "America/New_York",
+    "perDay": {
+      "Monday":    { "enabled": true,  "start": "08:00", "end": "20:00" },
+      "Saturday":  { "enabled": true,  "start": "08:00", "end": "22:00" },
+      "Sunday":    { "enabled": false, "start": "09:00", "end": "17:00" }
+    },
+    "dateExceptions": [
+      { "date": "2026-12-24", "closed": false, "start": "08:00", "end": "13:00" },
+      { "date": "2026-12-25", "closed": true }
+    ],
+    "schedules": [{ "id": "a1b2c3", "name": "Storm", "perDay": {} }],
+    "activeScheduleId": null,
+    "status": {
+      "state": "open",
+      "reason": "weekly",
+      "timezone": "America/New_York",
+      "closesAt": "2026-11-25T20:00:00-05:00",
+      "opensAt": null,
+      "summary": "Open now, closes 8:00 PM"
+    }
+  },
+  "version": "5f1c0e8a-3d2b-4a7e-9c11-77a0c2f4e8d1"
+}
+```
+</ResponseExample>

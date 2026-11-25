@@ -210,6 +210,20 @@
             ]
           },
           {
+            "group": "Business Hours",
+            "pages": [
+              "v1/api-reference/endpoints/flows/business-hours/overview",
+              "v1/api-reference/endpoints/flows/business-hours/get",
+              "v1/api-reference/endpoints/flows/business-hours/update",
+              "v1/api-reference/endpoints/flows/business-hours/set-date-exception",
+              "v1/api-reference/endpoints/flows/business-hours/remove-date-exception",
+              "v1/api-reference/endpoints/flows/business-hours/create-schedule",
+              "v1/api-reference/endpoints/flows/business-hours/activate-schedule",
+              "v1/api-reference/endpoints/flows/business-hours/update-schedule",
+              "v1/api-reference/endpoints/flows/business-hours/delete-schedule"
+            ]
+          },
+          {
             "group": "Message Flows",
             "icon": "diagram-project",
             "pages": [

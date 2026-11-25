@@ -1,0 +1,45 @@
+---
+title: "Edit a Schedule"
+api: "PUT /v1/api/call-flows/{id}/office-hours/schedules/{scheduleId}"
+description: "Rename a saved schedule or change the week it holds."
+---
+
+## Headers
+
+<ParamField header="x-workspace-id" type="string" required>
+Workspace identifier for the API.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="id" type="string" required>
+The unique ID of the call flow.
+</ParamField>
+
+<ParamField path="scheduleId" type="string" required>
+The schedule's id or its name.
+</ParamField>
+
+## Request Body
+
+<ParamField body="name" type="string">
+A new name, up to 60 characters.
+</ParamField>
+
+<ParamField body="perDay" type="object">
+A new week for this schedule.
+</ParamField>
+
+<Note>
+Editing the schedule that is currently active also changes the hours in use, so the flow never keeps the old week under the new name.
+</Note>
+
+<RequestExample>
+```bash cURL
+curl -X PUT 'https://api.trillet.ai/v1/api/call-flows/{flowId}/office-hours/schedules/Storm' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'x-workspace-id: YOUR_WORKSPACE_ID' \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "Severe weather"}'
+```
+</RequestExample>
