@@ -61,7 +61,7 @@ curl "https://api.trillet.ai/partner/v1/usage?from=2026-11-01T00:00:00Z&to=2026-
 
 | Parameter | Values |
 |---|---|
-| `groupBy` | `tenant` (default) or `type`. With `type`, each row has `type` instead of `tenantId`. |
+| `groupBy` | `tenant` (default), `type` or `agent`. With `type`, each row has `type` instead of `tenantId`. With `agent`, each row has `tenantId` and `agentId`: see [Usage per agent](#usage-per-agent). |
 | `granularity` | `day` (default, `period` is `YYYY-MM-DD`) or `month` (`period` is `YYYY-MM`). Periods are UTC. |
 
 Each row has `amount` (USD), `count` (number of charges) and, when the charges include call time, `billedMinutes`. The charge types counted as usage are:
@@ -114,6 +114,27 @@ Rows are newest first. Page with `limit` (1 to 200, default 50) and `starting_af
 | `billedSeconds` | The call time charged |
 | `ratePerMinute` | The per-minute rate applied. Telephony and other surcharges are in `amount`, not in the rate. |
 | `amount` | The charge in USD |
+
+
+## Usage per agent
+
+`groupBy=agent` gives one row per tenant and agent, for example to see what each language of a customer's receptionist costs.
+
+```bash
+curl "https://api.trillet.ai/partner/v1/usage?granularity=month&groupBy=agent&tenantId=d9d9d9d9d9d9d9d9d9d9d9d9" \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+```json
+{
+  "data": [
+    { "period": "2026-11", "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9", "agentId": "e0e0e0e0e0e0e0e0e0e0e0e0", "amount": 4.5, "count": 30, "billedMinutes": 50 },
+    { "period": "2026-11", "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9", "agentId": null, "amount": 5.49, "count": 3 }
+  ]
+}
+```
+
+Only call charges belong to an agent. Everything else (phone numbers, messages, workflow runs) is one row per tenant with `agentId: null`, so the rows always add up to `total`. Call charges made before agents were recorded on them are in that row too.
 
 ## Spend caps
 

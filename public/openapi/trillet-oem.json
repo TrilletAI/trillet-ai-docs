@@ -2321,7 +2321,8 @@
               "type": "string",
               "enum": [
                 "tenant",
-                "type"
+                "type",
+                "agent"
               ],
               "default": "tenant"
             }
@@ -4772,7 +4773,8 @@
             "type": "string",
             "enum": [
               "tenant",
-              "type"
+              "type",
+              "agent"
             ]
           },
           "granularity": {
@@ -4796,7 +4798,14 @@
                 },
                 "tenantId": {
                   "type": "string",
-                  "description": "Present when `groupBy` is `tenant`."
+                  "description": "Present when `groupBy` is `tenant` or `agent`."
+                },
+                "agentId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Present when `groupBy` is `agent`. `null` for spend that belongs to no agent."
                 },
                 "type": {
                   "type": "string",

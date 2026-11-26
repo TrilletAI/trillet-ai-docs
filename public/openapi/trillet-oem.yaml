@@ -1212,7 +1212,7 @@ paths:
         - $ref: "#/components/parameters/UsageTenantId"
         - name: groupBy
           in: query
-          schema: { type: string, enum: [tenant, type], default: tenant }
+          schema: { type: string, enum: [tenant, type, agent], default: tenant }
         - name: granularity
           in: query
           schema: { type: string, enum: [day, month], default: day }
@@ -2235,7 +2235,7 @@ components:
         from: { type: string, format: date-time }
         to: { type: string, format: date-time }
         currency: { type: string, const: usd }
-        groupBy: { type: string, enum: [tenant, type] }
+        groupBy: { type: string, enum: [tenant, type, agent] }
         granularity: { type: string, enum: [day, month] }
         total: { type: number }
         data:
@@ -2244,7 +2244,10 @@ components:
             type: object
             properties:
               period: { type: string, description: "`YYYY-MM-DD` or `YYYY-MM`, UTC." }
-              tenantId: { type: string, description: "Present when `groupBy` is `tenant`." }
+              tenantId: { type: string, description: "Present when `groupBy` is `tenant` or `agent`." }
+              agentId:
+                type: [string, "null"]
+                description: Present when `groupBy` is `agent`. `null` for spend that belongs to no agent.
               type:
                 type: string
                 description: Present when `groupBy` is `type`.
