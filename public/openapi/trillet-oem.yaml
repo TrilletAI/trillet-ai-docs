@@ -45,6 +45,8 @@ tags:
     description: Buy numbers per tenant, billed to your partner account, or register your own.
   - name: Call flow settings
     description: Greeting, speech, recording and call handling for a tenant's call flow.
+  - name: Provisioning
+    description: Build a customer's agent from one request, follow the job and read the result.
   - name: Webhook endpoints
     description: Where signed events are delivered.
   - name: Events
@@ -643,6 +645,222 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
 
+  /partner/v1/agents/provision:
+    post:
+      tags: [Provisioning]
+      operationId: provisionAgent
+      summary: Provision an agent
+      description: |
+        Gives one of your customers a working agent from a single request. The tenant is found by
+        `tenant.externalId`, or created when no live tenant has it. A job then builds one agent per
+        language from the business details and your template, calls it with test callers, fixes
+        what they find and calls again.
+
+        Answers `202` at once. Follow the job with `GET /partner/v1/jobs/{jobId}` or the
+        `provision.*` events. A build takes about 6 to 10 minutes.
+
+        Needs `tenants:write` and `resources:write`. `Idempotency-Key` is required.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyRequired"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProvisionRequest" }
+            example:
+              tenant:
+                externalId: cust_8842
+                package: plus
+                industry: garage
+                externalRefs: { crm_account_id: 0015g00000XYZ }
+              business:
+                name: Harbour Garage
+                website: https://www.harbour-garage.example
+                timezone: Europe/Zurich
+                openingHours:
+                  - { day: Monday, open: "07:30", close: "18:00" }
+              template: "Always ask for the registration plate. Never quote a price for bodywork."
+              languages: [de, fr]
+              transferNumber: "+41445550142"
+              notifications: { email: owner@harbour-garage.example, urgent: true }
+              tests: { passRate: 0.8 }
+              goLive: auto
+      responses:
+        "202":
+          description: The job was queued.
+          headers:
+            Trillet-Version: { $ref: "#/components/headers/TrilletVersion" }
+            Idempotent-Replayed: { $ref: "#/components/headers/IdempotentReplayed" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Provision" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
+          description: "`missing_scope`, `provisioning_not_enabled` (automatic building is not enabled on your account) or `key_restricted` (a key restricted to some tenants cannot create one)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "409":
+          description: "`receptionist_exists`, `provision_in_progress`, `tenant_suspended`, `tenant_limit_reached`, or an idempotency conflict."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422": { $ref: "#/components/responses/IdempotencyKeyReused" }
+        "429":
+          description: "`provision_limit_reached`: your account's provisioning jobs for the last 24 hours are used up."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: "`queue_unavailable`. Retry with a new `Idempotency-Key`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /partner/v1/jobs:
+    get:
+      tags: [Provisioning]
+      operationId: listJobs
+      summary: List jobs
+      description: Lists jobs, newest first. Needs `resources:read`.
+      parameters:
+        - $ref: "#/components/parameters/Limit100"
+        - name: starting_after
+          in: query
+          description: The `id` of the last job on the previous page.
+          schema: { $ref: "#/components/schemas/ObjectId" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [queued, running, succeeded, failed] }
+        - name: type
+          in: query
+          schema: { type: string, enum: [provision] }
+        - name: tenantId
+          in: query
+          schema: { $ref: "#/components/schemas/ObjectId" }
+      responses:
+        "200":
+          description: A page of jobs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JobList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /partner/v1/jobs/{jobId}:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [Provisioning]
+      operationId: getJob
+      summary: Get a job
+      description: Needs `resources:read`. A job that is not yours returns `404` `job_not_found`.
+      responses:
+        "200":
+          description: The job.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Job" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/jobs/{jobId}/test-report:
+    parameters:
+      - $ref: "#/components/parameters/JobId"
+    get:
+      tags: [Provisioning]
+      operationId: getJobTestReport
+      summary: Get a job's test report
+      description: |
+        Every test caller of a provisioning job: who they were, what was expected, whether the call
+        passed, and the conversation. The callers are made up for the test; no real person is
+        involved. Needs `resources:read`. Returns `404` `report_not_ready` until the job has
+        finished, and for a job with no test calls.
+      responses:
+        "200":
+          description: The test report.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/receptionists:
+    get:
+      tags: [Provisioning]
+      operationId: listReceptionists
+      summary: List receptionists
+      description: |
+        Receptionists across your tenants, newest first. With `status=needs_review` this is your
+        review queue. Needs `resources:read`.
+      parameters:
+        - $ref: "#/components/parameters/Limit100"
+        - name: starting_after
+          in: query
+          description: The `tenantId` of the last receptionist on the previous page.
+          schema: { $ref: "#/components/schemas/ObjectId" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [building, ready, needs_review, failed] }
+      responses:
+        "200":
+          description: A page of receptionists.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReceptionistList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /partner/v1/tenants/{tenantId}/receptionist:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    get:
+      tags: [Provisioning]
+      operationId: getReceptionist
+      summary: Get a tenant's receptionist
+      description: Needs `resources:read`. A tenant that was never provisioned returns `404` `receptionist_not_found`.
+      responses:
+        "200":
+          description: The receptionist.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Receptionist" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /partner/v1/tenants/{tenantId}/receptionist/approve:
+    parameters:
+      - $ref: "#/components/parameters/TenantId"
+    post:
+      tags: [Provisioning]
+      operationId: approveReceptionist
+      summary: Approve a receptionist
+      description: |
+        Clears a receptionist that is held for review, whatever the reason. Approving one that is
+        already `ready` changes nothing. Needs `resources:write`.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKeyOptional"
+      responses:
+        "200":
+          description: The receptionist, now `ready`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Receptionist" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: "`receptionist_not_reviewable`: it is still being built, or its build failed."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
   /partner/v1/webhook-endpoints:
     post:
       tags: [Webhook endpoints]
@@ -1090,6 +1308,11 @@ components:
       required: true
       description: The event ID, with or without the `evt_` prefix.
       schema: { type: string, pattern: "^(evt_)?[a-fA-F0-9]{24}$" }
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/ObjectId" }
     IdempotencyKeyRequired:
       name: Idempotency-Key
       in: header
@@ -1421,6 +1644,313 @@ components:
           description: |
             Whether this tenant has call reviews. `null` clears the tenant's own setting, so your
             account's setting applies again.
+    ProvisionRequest:
+      type: object
+      required: [tenant, business]
+      additionalProperties: false
+      properties:
+        tenant:
+          type: object
+          required: [externalId]
+          additionalProperties: false
+          description: |
+            The customer. A live tenant with this `externalId` is used as it is; otherwise one is
+            created from these fields.
+          properties:
+            externalId: { type: string, minLength: 1, maxLength: 128 }
+            name:
+              type: string
+              minLength: 1
+              maxLength: 100
+              description: Defaults to `business.name`.
+            region: { type: string, enum: [us, au] }
+            package: { type: [string, "null"], minLength: 1, maxLength: 64 }
+            industry: { type: [string, "null"], minLength: 1, maxLength: 64 }
+            externalRefs:
+              type: [object, "null"]
+              additionalProperties: { type: string, minLength: 1, maxLength: 128 }
+            metadata: { type: object, additionalProperties: true }
+            limits: { $ref: "#/components/schemas/TenantLimits" }
+        business:
+          type: object
+          required: [name]
+          additionalProperties: false
+          description: What you know about the business. Anything you send wins over what its website says.
+          properties:
+            name: { type: string, minLength: 1, maxLength: 120 }
+            website: { type: string, maxLength: 300, description: "Read to fill in what you did not send." }
+            about: { type: string, maxLength: 4000, description: A few lines about the business. }
+            industry: { type: string, maxLength: 120 }
+            timezone: { type: string, maxLength: 60, description: "An IANA timezone, such as `Europe/Zurich`." }
+            facts:
+              type: object
+              additionalProperties: false
+              properties:
+                hours: { type: string, maxLength: 6000 }
+                services: { type: string, maxLength: 6000 }
+                pricing: { type: string, maxLength: 6000 }
+                faqs: { type: string, maxLength: 6000 }
+                location: { type: string, maxLength: 6000 }
+                other: { type: string, maxLength: 6000 }
+            openingHours:
+              type: array
+              maxItems: 14
+              items:
+                type: object
+                properties:
+                  day: { type: string, description: Full English day name. }
+                  open: { type: string, description: "`HH:MM`" }
+                  close: { type: string, description: "`HH:MM`" }
+            rules:
+              type: array
+              maxItems: 12
+              items: { type: string, maxLength: 400 }
+            urgentMeans: { type: string, maxLength: 200, description: What counts as urgent for this business. }
+            captureFields:
+              type: array
+              maxItems: 6
+              items: { $ref: "#/components/schemas/CaptureField" }
+            script: { type: string, maxLength: 20000, description: The business's own call script, kept word for word. }
+        template:
+          description: |
+            Your template for this kind of customer: the text of your template file, or an object
+            with the text and any parts you want applied exactly. Used for this build and kept on
+            the receptionist as sent.
+          anyOf:
+            - { type: string, maxLength: 20000 }
+            - type: object
+              additionalProperties: false
+              properties:
+                name: { type: string, maxLength: 120 }
+                text: { type: string, maxLength: 20000 }
+                rules:
+                  type: array
+                  maxItems: 12
+                  items: { type: string, maxLength: 400 }
+                captureFields:
+                  type: array
+                  maxItems: 6
+                  items: { $ref: "#/components/schemas/CaptureField" }
+                urgentMeans: { type: string, maxLength: 200 }
+        languages:
+          type: array
+          maxItems: 4
+          items: { type: string, enum: [en, de, fr, it, es] }
+          description: One agent per language. The first is the one callers reach. Defaults to the language of the website, or English.
+        voices:
+          type: object
+          additionalProperties: { type: string, maxLength: 80 }
+          description: A voice ID per language code. A local voice is chosen when left out.
+        transferNumber: { type: string, maxLength: 40, description: Where calls are transferred to a person. Leave out for a message-taking agent. }
+        bookingLinkUrl: { type: string, maxLength: 500, description: "An `https` booking page the agent can text to callers." }
+        notifications:
+          type: object
+          additionalProperties: false
+          properties:
+            email: { type: string, maxLength: 200, description: Where the business receives call summaries and alerts. }
+            summary: { type: boolean, default: true, description: Email a summary after each call. }
+            urgent: { type: boolean, default: false, description: Add a workflow that emails urgent calls at once. }
+            callbacks: { type: boolean, default: false, description: Add a workflow that emails call-back requests. }
+        tests:
+          type: object
+          additionalProperties: false
+          properties:
+            skip: { type: boolean, default: false, description: Build without test calls. }
+            passRate:
+              type: number
+              minimum: 0
+              maximum: 1
+              default: 0.8
+              description: The share of test calls that must pass for the receptionist to be `ready`.
+        goLive:
+          type: string
+          enum: [auto, approval]
+          default: auto
+          description: "`approval` holds a passing receptionist as `needs_review` until you approve it."
+    CaptureField:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        type: { type: string, enum: [text, number, boolean, selector] }
+        options:
+          type: array
+          items: { type: string }
+        description: { type: string }
+    Provision:
+      type: object
+      required: [object, tenantCreated, job, tenant, receptionist]
+      properties:
+        object: { type: string, const: provision }
+        tenantCreated: { type: boolean, description: Whether this request created the tenant. }
+        job: { $ref: "#/components/schemas/Job" }
+        tenant: { $ref: "#/components/schemas/Tenant" }
+        receptionist: { $ref: "#/components/schemas/Receptionist" }
+    Job:
+      type: object
+      required: [object, id, type, status]
+      properties:
+        object: { type: string, const: job }
+        id: { $ref: "#/components/schemas/ObjectId" }
+        type: { type: string, enum: [provision] }
+        status: { type: string, enum: [queued, running, succeeded, failed] }
+        stage:
+          type: [string, "null"]
+          enum: [reading, building, testing, finishing, null]
+          description: Where a running job is. `null` otherwise.
+        tenantId: { type: [string, "null"] }
+        attempts: { type: integer }
+        result:
+          type: [object, "null"]
+          description: Set when a provisioning job succeeds.
+          properties:
+            receptionistStatus: { type: string, enum: [ready, needs_review] }
+            reviewReason: { type: [string, "null"], enum: [tests_failed, tests_unavailable, approval_required, null] }
+            frontDoorAgentId: { type: string }
+            agents:
+              type: array
+              items:
+                type: object
+                properties:
+                  language: { type: string }
+                  agentId: { type: string }
+                  callFlowId: { type: string }
+            tests: { $ref: "#/components/schemas/ReceptionistTests" }
+        error:
+          type: [object, "null"]
+          properties:
+            code: { type: string }
+            message: { type: string }
+        createdAt: { type: [string, "null"], format: date-time }
+        startedAt: { type: [string, "null"], format: date-time }
+        finishedAt: { type: [string, "null"], format: date-time }
+      example:
+        object: job
+        id: a4a4a4a4a4a4a4a4a4a4a4a4
+        type: provision
+        status: running
+        stage: testing
+        tenantId: d9d9d9d9d9d9d9d9d9d9d9d9
+        attempts: 1
+        result: null
+        error: null
+        createdAt: "2026-11-26T09:00:00.000Z"
+        startedAt: "2026-11-26T09:00:02.000Z"
+        finishedAt: null
+    JobList:
+      type: object
+      required: [object, data, hasMore]
+      properties:
+        object: { type: string, const: list }
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Job" }
+        hasMore: { type: boolean }
+    ReceptionistTests:
+      type: object
+      properties:
+        total: { type: [integer, "null"], description: Test calls that connected. }
+        passedFirst: { type: [integer, "null"], description: Passed before any fix. }
+        passed: { type: [integer, "null"], description: Passed after fixes. }
+        passRate: { type: [number, "null"] }
+        requiredPassRate: { type: [number, "null"] }
+        fixesApplied: { type: [integer, "null"] }
+        skipped: { type: boolean }
+        unavailable: { type: boolean, description: The test calls could not run. }
+    Receptionist:
+      type: object
+      required: [object, tenantId, status, agents, tests]
+      properties:
+        object: { type: string, const: receptionist }
+        tenantId: { $ref: "#/components/schemas/ObjectId" }
+        businessName: { type: [string, "null"] }
+        status: { type: string, enum: [building, ready, needs_review, failed] }
+        reviewReason:
+          type: [string, "null"]
+          enum: [tests_failed, tests_unavailable, approval_required, null]
+        goLive: { type: string, enum: [auto, approval] }
+        frontDoorAgentId:
+          type: [string, "null"]
+          description: The agent callers reach first. Assign the customer's number to this one.
+        agents:
+          type: array
+          items:
+            type: object
+            properties:
+              language: { type: string }
+              label: { type: [string, "null"] }
+              agentId: { type: string }
+              callFlowId: { type: string }
+              knowledgeBaseId: { type: [string, "null"] }
+              voiceId: { type: [string, "null"] }
+              frontDoor: { type: boolean }
+        tests: { $ref: "#/components/schemas/ReceptionistTests" }
+        openQuestions:
+          type: array
+          description: Things the test calls could not settle from what was provided.
+          items:
+            type: object
+            properties:
+              question: { type: string }
+              why: { type: string }
+        workflows:
+          type: array
+          items: { type: object, additionalProperties: true }
+        template:
+          description: The template sent with the request, as sent.
+          type: [object, "null"]
+          additionalProperties: true
+        jobId: { type: [string, "null"] }
+        approvedAt: { type: [string, "null"], format: date-time }
+        createdAt: { type: [string, "null"], format: date-time }
+        updatedAt: { type: [string, "null"], format: date-time }
+    ReceptionistList:
+      type: object
+      required: [object, data, hasMore]
+      properties:
+        object: { type: string, const: list }
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/Receptionist" }
+        hasMore: { type: boolean }
+    TestReport:
+      type: object
+      required: [object, jobId]
+      additionalProperties: true
+      properties:
+        object: { type: string, const: test_report }
+        jobId: { $ref: "#/components/schemas/ObjectId" }
+        total: { type: integer }
+        passed: { type: integer }
+        passedFirst: { type: integer }
+        callers:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+            properties:
+              title: { type: string }
+              category: { type: string }
+              language: { type: string }
+              expected: { type: string }
+              passed: { type: boolean }
+              firstPassed: { type: boolean }
+              retested: { type: boolean }
+              score: { type: [number, "null"] }
+              verdict: { type: string }
+              transcript:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    role: { type: string, enum: [caller, agent] }
+                    text: { type: string }
+        fixes:
+          type: array
+          items: { type: object, additionalProperties: true }
+        needsYou:
+          type: array
+          items: { type: object, additionalProperties: true }
     PhoneNumber:
       type: object
       required: [object, id, tenantId, phoneNumber, external]
@@ -1617,6 +2147,12 @@ components:
         - tenant.deleted
         - tenant.restored
         - usage.threshold_reached
+        - provision.started
+        - provision.built
+        - provision.ready
+        - provision.needs_review
+        - provision.failed
+        - receptionist.approved
         - endpoint.test
     WebhookEndpointInput:
       type: object

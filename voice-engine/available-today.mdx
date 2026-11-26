@@ -43,6 +43,7 @@ curl https://api.trillet.ai/v1/api/agents \
 | Numbers are bought per workspace | [Phone numbers](/voice-engine/phone-numbers) are bought per tenant and billed to your account, or brought over SIP or Twilio |
 | Webhooks are set on each call flow | One set of [signed events](/voice-engine/events) for all tenants, with retries, an event log and redelivery |
 | Usage is viewed per workspace in the dashboard | A [usage API](/voice-engine/usage-and-billing) per tenant and per call, with monthly spend caps |
+| Each customer's agent is built by hand | [Provisioning](/voice-engine/provisioning): one request builds and tests an agent per language from the business's website and your template |
 | Each customer's agent is configured separately | [Templates](/voice-engine/templates) installed in every tenant and upgraded in staged rollouts (planned) |
 | Your users sign in to the Trillet portal (under your brand) | [Embedded screens](/voice-engine/embedding) inside your own app, with no separate login (planned) |
 
@@ -65,7 +66,9 @@ curl https://api.trillet.ai/v1/api/agents \
 | [Usage and spend caps](/voice-engine/usage-and-billing) | Built, in early access |
 | In-call events: `call.started`, `call.transferred`, `call.transfer_failed`, `tool.failed` and `call.blocked` | Built, in early access |
 | `sms.*` events | Planned |
-| One call that creates a customer and builds, tests and deploys its agent | Planned |
+| [Provisioning](/voice-engine/provisioning): one request that creates a customer and builds and tests its agent from your template, with jobs, a test gate, a review queue and events | Built, in early access |
+| Assigning a phone number as part of provisioning | Planned |
+| Stored templates with versions, and rolling a change out to agents already built | Planned |
 | Managing a customer's users and roles by API, and packages that set them | Planned |
 | Changes across many tenants as one job | Planned |
 | Usage per agent | Planned |

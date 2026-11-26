@@ -447,6 +447,7 @@
             "icon": "hammer",
             "pages": [
               "voice-engine/tenants",
+              "voice-engine/provisioning",
               "voice-engine/phone-numbers",
               "voice-engine/call-flow-settings",
               "voice-engine/templates"
@@ -482,6 +483,18 @@
                   "voice-engine/api-reference/restore-a-deleted-tenant",
                   "voice-engine/api-reference/get-tenant-feature-switches",
                   "voice-engine/api-reference/change-tenant-feature-switches"
+                ]
+              },
+              {
+                "group": "Provisioning",
+                "pages": [
+                  "voice-engine/api-reference/provision-an-agent",
+                  "voice-engine/api-reference/list-jobs",
+                  "voice-engine/api-reference/get-a-job",
+                  "voice-engine/api-reference/get-a-job-test-report",
+                  "voice-engine/api-reference/list-receptionists",
+                  "voice-engine/api-reference/get-a-tenant-receptionist",
+                  "voice-engine/api-reference/approve-a-receptionist"
                 ]
               },
               {
