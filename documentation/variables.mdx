@@ -256,16 +256,16 @@ In the API, a call flow that uses the new variables has `settings.variablesVersi
 ### Upgrade a call flow
 
 1. Open the call flow and go to **Settings > Variables**.
-2. Click **Review upgrade**. The review shows the variables your list will hold, the names that must be fixed first, what stays where it is set, any names that can't be added and why, and what changes for callers.
+2. Click **Review upgrade**. The review shows the variables your list will hold, the names that must be fixed first, any saved variables to fix before you publish, what stays where it is set, any names that can't be added and why, and what changes for callers.
 3. Click **Upgrade**. The upgrade goes into your unpublished changes. Test calls, and demo links that use your unpublished changes, use it straight away.
-4. Publish when you are ready. Callers get the upgrade from their next call.
+4. Publish when you are ready. If the review listed saved variables to fix, fix them in **Settings > Variables** first, where each one shows **Fix this before publishing**. A publish that applies the upgrade is refused until they are fixed. Callers get the upgrade from their next call.
 
 What the upgrade does:
 
 - It adds to your list the names of the values passed in that the call flow uses, when the name is valid and not used for anything else.
 - Fields collected after the call, extract tags and API response mappings keep working where they are set.
-- A name used for more than one kind of value, for example both passed in and from an API response, must be renamed in one place before you can upgrade. The review says where each one is set.
-- A name that can't go in the list is still filled by a value passed in under exactly that name. Built-in names are the exception: they read the built-in value.
+- A name used for more than one kind of value, for example both passed in and from an API response, must be renamed in one place before you can upgrade. The review says where each one is set. A field collected only after the call can share its name with one other kind of value: both keep their own value.
+- A name that can't go in the list is still filled by a value passed in under exactly that name. There are two exceptions: a built-in name reads the built-in value, and a prefixed form such as `{{input.name}}`, `{{captured.name}}` or `{{_dynamic_variable.name}}` reads the value its prefix names. See [Writing a variable](#writing-a-variable).
 
 What changes for callers, where your call flow is affected (the review lists the ones that apply):
 
@@ -273,9 +273,17 @@ What changes for callers, where your call flow is affected (the review lists the
 - In API requests, `{{name}}` is filled. Before, these requests filled only the prefixed forms.
 - In Agent Instructions, built-in values such as `{{business_hours_status}}` and prefixed forms such as `{{_dynamic_variable.name}}` are filled in.
 - With **Remember repeat callers** on, a previous call fills only variables in your list.
-- **Persistent recall** doesn't run, because each call fills in its own values.
+- **Persistent recall** (**Settings > Advanced Settings > Performance**) doesn't run, whether it is set to **All messages** or **First only**, because each call fills in its own values.
 
 To undo an upgrade you haven't published, click **Cancel upgrade** in **Settings > Variables**. Variables you added or changed are kept.
+
+While an upgrade is waiting in your unpublished changes:
+
+- Publishing those changes through the API, or through an AI assistant connected with the [Trillet MCP server](/mcp), is refused. Publish them from the call flow editor, or cancel the upgrade first.
+- **Discard draft** in the editor's header cancels the upgrade. So does discarding or deleting your unpublished changes through the API or an AI assistant. Deleting a saved version in **Version history** doesn't.
+- Restoring a version saved while the upgrade was waiting keeps it waiting. Restoring a version saved before you upgraded cancels it.
+
+After an upgrade is cancelled, restoring a version saved while it was waiting brings back that version's other changes, but not the upgrade. To upgrade again, click **Review upgrade** in **Settings > Variables**.
 
 ### Switch back
 
@@ -288,7 +296,7 @@ After switching back:
 - Variables from an API response are no longer filled automatically. Mappings you set up still apply.
 - A placeholder with no value is said or sent as written again.
 
-Upgrading and switching back are done in the call flow editor, by anyone who can edit the call flow. The API can't change which way a call flow works after it is created.
+Upgrading and switching back are done only in the call flow editor, by anyone who can edit the call flow. The API and AI assistants can't do them.
 
 ## Troubleshooting
 
