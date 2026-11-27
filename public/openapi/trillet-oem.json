@@ -2752,8 +2752,7 @@
           "mode": {
             "type": "string",
             "enum": [
-              "live",
-              "sandbox"
+              "live"
             ]
           },
           "scopes": {

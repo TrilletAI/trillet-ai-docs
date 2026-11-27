@@ -129,7 +129,7 @@ An account can have up to 10 endpoints (`409` `too_many_endpoints`). An invalid 
 | `id` | Event ID. Also sent in the `webhook-id` header. Use it to de-duplicate. |
 | `type` | The event type |
 | `created` | When the event happened, in Unix seconds |
-| `livemode` | Always `true` until sandbox tenants are available |
+| `livemode` | Always `true` |
 | `tenant` | The tenant's `id` and `externalId`. `null` for account-level events. |
 | `data` | Depends on the type. Call events carry `data.call`. |
 
