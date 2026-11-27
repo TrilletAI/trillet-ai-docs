@@ -184,6 +184,8 @@ Other events:
 | `tenant.suspended` | A tenant was suspended | `reason`, if given |
 | `tenant.resumed`, `tenant.deleted`, `tenant.restored` | Tenant lifecycle | none |
 | `usage.threshold_reached` | A spend cap reached 80% or 100% this month. See [Spend caps](/voice-engine/usage-and-billing#spend-caps). | `scope`, `percent`, `cap`, `monthToDate`, `month` |
+| `provision.started`, `provision.built`, `provision.ready`, `provision.needs_review`, `provision.failed` | A [provisioning job](/voice-engine/provisioning#events) moved on | `jobId`, and on the last three the result or the error |
+| `receptionist.approved` | A receptionist held for review was approved | `previousReason` |
 | `endpoint.test` | You sent a test event | `message` |
 
 Notes on the in-call events:

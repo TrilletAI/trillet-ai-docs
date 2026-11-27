@@ -6,6 +6,32 @@ description: "Dated changes to Trillet OEM, the white-label voice AI API for EHR
 
 Changes to the Trillet OEM API and its documentation, newest first. Within `/partner/v1` changes are additive, so existing integrations keep working. The `Trillet-Version` response header carries the date of the release that served each request.
 
+<Update label="Provisioning" description="Trillet-Version: 2026-10-28" tags={["early access"]}>
+
+One request that gives a customer a working, tested agent.
+
+**Provisioning**
+- [`POST /partner/v1/agents/provision`](/voice-engine/provisioning) finds or creates the tenant, then builds one agent per language from the business's website, the details you send and your template. English, German, French, Italian and Spanish.
+- The agent is called by about ten made-up test callers, fixed and called again before it is reported ready. The test calls are not billed.
+- Send your template as text, or as text with rules and capture questions pulled out.
+
+**Jobs**
+- `GET /partner/v1/jobs` and `/jobs/{jobId}` to follow long-running work, and `/jobs/{jobId}/test-report` for every test call and its verdict.
+- A job that is interrupted runs again, and removes what the interrupted attempt made first.
+
+**Receptionists**
+- [`GET /partner/v1/tenants/{tenantId}/receptionist`](/voice-engine/provisioning#the-receptionist): a customer's agents as one thing, with test results, open questions and whether it is `ready` or held as `needs_review`.
+- `GET /partner/v1/receptionists?status=needs_review` as a review queue, and `POST .../receptionist/approve`.
+- `goLive: "approval"` holds a passing agent until you approve it.
+
+**Events**
+- `provision.started`, `provision.built`, `provision.ready`, `provision.needs_review`, `provision.failed` and `receptionist.approved`.
+
+**Usage**
+- [`GET /partner/v1/usage?groupBy=agent`](/voice-engine/usage-and-billing#usage-per-agent): usage per tenant and agent.
+
+</Update>
+
 <Update label="November 2026" description="Trillet-Version: 2026-10-28" tags={["early access"]}>
 
 Finding and supporting customers, and safer retries. New fields and endpoints are additive. One existing list changes: a tenant's numbers come back 100 at a time, with `hasMore` when there is another page.

@@ -1,0 +1,357 @@
+---
+title: "Provisioning"
+sidebarTitle: "Provisioning"
+description: "Give a customer a working, tested voice agent from one API request with Trillet OEM: the provision call, jobs, the receptionist and the review queue."
+---
+
+<Note>
+  **Early access.** Trillet OEM is built and in testing with design partners. Contact your account manager to have it enabled for your account. Details may still change.
+</Note>
+
+Provisioning turns one request into a working agent for one of your customers. It is built for a system such as your CRM to call when a deal closes, with nobody in the loop.
+
+One request:
+
+1. Finds the tenant by your `externalId`, or creates it.
+2. Reads the business's website and combines it with what you send and with your template.
+3. Builds one agent per language, each with a native voice, linked so a caller can switch language.
+4. Calls the agent with about ten made-up test callers, fixes what they find, and calls again.
+5. Records the result as a **receptionist** that is either `ready` or held for review.
+
+A build takes about 6 to 10 minutes. The request answers at once with a job you can follow.
+
+<Note>
+  Provisioning needs automatic agent building switched on for your account. Without it the request returns `403` `provisioning_not_enabled`. Ask your account manager.
+</Note>
+
+## Endpoints
+
+| Method | Path | Scope |
+|---|---|---|
+| `POST` | `/partner/v1/agents/provision` | `tenants:write` and `resources:write` |
+| `GET` | `/partner/v1/jobs` | `resources:read` |
+| `GET` | `/partner/v1/jobs/{jobId}` | `resources:read` |
+| `GET` | `/partner/v1/jobs/{jobId}/test-report` | `resources:read` |
+| `GET` | `/partner/v1/receptionists` | `resources:read` |
+| `GET` | `/partner/v1/tenants/{tenantId}/receptionist` | `resources:read` |
+| `POST` | `/partner/v1/tenants/{tenantId}/receptionist/approve` | `resources:write` |
+
+## Provision an agent
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/agents/provision \
+  -H "Authorization: Bearer tpk_live_..." \
+  -H "Idempotency-Key: provision-cust_8842" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenant": {
+      "externalId": "cust_8842",
+      "package": "plus",
+      "industry": "garage",
+      "externalRefs": { "crm_account_id": "0015g00000XYZ" }
+    },
+    "business": {
+      "name": "Harbour Garage",
+      "website": "https://www.harbour-garage.example",
+      "timezone": "Europe/Zurich",
+      "openingHours": [
+        { "day": "Monday", "open": "07:30", "close": "18:00" },
+        { "day": "Saturday", "open": "08:00", "close": "12:00" }
+      ]
+    },
+    "template": "Always ask for the registration plate. Never quote a price for bodywork.",
+    "languages": ["de", "fr"],
+    "transferNumber": "+41445550142",
+    "notifications": { "email": "owner@harbour-garage.example", "urgent": true, "callbacks": true },
+    "tests": { "passRate": 0.8 },
+    "goLive": "auto"
+  }'
+```
+
+`Idempotency-Key` is required. Use an ID that is unique to the sale, such as your order or opportunity ID, so a retried request never builds a second agent.
+
+### The tenant
+
+<ParamField body="tenant.externalId" type="string" required>
+  Your ID for the customer. A live tenant with this ID is used as it is. Otherwise a tenant is created from the fields below.
+</ParamField>
+<ParamField body="tenant.name" type="string">
+  Defaults to `business.name`.
+</ParamField>
+<ParamField body="tenant.package, tenant.industry, tenant.externalRefs, tenant.region, tenant.metadata, tenant.limits" type="various">
+  The same fields as [creating a tenant](/voice-engine/tenants#create-a-tenant). They apply only when the tenant is created here. To change an existing tenant, use `PATCH /partner/v1/tenants/{tenantId}`.
+</ParamField>
+
+### The business
+
+Send what you already know. The website fills in the rest, and anything you send wins over what the website says.
+
+<ParamField body="business.name" type="string" required>
+  The business's name, up to 120 characters.
+</ParamField>
+<ParamField body="business.website" type="string">
+  Read to learn opening hours, services, prices, FAQs and location.
+</ParamField>
+<ParamField body="business.about" type="string">
+  A few lines about the business, up to 4,000 characters.
+</ParamField>
+<ParamField body="business.timezone" type="string">
+  An IANA timezone such as `Europe/Zurich`. The agent tells the time, and works out "are you open now", on this clock.
+</ParamField>
+<ParamField body="business.facts" type="object">
+  Free text under `hours`, `services`, `pricing`, `faqs`, `location` and `other`, up to 6,000 characters each. These go into the agent's knowledge base.
+</ParamField>
+<ParamField body="business.openingHours" type="array">
+  One entry per open day: `{ "day": "Monday", "open": "07:30", "close": "18:00" }`.
+</ParamField>
+<ParamField body="business.rules" type="string[]">
+  Rules for this customer only, up to 400 characters each.
+</ParamField>
+<ParamField body="business.urgentMeans" type="string">
+  What counts as urgent for this business, used by the urgent alert.
+</ParamField>
+<ParamField body="business.captureFields" type="array">
+  Details to capture on every call, on top of the standard ones (caller name, phone number, what they asked for, preferred call-back time). Each is `{ "name": "last_service_date", "type": "text", "description": "When the car was last serviced" }`. `type` is `text`, `number`, `boolean` or `selector` (with `options`).
+</ParamField>
+<ParamField body="business.script" type="string">
+  The business's own call script or staff training, kept word for word, up to 20,000 characters.
+</ParamField>
+
+### Your template
+
+<ParamField body="template" type="string | object">
+  Your template for this kind of customer. Send the text of your template file as a string, or an object with the text and the parts you want applied exactly:
+
+  ```json
+  {
+    "name": "Garage",
+    "text": "The full text of your template...",
+    "rules": ["Always ask for the registration plate."],
+    "captureFields": [{ "name": "last_service_date", "type": "text" }],
+    "urgentMeans": "A breakdown on the road"
+  }
+  ```
+</ParamField>
+
+How the three sources combine:
+
+| | Order |
+|---|---|
+| Facts, opening hours and timezone | What you send in `business` wins, then the website |
+| What counts as urgent | `business.urgentMeans`, then the template's, then the website |
+| Rules and capture questions | Added together: template first, then `business`, then the website. An agent takes 12 rules and 6 extra capture questions; your template's come first, so they are never the ones dropped. |
+| Template text and call script | The agent's instructions and the test callers are written from them |
+
+The template is used for this build and kept on the receptionist as you sent it. Changing a template does not change agents that were already built.
+
+### Languages, transfers and notifications
+
+<ParamField body="languages" type="string[]">
+  Up to four of `en`, `de`, `fr`, `it`, `es`. One agent is built per language. The first is the one callers reach; it greets them and hands over to the others when a caller speaks another language. Defaults to the website's language, or English.
+</ParamField>
+<ParamField body="voices" type="object">
+  A voice ID per language, for example `{ "de": "..." }`. Left out, a voice local to the business is chosen.
+</ParamField>
+<ParamField body="transferNumber" type="string">
+  The number calls are transferred to when a caller needs a person. Left out, the agent takes messages and never offers a transfer.
+</ParamField>
+<ParamField body="bookingLinkUrl" type="string">
+  An `https` booking page the agent can offer to callers.
+</ParamField>
+<ParamField body="notifications.email" type="string">
+  Where the business receives emails. Nothing is sent to it during the test calls.
+</ParamField>
+<ParamField body="notifications.summary" type="boolean" default="true">
+  Email a summary after each call.
+</ParamField>
+<ParamField body="notifications.urgent" type="boolean" default="false">
+  Add a workflow that emails urgent calls at once.
+</ParamField>
+<ParamField body="notifications.callbacks" type="boolean" default="false">
+  Add a workflow that emails call-back requests.
+</ParamField>
+
+### Tests and going live
+
+<ParamField body="tests.passRate" type="number" default="0.8">
+  The share of test calls that must pass, from 0 to 1.
+</ParamField>
+<ParamField body="tests.skip" type="boolean" default="false">
+  Build without test calls. The receptionist is `ready` as soon as it is built.
+</ParamField>
+<ParamField body="goLive" type="string" default="auto">
+  `auto`: a receptionist that passes its tests is `ready`. `approval`: it is held as `needs_review` until you [approve](#review-and-approve) it, for example after your customer has signed off.
+</ParamField>
+
+### The response
+
+`202` with the job, the tenant and the receptionist, which starts as `building`:
+
+```json
+{
+  "object": "provision",
+  "tenantCreated": true,
+  "job": {
+    "object": "job",
+    "id": "a4a4a4a4a4a4a4a4a4a4a4a4",
+    "type": "provision",
+    "status": "queued",
+    "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9"
+  },
+  "tenant": { "object": "tenant", "id": "d9d9d9d9d9d9d9d9d9d9d9d9", "externalId": "cust_8842" },
+  "receptionist": { "object": "receptionist", "status": "building", "agents": [] }
+}
+```
+
+| Status | Code | When |
+|---|---|---|
+| `400` | `invalid_request` | A field is missing, has the wrong type or is not one this endpoint accepts. `error.param` names it. |
+| `403` | `provisioning_not_enabled` | Automatic agent building is not enabled on your account |
+| `403` | `key_restricted` | The key is restricted to some tenants and the tenant would have to be created |
+| `409` | `provision_in_progress` | A job is already building this tenant's receptionist. The message names the job. |
+| `409` | `receptionist_exists` | The tenant already has a receptionist |
+| `409` | `tenant_suspended`, `tenant_provisioning_failed` | The tenant cannot be built in |
+| `409` | `tenant_limit_reached` | The tenant would have to be created and your account is at its tenant limit |
+| `429` | `provision_limit_reached` | Your account's provisioning jobs for the last 24 hours are used up. The limit is a safety guard; ask your account manager to raise it before a large migration. |
+| `503` | `queue_unavailable` | The job could not be queued. Retry with a new `Idempotency-Key`. |
+
+## Follow the job
+
+Poll the job, or subscribe to the [provisioning events](#events) and skip polling.
+
+```bash
+curl https://api.trillet.ai/partner/v1/jobs/a4a4a4a4a4a4a4a4a4a4a4a4 \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+| `status` | Meaning |
+|---|---|
+| `queued` | Waiting to start, or waiting to be run again |
+| `running` | In progress. `stage` is `reading`, `building`, `testing` or `finishing`. |
+| `succeeded` | An agent was built. `result` says whether it is `ready` or `needs_review`. |
+| `failed` | Nothing was built. `error.code` says why, and nothing is left in the tenant. |
+
+A job that succeeds has:
+
+```json
+{
+  "result": {
+    "receptionistStatus": "ready",
+    "reviewReason": null,
+    "frontDoorAgentId": "e0e0e0e0e0e0e0e0e0e0e0e0",
+    "agents": [
+      { "language": "de", "agentId": "e0e0e0e0e0e0e0e0e0e0e0e0", "callFlowId": "b7b7b7b7b7b7b7b7b7b7b7b7" },
+      { "language": "fr", "agentId": "e1e1e1e1e1e1e1e1e1e1e1e1", "callFlowId": "b8b8b8b8b8b8b8b8b8b8b8b8" }
+    ],
+    "tests": { "total": 10, "passedFirst": 8, "passed": 10, "passRate": 1, "requiredPassRate": 0.8, "fixesApplied": 2 }
+  }
+}
+```
+
+`succeeded` means the job finished and an agent exists. Whether that agent is cleared to take calls is `result.receptionistStatus`.
+
+If the job is interrupted, it is run again from the start, up to three times, and anything a cut-off attempt made is removed first. `attempts` counts the runs.
+
+`GET /partner/v1/jobs` lists jobs newest first, with `status`, `type`, `tenantId`, `limit` and `starting_after`.
+
+### The test report
+
+`GET /partner/v1/jobs/{jobId}/test-report` returns every test caller: who they were, what was expected, whether the call passed before and after fixes, the verdict and the conversation. Show it to your customer when you ask for sign-off.
+
+The callers are made up for the test. No real person is called, and the test calls are not billed.
+
+## The receptionist
+
+A receptionist is one customer's set of agents treated as one thing: which agents belong together, how their tests went and whether they are cleared to take calls. A tenant has one.
+
+```bash
+curl https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/receptionist \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+```json
+{
+  "object": "receptionist",
+  "tenantId": "d9d9d9d9d9d9d9d9d9d9d9d9",
+  "businessName": "Harbour Garage",
+  "status": "needs_review",
+  "reviewReason": "tests_failed",
+  "goLive": "auto",
+  "frontDoorAgentId": "e0e0e0e0e0e0e0e0e0e0e0e0",
+  "agents": [
+    { "language": "de", "agentId": "e0e0e0e0e0e0e0e0e0e0e0e0", "callFlowId": "b7b7b7b7b7b7b7b7b7b7b7b7", "frontDoor": true },
+    { "language": "fr", "agentId": "e1e1e1e1e1e1e1e1e1e1e1e1", "callFlowId": "b8b8b8b8b8b8b8b8b8b8b8b8", "frontDoor": false }
+  ],
+  "tests": { "total": 10, "passedFirst": 5, "passed": 7, "passRate": 0.7, "requiredPassRate": 0.8 },
+  "openQuestions": [
+    { "question": "Do you offer a courtesy car?", "why": "Two callers asked and the website does not say." }
+  ]
+}
+```
+
+| `status` | Meaning |
+|---|---|
+| `building` | A provisioning job is running |
+| `ready` | Cleared to take calls |
+| `needs_review` | Built, but held. See `reviewReason`. |
+| `failed` | The build made nothing. Provision again. |
+
+| `reviewReason` | Meaning |
+|---|---|
+| `tests_failed` | Fewer test calls passed than `tests.passRate` asked for |
+| `tests_unavailable` | The agent was built but the test calls could not run |
+| `approval_required` | The tests passed and the request asked for `goLive: "approval"` |
+
+`openQuestions` lists what the test callers asked that nothing you sent, and nothing on the website, answers. Answering them, by adding to the knowledge base, is the quickest way to a better agent.
+
+The agents, call flows and knowledge base are ordinary resources in the tenant. Read and change them with the [standard endpoints](/voice-engine/authentication#calling-standard-endpoints-for-a-tenant), [call flow settings](/voice-engine/call-flow-settings) and [business hours](/voice-engine/call-flow-settings#business-hours). Each language has its own agent and call flow, so apply a change to each.
+
+### Assign a number
+
+Provisioning does not assign a phone number. When the receptionist is `ready`, [buy or register a number](/voice-engine/phone-numbers) for the tenant and assign it to `frontDoorAgentId`. The customer can then forward their existing number to it.
+
+The status is your signal, not a lock: the API does not stop you assigning a number to a receptionist that is held for review.
+
+## Review and approve
+
+`GET /partner/v1/receptionists?status=needs_review` is your review queue across all tenants.
+
+```bash
+curl "https://api.trillet.ai/partner/v1/receptionists?status=needs_review" \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+Look at the [test report](#the-test-report), fix what it shows, and approve:
+
+```bash
+curl -X POST https://api.trillet.ai/partner/v1/tenants/d9d9d9d9d9d9d9d9d9d9d9d9/receptionist/approve \
+  -H "Authorization: Bearer tpk_live_..."
+```
+
+Approving clears a held receptionist whatever the reason and returns it as `ready`. Approving one that is already `ready` changes nothing. One that is `building` or `failed` returns `409` `receptionist_not_reviewable`.
+
+## Events
+
+| Type | When | `data` |
+|---|---|---|
+| `provision.started` | The job was queued | `jobId`, `businessName` |
+| `provision.built` | The agents exist and testing is about to start | `jobId`, `agents` |
+| `provision.ready` | The job finished and the receptionist is cleared | `jobId`, `receptionistStatus`, `frontDoorAgentId`, `agents`, `tests` |
+| `provision.needs_review` | The job finished and the receptionist is held | The same, with `reviewReason` |
+| `provision.failed` | Nothing was built | `jobId`, `code`, `message` |
+| `receptionist.approved` | A held receptionist was approved | `previousReason` |
+
+Each carries the tenant with your `externalId`, so a handler can write the status straight back to the record that started it. See [Events](/voice-engine/events).
+
+## Many customers at once
+
+Send one provision request per customer. Jobs queue and run a few at a time, so a batch finishes in the order it was sent rather than all at once: allow a few minutes per customer when you plan a migration, and tell your account manager the size beforehand so your daily limit and our capacity are set for it.
+
+A tenant builds one receptionist at a time, and the same `Idempotency-Key` never builds twice, so a batch can be re-sent safely after an interruption.
+
+## Not available yet
+
+- Assigning a phone number as part of provisioning.
+- More than one transfer destination. Add further transfers on the call flows after the build.
+- Stored templates with versions, and rolling a template change out to agents already built.
+- Re-running the test calls on an existing receptionist, and cancelling a job.
