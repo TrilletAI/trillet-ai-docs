@@ -95,6 +95,7 @@
               "documentation/on-premise",
               "documentation/platform-integrations",
               "documentation/integrations/servicem8",
+              "documentation/variables",
               "documentation/inbound-call-webhook"
             ]
           },

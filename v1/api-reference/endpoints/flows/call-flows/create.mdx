@@ -272,7 +272,48 @@ description: "Create a new call flow with full settings."
       Array of knowledge base IDs to associate with this call flow.
     </ParamField>
     <ParamField body="utilizePriorCallsContext" type="boolean">
-      Whether to utilize context from prior calls. Defaults to false.
+      Whether to utilize context from prior calls. Defaults to false. On a call flow that uses the new variables, a previous call's values fill only `input` variables in `settings.variables` that the call doesn't send.
+    </ParamField>
+    <ParamField body="variablesVersion" type="number">
+      Send `2` to create a call flow that uses the new variables, described in [Variables](/documentation/variables). Leave it out, or send `1` or `null`, for a call flow that works the older way. Any other value returns `400`. The API can't change it after the call flow is created.
+    </ParamField>
+    <ParamField body="variables" type="array">
+      The call flow's variables list. It takes effect only on a call flow that uses the new variables. On such a call flow, a list that breaks a rule in [Names and limits](/documentation/variables#names-and-limits) returns `400` and the flow is not created.
+      <Expandable title="variable">
+        <ParamField body="key" type="string" required>
+          The name, used as `{{key}}`. Letters, numbers and underscores, starting with a letter, up to 64 characters. See [Names and limits](/documentation/variables#names-and-limits).
+        </ParamField>
+        <ParamField body="kind" type="string" required>
+          Where the value comes from: `input` (passed in when the call starts), `captured` (captured by the agent), `api` (from an API response) or `tag` (from a phone number tag).
+        </ParamField>
+        <ParamField body="type" type="string" default="string">
+          `string`, `number`, `boolean`, `date`, `time`, `enum`, `phone`, `email`, `object` or `array`.
+        </ParamField>
+        <ParamField body="description" type="string">
+          For `captured`: what the agent should listen for. Up to 2,000 characters.
+        </ParamField>
+        <ParamField body="options" type="array">
+          For `enum`: the choices, 1 to 100 strings of up to 200 characters each.
+        </ParamField>
+        <ParamField body="capture" type="object">
+          For `captured`: `{ "mode": "in_call" }` (during the call, the default), `"post_call"` (after the call) or `"both"`.
+        </ParamField>
+        <ParamField body="input" type="object">
+          For `input`: `{ "defaultValue": ... }`, the value used when the call doesn't send one.
+        </ParamField>
+        <ParamField body="api" type="object">
+          For `api`: `{ "toolRef", "path" }`. `toolRef` is the `_id` or the name of the in-call API to read from. `path` is the field in its response, such as `data.order.total`, and is read only when `toolRef` is set.
+        </ParamField>
+        <ParamField body="redact" type="boolean" default="false">
+          `true` hides the value after the call: it is left out of webhooks, workflows, email, Slack and call history.
+        </ParamField>
+        <ParamField body="expose" type="object">
+          `{ "webhook", "email", "history" }`: whether the value is in that variables list after the call. Each is `true` unless you send `false`.
+        </ParamField>
+        <ParamField body="order" type="number">
+          The variable's position in the list.
+        </ParamField>
+      </Expandable>
     </ParamField>
     <ParamField body="callSetting" type="object">
       Call length and silence handling.
@@ -323,6 +364,8 @@ When a request is refused, the flow is not created.
 | `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
 | `400` | `{"message": "Missing required field(s): ..."}` | `name`, `direction` or `promptType` is missing |
 | `400` | `{"message", "code", ...}` | Greeting input is not valid (see `welcomeMessageConfig`), or an `agent` error listed under `agent` |
+| `400` | `{"message": "settings.variablesVersion must be 1 or 2"}` | `settings.variablesVersion` is not `1`, `2` or `null` |
+| `400` | `{"message", "errors"}` | On a call flow that uses the new variables, `settings.variables` breaks a rule. `errors` has one message per problem, at most five and then a count of the rest, and `message` joins them |
 | `403` | `{"message": "workspaceId in the request body does not match x-workspace-id."}` | A body `workspaceId` names a workspace other than the header one (or one of its client workspaces you hold a role in) |
 | `409` | `{"message", "code": "AGENT_IN_USE"}` | Another call flow already uses that agent |
 | `422` | `{"message": "..."}` | The flow failed validation, for example an unknown `direction` or webhook `headers` sent as an object |
