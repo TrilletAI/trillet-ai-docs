@@ -1445,7 +1445,7 @@ components:
         id: { $ref: "#/components/schemas/ObjectId" }
         mode:
           type: string
-          enum: [live, sandbox]
+          enum: [live]
         scopes:
           type: array
           items: { $ref: "#/components/schemas/Scope" }
