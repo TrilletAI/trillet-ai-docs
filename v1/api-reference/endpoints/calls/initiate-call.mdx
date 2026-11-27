@@ -47,7 +47,7 @@ Authenticate with your API key in the `x-api-key` header, as described in [Authe
   - the greeting, as either the custom message or the AI greeting prompt. Calls placed with this endpoint use the call flow's Outbound greeting.
   - the voicemail message
 
-  Spell each key exactly as you send it, including upper and lower case, and put no spaces inside the braces. A `first_name` key fills in `{{first_name}}`, but not `{{firstName}}`, `{{First_Name}}` or `{{ first_name }}`.
+  Spell each key exactly as you send it, including upper and lower case. A `first_name` key fills in `{{first_name}}` and `{{ first_name }}`, but not `{{firstName}}` or `{{First_Name}}`.
 
   Send every variable your call flow uses. An unfilled placeholder is spoken as written, except in the AI greeting prompt, where it is left out.
 
