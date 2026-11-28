@@ -104,6 +104,24 @@ The record has the same shape as one item of `data` in [List Call Histories](/v1
   Values of mapped SIP headers for inbound calls on Bring Your Own Twilio numbers, as `{ key, value }` objects. `[]` when none.
 </ResponseField>
 
+<ResponseField name="callVariables" type="object">
+  The call's variables, each name with its value: values passed in when the call started, values captured by the agent and values from API responses. Hidden variables, and variables turned off for call history and API, are left out. On a call made by a call flow that uses the new variables, a hidden variable's value is also masked as `[redacted]` in fields such as `dynamic_variables` and `analyzedData`. See [Variables](/documentation/variables#after-the-call).
+</ResponseField>
+
+The next three fields are returned only for a call made by a call flow that uses the new variables.
+
+<ResponseField name="variablesVersion" type="number">
+  `2`.
+</ResponseField>
+
+<ResponseField name="variablesDetail" type="array">
+  Each variable as `{ name, value, kind, type, source, capturedAt, redacted }`, in the same shape as the post-call webhook's `call_metadata.variables_detail`. Variables turned off for call history and API are left out. `kind` is `input`, `captured` or `api`. `source` is `input`, `pre_call`, `prior`, `default`, `api`, `in_call` or `post_call`. A hidden variable has `redacted: true` and no `value`.
+</ResponseField>
+
+<ResponseField name="unresolvedRefs" type="array">
+  The placeholders the call had no value for, by name. `[]` when there were none.
+</ResponseField>
+
 See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) for the remaining fields (`charged_duration`, `error`, `hasTelephonyCost`, `publicRecordingUrl`, `batchId`, `pendingReason`, `variables`, `dynamic_variables`, `llm`/`stt`/`tts`, `bookingOutcome` and others).
 
 ### Errors
@@ -165,7 +183,8 @@ See [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) f
   "postCallEmailDeliveries": [],
   "bookingOutcome": null,
   "callEndedBy": "Unknown",
-  "callEndReason": "Unknown"
+  "callEndReason": "Unknown",
+  "callVariables": {}
 }
 ```
 </ResponseExample>

@@ -7,6 +7,18 @@ rss: true
 
 The Trillet changelog lists dated product and API changes that are live in production, newest first. Changes to the Trillet OEM partner API have their own [Trillet OEM changelog](/voice-engine/changelog). New product features for Trillet's voice agents are announced on the [product changelog](https://trillet.ai/changelog).
 
+<Update label="SET ON MERGE: Month D, YYYY" tags={["API", "Call flows"]}>
+
+**Variables in webhooks, call history and call flows**
+
+- Post-call webhooks carry `call_metadata.variables`, each variable's name and value, and `call_metadata.variables_detail`, with each one's kind, type and source. Existing keys are unchanged.
+- [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) and [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get) return `callVariables`. For calls made by call flows that use the new variables, Get a Specific Call History also returns `variablesVersion`, `variablesDetail` and `unresolvedRefs`.
+- Call flows accept `settings.variables`, the call flow's list of variables. [Create Call Flow](/v1/api-reference/endpoints/flows/call-flows/create) accepts `settings.variablesVersion: 2` to create a call flow that uses the new variables.
+
+See [Variables](/documentation/variables).
+
+</Update>
+
 <Update label="October 27, 2026" tags={["MCP"]}>
 
 **Sign in to the Trillet MCP server from ChatGPT and Claude**

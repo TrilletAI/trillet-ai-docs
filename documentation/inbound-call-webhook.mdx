@@ -56,6 +56,8 @@ Note: The API response should always include the variables object in the followi
 ## Replace Variable in AI Prompts
 Use the returned variables from your webhook to dynamically update AI prompts.
 
+The variables your webhook returns are values passed in when the call starts. See [Variables](/documentation/variables) for every place you can use them.
+
 Example Prompt in Call Flow Designer:
 ```bash
 Hello, {{customer_name}}, your order status is {{order_status}}.

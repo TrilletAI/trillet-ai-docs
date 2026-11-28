@@ -1,0 +1,317 @@
+---
+title: "Call flow variables: pass in, capture and send call data"
+sidebarTitle: "Variables"
+description: "Keep every value a call flow uses in one list: values passed in when the call starts, values the agent captures, API responses and phone number tags. Use them in instructions, greetings and API requests, and get them back after the call."
+---
+
+Variables are the values a call flow fills in on each call: the customer's name sent when the call starts, an order number the caller reads out, a balance from your system. A call flow keeps them in one list, under **Settings > Variables** in the call flow editor. Write `{{name}}` wherever you want a value to appear.
+
+- **Save what the caller says.** Add a variable that is **Captured by the agent** and say what the agent should listen for, for example `order_number`: "The order number the caller reads out."
+- **No prompt tag needed.** The agent is told what to listen for and gets a tool to save the value. You don't have to mention it in your Agent Instructions.
+- **Use it after the call.** Every variable is sent in the post-call webhook under `call_metadata.variables`, reaches workflows as `{{trigger.variables.order_number}}`, shows in the post-call email and Slack message, and is stored in call history.
+
+<Note>
+  New call flows you build in the dashboard work the way this page describes. A copy works the way its source does. Call flows made before keep working as they always have, and you can upgrade each one when you are ready. See [Older call flows and upgrading](#older-call-flows-and-upgrading).
+</Note>
+
+## Kinds of variables
+
+Each variable has a name, a type and a kind. The kind says where its value comes from.
+
+| Kind | Where the value comes from |
+| --- | --- |
+| **Passed in when the call starts** | Values you send with the call, and the values your inbound call webhook returns. |
+| **Captured by the agent** | What the caller says, saved by the agent during the call, by the analysis after the call, or both. |
+| **From an API response** | The response of an In-Call API the agent calls during the call. |
+| **From a phone number tag** | The custom tags on the phone number the call uses. |
+| **Built in** | Values Trillet fills on every call, such as today's date and whether you are open. See [Built-in values](#built-in-values). |
+
+To add a variable, open **Settings > Variables**, click **Add variable** and choose where it comes from. The types are Text, Number, Yes/No, Date, Time, Choice, Phone and Email. Values passed in and values from an API response can also be an Object or a List. A phone number tag is always Text.
+
+Changes in the Variables panel reach callers when you publish. Test calls from the editor use your unpublished changes straight away.
+
+### Passed in when the call starts
+
+These values arrive with the call:
+
+- `dynamic_variables` on [Initiate Outbound Call](/v1/api-reference/endpoints/calls/initiate-call) and [Connect a Web Call](/v1/api-reference/endpoints/calls/web/connect)
+- the columns of a [batch call](/v1/api-reference/endpoints/calls/batch/overview) CSV
+- the `variables` your [inbound call webhook](/documentation/inbound-call-webhook) returns
+- the values you set in **Dynamic Variables** for a test call
+
+A value sent under a name fills `{{name}}` whether or not the name is in your list. Adding it to the list lets you choose its type, give it a default under **Value when the call doesn't send one**, hide it after the call, and pick it from the variable picker.
+
+When more than one value is available, the first of these is used:
+
+1. the value your inbound call webhook returns
+2. the value sent with the call
+3. with **Remember repeat callers** on (**Settings > Call Handling > Memory**), the value the caller's previous call collected under the same name. This fills only variables in your list.
+4. the **Value when the call doesn't send one**
+
+### Captured by the agent
+
+A captured variable has a name, a type and **What should the agent listen for?** (up to 2,000 characters). The agent reads that description to know what to save, so write it the way you would brief a colleague: "The caller's preferred appointment day, as a date."
+
+**When** sets who fills the value:
+
+- **During the call:** the agent saves the value as soon as the caller gives it. From then on it can be used in API requests and in what the agent says.
+- **After the call:** the analysis that runs after the call reads the transcript and fills the value.
+- **Both:** the value saved during the call is kept. The analysis after the call fills it only when the call didn't capture one.
+
+Agent Instructions are filled in once, when the call starts, before anything is captured. Where they mention a captured variable, the agent reads `order_number (not known yet)`, and it uses the saved value once it has one.
+
+The older `{{extract_variable "name"}}` tag in Agent Instructions keeps working.
+
+### From an API response
+
+When an In-Call API (**Settings > Tools > In-Call APIs**) answers with a success status, fields in its response fill variables with the same name. You don't set up a mapping.
+
+- A variable in your list called `balance` takes a top-level `balance` field. If there is none, it takes the one `balance` field nested anywhere in the response. If the response has two or more nested `balance` fields, the variable stays empty rather than guessing.
+- To read one exact field, edit the variable, choose the API under **Which API**, and enter the **Field in the response**, such as `data.order.total`. Leave the field empty to use the field with the same name.
+- Top-level fields that aren't in your list can be used too, as `{{field_name}}`, up to 50 per response. A field is skipped when the call already has a value with that name of another kind.
+- Each response replaces what that API filled before. A response with an error status fills nothing, so an earlier lookup's values don't linger.
+- Response mappings set up on the API before still apply, and win for their name.
+
+An API response never fills a built-in value such as `phone_number`.
+
+### From a phone number tag
+
+The **Custom Tags** you set when you configure a phone number fill variables of the same name on calls that use that number. Use `{{tag.name}}`, or add the name to your list as **From a phone number tag**.
+
+## Writing a variable
+
+Write the name in double curly braces: `{{order_number}}`. You don't have to type it: **Variables** in the Agent Instructions toolbar, and **Insert variable** by the greetings and the voicemail message, list what can be used there and insert the right form at the cursor.
+
+- Names are case-sensitive: `{{Order_Number}}` doesn't read `order_number`.
+- Spaces inside the braces are fine: `{{ order_number }}` is the same as `{{order_number}}`.
+- Use a dot to read inside an object or a list: `{{customer.city}}`, `{{items.0.name}}`.
+- Numbers and Yes/No values are written as text, such as `42.5` and `true`. Objects and lists are written as compact JSON.
+- Text like `{{transfer: Sales}}` or `{{extract_variable "name"}}` is an instruction to the agent, not a variable, and is left as written.
+
+`{{name}}` reads the variable called `name` in your list, from its own kind only. A name that isn't in your list is looked up in this order: captured by the agent, from an API response, passed in, phone number tag, built in. A built-in name always reads the built-in value.
+
+To read one kind on purpose, put the kind in front:
+
+| You write | Reads |
+| --- | --- |
+| `{{input.name}}` | A value passed in when the call starts |
+| `{{captured.name}}` | A value captured by the agent |
+| `{{api.name}}` | A value from an API response |
+| `{{tag.name}}` | A phone number tag |
+| `{{system.name}}` | A built-in value |
+| `{{secret.name}}`, `{{secret.name.field}}` | A workspace secret, in API requests only. Without a field, the secret's `api_key` field is used |
+
+The older forms still work: `{{_dynamic_variable.name}}` and `{{_dynamic_variables.name}}` read a value passed in, `{{_variable.name}}` is the same as `{{name}}`, `{{_response.name}}` reads an API response, `{{_metadata.name}}` a phone number tag, `{{_time_context.name}}` a built-in value and `{{_secret.name}}` a secret.
+
+### When a value is missing
+
+A placeholder with no value is left out. The agent never says `{{order_number}}` aloud and never sends it to your API.
+
+- In Agent Instructions, greetings and messages, the placeholder becomes empty text. The exception is a captured or API variable in Agent Instructions, which reads as not known yet.
+- In an API request, it becomes an empty string. When a JSON body value is only a placeholder, such as `"total": "{{order_total}}"`, a missing value is sent as `null`, and a value that is there keeps its type, so a number is sent as a number.
+- The call records the name. In call history, the call's **Variables** card lists it under **Not filled during the call**.
+
+## Where you can use variables
+
+| Where | What can fill it |
+| --- | --- |
+| Agent Instructions | Every kind. Captured and API values read as "not known yet" until the call has them. |
+| Greetings: the custom message and the AI greeting prompt | Values passed in, phone number tags and built-in values. The greeting is said before anything is captured. |
+| Voicemail message | Values passed in and phone number tags only. Built-in values stay empty here. |
+| Messages the agent says during the call, such as silence check-ins and transfer messages | Every kind, as known when the message is said. |
+| In-Call APIs and custom tools: URL, headers and body | Every kind, and secrets. In the URL and headers, see the note below. |
+| Transfer destinations | Every kind. Same rule as URLs. |
+| Inbound call webhook: URL, headers and query parameters | Values passed in, phone number tags, built-in values and `{{_system.phoneNumber}}`. |
+
+In a URL, a header or a transfer destination, `{{name}}` never takes a value captured by the agent, because a captured value comes from the conversation. To use one there on purpose, write `{{captured.name}}`. The request body takes `{{name}}` as usual.
+
+The Variables panel lists **References to check**: placeholders that won't be filled the way you might expect, and why. The same notes show under the text that holds them. They are advice only. Nothing there stops you from saving or publishing.
+
+## After the call
+
+| Where | What you get |
+| --- | --- |
+| Post-call webhook | `call_metadata.variables`, each name and its value, and `call_metadata.variables_detail`, a list with each variable's kind, type and source. With a custom payload, pick the keys you want in the payload designer. |
+| Workflows | `{{trigger.variables}}` on the call completed triggers, and one value as `{{trigger.variables.order_number}}`. |
+| Post-call email and Slack | The call's variables, in the order of your list. |
+| Call history and API | The **Variables** card on the call's page, and `callVariables` from [List Call Histories](/v1/api-reference/endpoints/calls/call-history/list) and [Get a Specific Call History](/v1/api-reference/endpoints/calls/call-history/get). |
+
+Values passed in, captured by the agent or from an API response are included when the call has them, whether or not they are in your list. Built-in values and phone number tags are not. Here is a webhook for a call flow whose list has `customer_name` (passed in), `order_number` (captured), `balance` (from an API response) and `date_of_birth` (captured and hidden). Other `call_metadata` fields are left out.
+
+```json
+{
+  "call_metadata": {
+    "variables": {
+      "customer_name": "Jane Doe",
+      "order_number": "A-1042",
+      "balance": 42.5
+    },
+    "variables_detail": [
+      {
+        "name": "customer_name",
+        "value": "Jane Doe",
+        "kind": "input",
+        "type": "string",
+        "source": "input",
+        "capturedAt": null,
+        "redacted": false
+      },
+      {
+        "name": "order_number",
+        "value": "A-1042",
+        "kind": "captured",
+        "type": "string",
+        "source": "in_call",
+        "capturedAt": "2026-12-01T10:15:02.000Z",
+        "redacted": false
+      },
+      {
+        "name": "balance",
+        "value": 42.5,
+        "kind": "api",
+        "type": "number",
+        "source": "api",
+        "capturedAt": "2026-12-01T10:15:09.000Z",
+        "redacted": false
+      },
+      {
+        "name": "date_of_birth",
+        "kind": "captured",
+        "type": "date",
+        "source": "in_call",
+        "capturedAt": "2026-12-01T10:14:40.000Z",
+        "redacted": true
+      }
+    ]
+  }
+}
+```
+
+In `variables_detail`:
+
+- `kind` is `input` (passed in), `captured` or `api`.
+- `source` says where the value came from: `input` (sent with the call), `pre_call` (the inbound call webhook), `prior` (the caller's previous call), `default` (the default value), `api`, `in_call` (captured during the call) or `post_call` (the analysis after the call).
+- `capturedAt` is when the agent captured the value or the API returned it, and `null` for other values.
+- A hidden variable has `redacted: true` and no `value`, and it is left out of `variables`.
+
+## Hiding values
+
+Turn on **Hide the value after the call** for anything sensitive, such as a date of birth or an account number. The value is left out of webhooks, workflows, the post-call email and Slack message, and call history. Where it would appear in another field of the webhook or call history, such as `dynamic_variables`, it shows as `[redacted]`. Anything said aloud stays in the transcript.
+
+For a value that isn't sensitive but shouldn't be in one place, use the switches under **Include in the variables list**: **Webhook and workflows**, **Email and Slack**, and **Call history and API**. Turning one off takes the value out of that variables list only. It can still appear in the call's other fields, such as `dynamic_variables`. To keep a value out of everything, use **Hide the value after the call**.
+
+## Names and limits
+
+- A name uses letters, numbers and underscores, starts with a letter, and is up to 64 characters long.
+- A name holds one kind of value. Two names in your list can't differ only in upper and lower case.
+- These names can't be used, in any mix of upper and lower case: `input`, `captured`, `api`, `tag`, `system`, `secret`, `trigger`, `steps` and `item`; the built-in value names; names starting with `juney_` or `trillet_`; the names of the agent's own actions, such as `transfer`, `end_call`, `book_event` and `extract_variable`; and the fields every call's analysis writes: `summary`, `call_disposition`, `call_sentiment`, `voicemail_left`, `response_confidence`, `language_classification`, `callback_requested_date_time`, `compliance` and `disconnect_reason`.
+- A call flow can have up to 200 variables.
+- What the agent should listen for can be up to 2,000 characters. A Choice can have up to 100 choices of up to 200 characters each. **Field in the response** can be up to 500 characters.
+
+The Variables panel won't save a variable that breaks these rules, and publishing and the API refuse a list that does, with a message that names the problem.
+
+## Built-in values
+
+Trillet fills these on every call. Times and dates use the call flow's timezone.
+
+| Name | Value |
+| --- | --- |
+| `current_time` | The time now |
+| `current_date` | Today's date, with the day of the week |
+| `timezone` | The timezone the times and dates are given in |
+| `day_of_week` | Today's day of the week, like Monday |
+| `is_weekend` | `yes` on Saturday and Sunday, `no` on other days |
+| `business_hours_status` | `open` or `closed` by your office hours, `unknown` when office hours are off |
+| `today` | Today's date, with the day of the week |
+| `tomorrow` | Tomorrow's date, with the day of the week |
+| `day_after_tomorrow` | The date the day after tomorrow, with the day of the week |
+| `upcoming_dates` | The next 14 days, one per line, starting today |
+| `this_week_dates` | The dates from today to Sunday, one per line |
+| `next_week_dates` | Next week from Monday to Sunday, one per line |
+| `office_hours_enabled` | `yes` when office hours are on, otherwise `no` |
+| `office_hours_timezone` | The timezone your office hours are in |
+| `office_hours_schedule` | Your office hours, written out |
+| `next_available_callback` | The next time inside your office hours for a callback. Empty when office hours are off |
+| `currentDate` | Today's date as day/month/year, like 25/12/2026 |
+| `currentTime` | The time now on a 24-hour clock, like 14:30 |
+| `currentDay` | Today's day of the week, like Monday |
+| `phone_number` | The other side's number: the caller on an inbound call, the number called on an outbound call |
+| `call_id` | This call's ID |
+| `call_history_id` | The ID of this call's entry in call history |
+| `call_direction` | `inbound` or `outbound` |
+
+## Older call flows and upgrading
+
+Call flows made before this way of handling variables keep working exactly as they did. Nothing is renamed and no prompt is rewritten. Their **Settings > Variables** panel shows a read-only list of the values the call flow uses and where each one is set. Change them where they are set.
+
+Which way a call flow works:
+
+- A new call flow you build in the dashboard uses the new variables.
+- A copy of a call flow or of a template works the way its source works for callers.
+- A call flow created through the API works the older way unless the request sends `settings.variablesVersion: 2`. See [Create Call Flow](/v1/api-reference/endpoints/flows/call-flows/create).
+- Node flows keep their own variables in the node editor and can't be upgraded.
+
+In the API, a call flow that uses the new variables has `settings.variablesVersion` set to `2`.
+
+### Upgrade a call flow
+
+1. Open the call flow and go to **Settings > Variables**.
+2. Click **Review upgrade**. The review shows the variables your list will hold, the names that must be fixed first, any saved variables to fix before you publish, what stays where it is set, any names that can't be added and why, and what changes for callers.
+3. Click **Upgrade**. The upgrade goes into your unpublished changes. Test calls, and demo links that use your unpublished changes, use it straight away.
+4. Publish when you are ready. If the review listed saved variables to fix, fix them in **Settings > Variables** first, where each one shows **Fix this before publishing**. A publish that applies the upgrade is refused until they are fixed. Callers get the upgrade from their next call.
+
+What the upgrade does:
+
+- It adds to your list the names of the values passed in that the call flow uses, when the name is valid and not used for anything else.
+- Fields collected after the call, extract tags and API response mappings keep working where they are set.
+- A name used for more than one kind of value, for example both passed in and from an API response, must be renamed in one place before you can upgrade. The review says where each one is set. A field collected only after the call can share its name with one other kind of value: both keep their own value.
+- A name that can't go in the list is still filled by a value passed in under exactly that name. There are two exceptions: a built-in name reads the built-in value, and a prefixed form such as `{{input.name}}`, `{{captured.name}}` or `{{_dynamic_variable.name}}` reads the value its prefix names. See [Writing a variable](#writing-a-variable).
+
+What changes for callers, where your call flow is affected (the review lists the ones that apply):
+
+- A placeholder with no value is left out. Before, it could be said or sent as written.
+- In API requests, `{{name}}` is filled. Before, these requests filled only the prefixed forms.
+- In Agent Instructions, built-in values such as `{{business_hours_status}}` and prefixed forms such as `{{_dynamic_variable.name}}` are filled in.
+- With **Remember repeat callers** on, a previous call fills only variables in your list.
+- **Persistent recall** (**Settings > Advanced Settings > Performance**) doesn't run, whether it is set to **All messages** or **First only**, because each call fills in its own values.
+
+To undo an upgrade you haven't published, click **Cancel upgrade** in **Settings > Variables**. Variables you added or changed are kept.
+
+While an upgrade is waiting in your unpublished changes:
+
+- Publishing those changes through the API, or through an AI assistant connected with the [Trillet MCP server](/mcp), is refused. Publish them from the call flow editor, or cancel the upgrade first.
+- **Discard draft** in the editor's header cancels the upgrade. So does discarding or deleting your unpublished changes through the API or an AI assistant. Deleting a saved version in **Version history** doesn't.
+- Restoring a version saved while the upgrade was waiting keeps it waiting. Restoring a version saved before you upgraded cancels it.
+
+After an upgrade is cancelled, restoring a version saved while it was waiting brings back that version's other changes, but not the upgrade. To upgrade again, click **Review upgrade** in **Settings > Variables**.
+
+### Switch back
+
+On a call flow that uses the new variables, **Switch back to the older way** in **Settings > Variables** takes effect for the next call, with no publishing. Calls already in progress finish the way they started. Your variables list and everything else in the call flow are kept, so you can upgrade again later.
+
+After switching back:
+
+- Values set to **Hide the value after the call** show again in webhooks, workflows, email, Slack and call history.
+- Variables captured by the agent are no longer captured, unless an older capture setting also collects them.
+- Variables from an API response are no longer filled automatically. Mappings you set up still apply.
+- A placeholder with no value is said or sent as written again.
+
+Upgrading and switching back are done only in the call flow editor, by anyone who can edit the call flow. The API and AI assistants can't do them.
+
+## Troubleshooting
+
+**A variable is empty on the call.** Open the call in call history: the **Variables** card lists what the call had, and **Not filled during the call** names what it didn't. Then check:
+
+- the spelling and the upper and lower case of the name
+- that the call sends the value, or that the variable has a default
+- whether it was known yet: greetings and the voicemail message are said before anything is captured
+- the kind: a name in your list reads only its own kind, so `{{input.balance}}` stays empty when `balance` is from an API response
+- in a URL, a header or a transfer destination, use `{{captured.name}}` for a captured value
+
+**An API value isn't filled.** The API must answer with a success status. If the same field name appears more than once in the response, choose the API and the exact field in the variable's settings.
+
+**A secret isn't sent.** Secrets are filled only in API requests. A secret whose name contains a dash can't be used in a placeholder. Use a secret named with underscores instead, such as `my_crm` rather than `my-crm`.
+
+**A value is missing from the webhook.** Check that the variable isn't hidden and that **Webhook and workflows** is on under **Include in the variables list**. With a custom payload, add the key to the payload.
+
+**Publishing is refused.** The panel shows **Fix this before publishing** under the variable that breaks a rule in [Names and limits](#names-and-limits).

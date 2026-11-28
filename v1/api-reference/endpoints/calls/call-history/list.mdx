@@ -85,7 +85,7 @@ All filters are exact matches unless stated otherwise. A filter value that match
 </ParamField>
 
 <ParamField query="slim" type="string">
-  Set to `true` to also omit `postCallStatus`, `preCallWebhook`, `dynamic_variables` and `variables`.
+  Set to `true` to also omit `postCallStatus`, `preCallWebhook`, `dynamic_variables`, `variables` and `callVariables`.
 </ParamField>
 
 ### Response Fields
@@ -129,6 +129,7 @@ All filters are exact matches unless stated otherwise. A filter value that match
     <ResponseField name="analyzedData" type="object">Post-call analysis results. Keys depend on the call flow's post-call analysis settings (for example `call_disposition`, `call_sentiment`).</ResponseField>
     <ResponseField name="variables" type="object">Variables collected during the call. Omitted with `slim=true`.</ResponseField>
     <ResponseField name="dynamic_variables" type="object">Dynamic variables passed into the call. Omitted with `slim=true`.</ResponseField>
+    <ResponseField name="callVariables" type="object">The call's variables, each name with its value: values passed in when the call started, values captured by the agent and values from API responses. Hidden variables, and variables turned off for call history and API, are left out. On a call made by a call flow that uses the new variables, a hidden variable's value is also masked as `[redacted]` in fields such as `dynamic_variables` and `analyzedData`. See [Variables](/documentation/variables#after-the-call). Omitted with `slim=true`.</ResponseField>
     <ResponseField name="transcript" type="array">Transcript entries. Omitted with `includeTranscripts=false`.</ResponseField>
     <ResponseField name="hipaaCompliance" type="boolean">Whether the call ran in HIPAA mode.</ResponseField>
     <ResponseField name="functionCalls" type="array">Tool calls made during the call.</ResponseField>
@@ -219,7 +220,8 @@ All filters are exact matches unless stated otherwise. A filter value that match
       "bookingOutcome": null,
       "mode": "voice",
       "callEndedBy": "Unknown",
-      "callEndReason": "Unknown"
+      "callEndReason": "Unknown",
+      "callVariables": {}
     }
   ],
   "pagination": {

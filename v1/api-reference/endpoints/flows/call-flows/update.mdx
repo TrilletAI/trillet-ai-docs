@@ -164,7 +164,13 @@ Configuration settings for the call flow.
     Default customer location. Empty by default.
   </ParamField>
   <ParamField body="utilizePriorCallsContext" type="boolean">
-    Whether to use context from previous calls.
+    Whether to use context from previous calls. On a call flow that uses the new variables, a previous call's values fill only `input` variables in `settings.variables` that the call doesn't send.
+  </ParamField>
+  <ParamField body="variables" type="array">
+    The call flow's variables list, with the same fields as on [Create Call Flow](/v1/api-reference/endpoints/flows/call-flows/create). The list you send replaces the whole list. It takes effect only on a call flow that uses the new variables, described in [Variables](/documentation/variables). On such a call flow, an entry you add or change that breaks a rule in [Names and limits](/documentation/variables#names-and-limits) returns `400`. Entries already stored are not checked again.
+  </ParamField>
+  <ParamField body="variablesVersion" type="number">
+    Which way the call flow handles variables: `2` for the new variables, `1` or absent for the older way. It can't be changed here: a value you send is ignored.
   </ParamField>
 
   <ParamField body="security" type="object">
@@ -370,7 +376,7 @@ When a request is refused, nothing is changed.
 | Status | Body | When |
 | --- | --- | --- |
 | `400` | `{"error": "Workspace ID is required."}` | No `x-workspace-id` |
-| `400` | `{"message", "errors"}` | A changed `settings.callSetting` value is outside the allowed values above, or the silence sequence is longer than `maxCallDuration` |
+| `400` | `{"message", "errors"}` | A changed `settings.callSetting` value is outside the allowed values above, the silence sequence is longer than `maxCallDuration`, or, on a call flow that uses the new variables, an entry you added or changed in `settings.variables` breaks a rule |
 | `400` | `{"message", "code", "field", "errors"}` | Greeting input is not valid (see `welcomeMessageConfig`) |
 | `400` | `{"message": "..."}` | Other settings rules: invalid transfers, custom tools, booking link, Google Calendar settings or speech-recognition keywords, or a knowledge base from another workspace |
 | `409` | `{"code": "FLOW_ARCHIVED", "message": "This flow is archived and is read-only. Restore it to make changes."}` | The flow is archived. Restore it in the dashboard first |
